@@ -17,7 +17,7 @@
 
 import { EventEmitter } from 'node:events';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
+import initSqlJs, { type Database as SqlJsDatabase } from 'sql.js';
 import { DomainEvent, AllDomainEvents } from './domain-events.js';
 
 // =============================================================================

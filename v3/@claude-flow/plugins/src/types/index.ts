@@ -23,7 +23,7 @@ export interface PluginMetadata {
   readonly author?: string;
   readonly license?: string;
   readonly repository?: string;
-  readonly dependencies?: string[];
+  readonly dependencies?: Array<string | { name: string; version: string; optional?: boolean }>;
   readonly peerDependencies?: Record<string, string>;
   readonly minCoreVersion?: string;
   readonly maxCoreVersion?: string;

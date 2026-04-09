@@ -123,28 +123,39 @@ export class TokenOptimizer extends EventEmitter {
       };
     }
 
-    const memories = await this.reasoningBank.retrieveMemories(query, {
-      limit,
-      threshold,
-    });
+    try {
+      const memories = await this.reasoningBank.retrieveMemories(query, {
+        limit,
+        threshold,
+      });
 
-    const compactPrompt = this.reasoningBank.formatMemoriesForPrompt(memories);
+      const compactPrompt = this.reasoningBank.formatMemoriesForPrompt(memories);
 
-    // Estimate tokens saved based on actual content length difference
-    // Rough heuristic: ~4 chars per token, compare full query context vs compact
-    const queryTokenEstimate = Math.ceil(query.length / 4);
-    const compactTokenEstimate = Math.ceil(compactPrompt.length / 4);
-    const saved = Math.max(0, queryTokenEstimate - compactTokenEstimate);
+      // Estimate tokens saved based on actual content length difference
+      // Rough heuristic: ~4 chars per token, compare full query context vs compact
+      const queryTokenEstimate = Math.ceil(query.length / 4);
+      const compactTokenEstimate = Math.ceil(compactPrompt.length / 4);
+      const saved = Math.max(0, queryTokenEstimate - compactTokenEstimate);
 
-    this.stats.totalTokensSaved += saved;
-    this.stats.memoriesRetrieved += memories.length;
+      this.stats.totalTokensSaved += saved;
+      this.stats.memoriesRetrieved += memories.length;
 
-    return {
-      query,
-      memories,
-      compactPrompt,
-      tokensSaved: saved,
-    };
+      return {
+        query,
+        memories,
+        compactPrompt,
+        tokensSaved: saved,
+      };
+    } catch {
+      // ReasoningBank may throw on database schema issues or unavailability;
+      // degrade gracefully to empty context rather than propagating the error.
+      return {
+        query,
+        memories: [],
+        compactPrompt: '',
+        tokensSaved: 0,
+      };
+    }
   }
 
   /**
@@ -197,10 +208,11 @@ export class TokenOptimizer extends EventEmitter {
     expectedSuccessRate: number;
   } {
     if (!this.configTuning) {
-      // Scale defaults based on agent count
-      const batchSize = agentCount <= 4 ? 2 : agentCount <= 8 ? 4 : 6;
+      // Scale defaults based on agent count (anti-drift: prefer hierarchical)
+      const batchSize = agentCount <= 4 ? 2 : agentCount <= 8 ? 4 : 5;
       const cacheSizeMB = Math.min(200, 25 * Math.ceil(agentCount / 2));
-      const topology = agentCount <= 6 ? 'hierarchical' : agentCount <= 12 ? 'hierarchical-mesh' : 'mesh';
+      // Anti-drift: hierarchical for most team sizes to prevent agent divergence
+      const topology = agentCount <= 6 ? 'hierarchical' : 'hierarchical';
       return {
         batchSize,
         cacheSizeMB,

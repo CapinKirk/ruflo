@@ -682,4 +682,9 @@ export function createGNNBridge(embeddingDim = 128): IGNNBridge {
   return new GNNBridge(embeddingDim);
 }
 
+/**
+ * Alias for use in code-intelligence MCP tools
+ */
+export const CodeGNNBridge = GNNBridge;
+
 export default GNNBridge;

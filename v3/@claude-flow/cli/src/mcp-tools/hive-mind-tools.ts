@@ -535,8 +535,8 @@ export const hiveMindTools: MCPTool[] = [
       if (action === 'propose') {
         const proposalId = `proposal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const quorumPreset = (input.quorumPreset as QuorumPreset) || 'majority';
-        const term = (input.term as number) || (state.queen?.term ?? 1);
-        const timeoutMs = (input.timeoutMs as number) || 30000;
+        const term = (input.term as number) ?? (state.queen?.term ?? 1);
+        const timeoutMs = (input.timeoutMs as number) ?? 30000;
 
         // Raft: check if there's already a pending proposal for this term
         if (strategy === 'raft') {

@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
  * falling back to home directory
  */
 function getDataDir(): string {
-  const cwd = process.cwd();
+  const cwd = process.env.CLAUDE_FLOW_CWD || process.cwd();
   const localDir = join(cwd, '.claude-flow', 'neural');
   const homeDir = join(homedir(), '.claude-flow', 'neural');
 

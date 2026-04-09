@@ -22,6 +22,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ============================================================================
 // Types & Constants
 // ============================================================================
@@ -556,7 +561,7 @@ export class ModelRouter {
     };
 
     try {
-      const fullPath = join(process.cwd(), this.config.statePath);
+      const fullPath = join(projectCwd(), this.config.statePath);
       if (existsSync(fullPath)) {
         const data = readFileSync(fullPath, 'utf-8');
         return { ...defaultState, ...JSON.parse(data) };
@@ -573,7 +578,7 @@ export class ModelRouter {
    */
   private saveState(): void {
     try {
-      const fullPath = join(process.cwd(), this.config.statePath);
+      const fullPath = join(projectCwd(), this.config.statePath);
       const dir = dirname(fullPath);
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true });

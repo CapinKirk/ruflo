@@ -21,6 +21,6 @@ export default defineConfig({
         singleFork: true,
         execArgv: ['--max-old-space-size=8192'],
       },
-    },
+    } as any,
   },
 });

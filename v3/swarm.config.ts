@@ -5,15 +5,14 @@
  * Based on the V3 Architecture Decision Records and Swarm Implementation Plan
  */
 
-import {
+import type {
   SwarmConfig,
   TopologyType,
-  LoadBalancingStrategy,
   AgentDomain,
   PhaseId,
   PerformanceTargets,
-  V3_PERFORMANCE_TARGETS
-} from './shared/types';
+} from './@claude-flow/shared/src/types.js';
+import { V3_PERFORMANCE_TARGETS } from './@claude-flow/shared/src/types.js';
 
 // =============================================================================
 // Swarm Configuration

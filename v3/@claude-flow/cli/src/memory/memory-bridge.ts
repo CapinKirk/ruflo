@@ -20,6 +20,11 @@
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ===== Lazy singleton =====
 
 let registryPromise: Promise<any> | null = null;
@@ -32,12 +37,12 @@ let bridgeAvailable: boolean | null = null;
  * or the special ':memory:' path.
  */
 function getDbPath(customPath?: string): string {
-  const swarmDir = path.resolve(process.cwd(), '.swarm');
+  const swarmDir = path.resolve(projectCwd(), '.swarm');
   if (!customPath) return path.join(swarmDir, 'memory.db');
   if (customPath === ':memory:') return ':memory:';
   const resolved = path.resolve(customPath);
   // Ensure the path doesn't escape the working directory
-  const cwd = process.cwd();
+  const cwd = projectCwd();
   if (!resolved.startsWith(cwd)) {
     return path.join(swarmDir, 'memory.db'); // fallback to safe default
   }

@@ -246,7 +246,7 @@ export class WorkflowEngine {
     const results: TaskResult[] = [];
     const errors: Error[] = [];
 
-    const taskChunks = [];
+    const taskChunks: ITask[][] = [];
     for (let i = 0; i < workflow.tasks.length; i += tasksPerCoordinator) {
       taskChunks.push(workflow.tasks.slice(i, i + tasksPerCoordinator));
     }
@@ -376,6 +376,9 @@ export class WorkflowEngine {
     const orderedTasks = Task.resolveExecutionOrder(tasks);
 
     for (const task of orderedTasks) {
+      // Yield to event loop between tasks so pause/cancel can be processed
+      await new Promise(resolve => setTimeout(resolve, 0));
+
       // Check if paused
       while (execution.state.status === 'paused') {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -395,6 +398,10 @@ export class WorkflowEngine {
           const nestedResult = await this.executeWorkflow(task.workflow);
           if (nestedResult.status === 'failed') {
             throw new Error(`Nested workflow failed`);
+          }
+          // Count sub-tasks from nested workflow
+          for (let s = 0; s < nestedResult.tasksCompleted; s++) {
+            completedTasks.add(`${task.id}:sub-${s}`);
           }
         } else {
           // Get assigned agent or distribute

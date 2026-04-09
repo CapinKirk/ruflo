@@ -2,10 +2,10 @@
  * Swarm MCP Tools for CLI
  *
  * Tool definitions for swarm coordination with file-based state persistence.
- * Replaces previous stub implementations with real state tracking.
+ * Emits domain events to a file-based event log for cross-tool observability.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type MCPTool, getProjectCwd } from './types.js';
 import { validateIdentifier } from './validate-input.js';
@@ -54,6 +54,33 @@ function loadSwarmStore(): SwarmStore {
     }
   } catch { /* return default */ }
   return { swarms: {}, version: '3.0.0' };
+}
+
+// Domain event log — append-only JSONL for cross-tool observability
+const DOMAIN_EVENT_LOG = 'domain-events.jsonl';
+let domainEventCounter = 0;
+
+function emitDomainEvent(
+  type: string,
+  aggregateId: string,
+  aggregateType: 'swarm' | 'agent' | 'task' | 'memory',
+  payload: Record<string, unknown>,
+): void {
+  try {
+    const event = {
+      id: `evt-${Date.now()}-${++domainEventCounter}`,
+      type,
+      aggregateId,
+      aggregateType,
+      version: 1,
+      timestamp: Date.now(),
+      source: 'swarm',
+      payload,
+    };
+    const logPath = join(getSwarmDir(), DOMAIN_EVENT_LOG);
+    ensureSwarmDir();
+    appendFileSync(logPath, JSON.stringify(event) + '\n', 'utf-8');
+  } catch { /* domain events are non-fatal */ }
 }
 
 function saveSwarmStore(store: SwarmStore): void {
@@ -128,6 +155,14 @@ export const swarmTools: MCPTool[] = [
       const store = loadSwarmStore();
       store.swarms[swarmId] = swarmState;
       saveSwarmStore(store);
+
+      // Emit domain event (ADR-007)
+      emitDomainEvent('swarm:initialized', swarmId, 'swarm', {
+        topology,
+        maxAgents,
+        config: swarmState.config,
+        initializedAt: now,
+      });
 
       return {
         success: true,
@@ -255,6 +290,13 @@ export const swarmTools: MCPTool[] = [
       target.status = 'terminated';
       target.updatedAt = new Date().toISOString();
       saveSwarmStore(store);
+
+      // Emit domain event (ADR-007)
+      emitDomainEvent('swarm:terminated', target.swarmId, 'swarm', {
+        reason: (input.graceful as boolean) ?? true ? 'graceful_shutdown' : 'forced_shutdown',
+        terminatedAt: target.updatedAt,
+        metrics: { agentsTerminated: target.agents.length, tasksCompleted: target.tasks.length },
+      });
 
       return {
         success: true,

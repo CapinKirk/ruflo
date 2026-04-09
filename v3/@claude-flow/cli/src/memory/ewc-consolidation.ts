@@ -24,6 +24,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -147,7 +152,7 @@ const DEFAULT_EWC_CONFIG: EWCConfig = {
   maxPatterns: 1000,
   fisherDecayRate: 0.01,
   importanceThreshold: 0.3,
-  storagePath: path.join(process.cwd(), '.swarm', 'ewc-fisher.json'),
+  storagePath: path.join(projectCwd(), '.swarm', 'ewc-fisher.json'),
   onlineMode: true,
   dimensions: 384
 };

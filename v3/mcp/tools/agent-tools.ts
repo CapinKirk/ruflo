@@ -163,13 +163,12 @@ async function handleSpawnAgent(
       const { UnifiedSwarmCoordinator } = await import('@claude-flow/swarm');
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
-      // Spawn agent using the coordinator
+      // Spawn agent using the coordinator — cast to any since MCP tool types differ
       await coordinator.spawnAgent({
-        id: agentId,
         type: input.agentType as any,
+        name: agentId,
         capabilities: input.config?.capabilities as any || [],
-        priority: input.priority === 'critical' ? 1 : input.priority === 'high' ? 2 : input.priority === 'normal' ? 3 : 4,
-      });
+      } as any);
 
       return {
         agentId,
@@ -208,11 +207,11 @@ async function handleListAgents(
       const { UnifiedSwarmCoordinator } = await import('@claude-flow/swarm');
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
-      // Get swarm status
-      const status = await coordinator.getStatus();
+      // Get swarm status — cast to any since MCP tool types differ from coordinator types
+      const status = await coordinator.getStatus() as any;
 
       // Convert swarm agents to AgentInfo format
-      let agents: AgentInfo[] = status.agents.map(agent => ({
+      let agents: AgentInfo[] = (status.agents ?? []).map((agent: any) => ({
         id: agent.id,
         agentType: agent.type,
         status: agent.status === 'active' ? 'active' :
@@ -309,16 +308,16 @@ async function handleAgentStatus(
       const { UnifiedSwarmCoordinator } = await import('@claude-flow/swarm');
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
-      // Get agent status
-      const agentState = await coordinator.getAgentStatus(input.agentId);
+      // Get agent status — cast to any since MCP tool types differ from coordinator types
+      const agentState = await coordinator.getAgentStatus(input.agentId) as any;
 
       const status: AgentStatus = {
-        id: agentState.id,
-        agentType: agentState.type,
-        status: agentState.status === 'active' ? 'active' :
-                agentState.status === 'idle' ? 'idle' : 'terminated',
-        createdAt: agentState.createdAt.toISOString(),
-        lastActivityAt: agentState.lastActivityAt?.toISOString(),
+        id: agentState.id ?? agentState.agentId,
+        agentType: agentState.type ?? agentState.agentType ?? 'worker',
+        status: String(agentState.status) === 'active' ? 'active' :
+                String(agentState.status) === 'idle' ? 'idle' : 'terminated',
+        createdAt: agentState.createdAt?.toISOString?.() ?? new Date().toISOString(),
+        lastActivityAt: agentState.lastActivityAt?.toISOString?.(),
         config: agentState.config,
         metadata: agentState.metadata,
       };
@@ -326,7 +325,7 @@ async function handleAgentStatus(
       if (input.includeMetrics) {
         status.metrics = {
           tasksCompleted: agentState.metrics?.tasksCompleted || 0,
-          tasksInProgress: agentState.metrics?.tasksInProgress || 0,
+          tasksInProgress: agentState.metrics?.tasksInProgress ?? agentState.metrics?.activeTasks ?? 0,
           tasksFailed: agentState.metrics?.tasksFailed || 0,
           averageExecutionTime: agentState.metrics?.averageExecutionTime || 0,
           uptime: agentState.metrics?.uptime || 0,
@@ -334,8 +333,8 @@ async function handleAgentStatus(
       }
 
       if (input.includeHistory) {
-        status.history = (agentState.history || []).map(h => ({
-          timestamp: h.timestamp.toISOString(),
+        status.history = (agentState.history || []).map((h: any) => ({
+          timestamp: h.timestamp?.toISOString?.() ?? String(h.timestamp),
           event: h.event,
           details: h.details,
         }));

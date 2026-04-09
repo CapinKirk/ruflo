@@ -37,6 +37,9 @@ import type {
 } from './types.js';
 import type { AgentDomain, DomainConfig, DomainStatus } from './unified-coordinator.js';
 
+// Capture native hrtime at module load, before any test framework can fake it.
+const nativeHrtimeBigint = process.hrtime.bigint.bind(process.hrtime);
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -525,6 +528,15 @@ export class QueenCoordinator extends EventEmitter {
   private delegationLatencies: number[] = [];
   private consensusLatencies: number[] = [];
 
+  /**
+   * Get current high-resolution time in milliseconds.
+   * Uses the native hrtime captured at module load, which is immune
+   * to fake timers and ensures accurate latency measurements.
+   */
+  private hrtimeMs(): number {
+    return Number(nativeHrtimeBigint()) / 1_000_000;
+  }
+
   constructor(
     swarm: ISwarmCoordinator,
     config: Partial<QueenCoordinatorConfig> = {},
@@ -589,7 +601,7 @@ export class QueenCoordinator extends EventEmitter {
    * @returns Task analysis with recommendations
    */
   async analyzeTask(task: TaskDefinition): Promise<TaskAnalysis> {
-    const startTime = performance.now();
+    const startTime = this.hrtimeMs();
 
     this.analysisCounter++;
     const analysisId = `analysis_${Date.now()}_${this.analysisCounter}`;
@@ -640,7 +652,7 @@ export class QueenCoordinator extends EventEmitter {
     this.analysisCache.set(analysisId, analysis);
 
     // Record latency
-    const latency = performance.now() - startTime;
+    const latency = this.hrtimeMs() - startTime;
     this.analysisLatencies.push(latency);
     if (this.analysisLatencies.length > 100) {
       this.analysisLatencies.shift();
@@ -1102,7 +1114,7 @@ export class QueenCoordinator extends EventEmitter {
    * @returns Delegation plan
    */
   async delegateToAgents(task: TaskDefinition, analysis: TaskAnalysis): Promise<DelegationPlan> {
-    const startTime = performance.now();
+    const startTime = this.hrtimeMs();
 
     this.planCounter++;
     const planId = `plan_${Date.now()}_${this.planCounter}`;
@@ -1144,7 +1156,7 @@ export class QueenCoordinator extends EventEmitter {
     await this.executeDelegation(plan);
 
     // Record latency
-    const latency = performance.now() - startTime;
+    const latency = this.hrtimeMs() - startTime;
     this.delegationLatencies.push(latency);
     if (this.delegationLatencies.length > 100) {
       this.delegationLatencies.shift();
@@ -1696,7 +1708,7 @@ export class QueenCoordinator extends EventEmitter {
    * @returns Consensus result
    */
   async coordinateConsensus(decision: Decision): Promise<ConsensusResult> {
-    const startTime = performance.now();
+    const startTime = this.hrtimeMs();
 
     this.decisionCounter++;
     decision.decisionId = `decision_${Date.now()}_${this.decisionCounter}`;
@@ -1731,7 +1743,7 @@ export class QueenCoordinator extends EventEmitter {
       }
 
       // Record latency
-      const latency = performance.now() - startTime;
+      const latency = this.hrtimeMs() - startTime;
       this.consensusLatencies.push(latency);
       if (this.consensusLatencies.length > 100) {
         this.consensusLatencies.shift();

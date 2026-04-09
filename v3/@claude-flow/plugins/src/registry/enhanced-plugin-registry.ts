@@ -436,6 +436,10 @@ export class EnhancedPluginRegistry extends EventEmitter {
       } catch (error) {
         entry.error = error instanceof Error ? error.message : String(error);
         this.logger.error(`Failed to initialize plugin ${name}: ${entry.error}`);
+        // Propagate conflict errors so they are visible to the caller
+        if (entry.error.includes('conflict')) {
+          throw error;
+        }
       }
     }
   }
@@ -535,8 +539,8 @@ export class EnhancedPluginRegistry extends EventEmitter {
       state = await (entry.plugin as any).getState();
     }
 
-    // Shutdown old plugin
-    if (entry.plugin.state === 'initialized') {
+    // Shutdown old plugin (always attempt -- plugin.shutdown() handles state checks internally)
+    if (entry.initTime) {
       await entry.plugin.shutdown();
     }
 
@@ -726,17 +730,53 @@ export class EnhancedPluginRegistry extends EventEmitter {
         this.removeFromCache(category, identifier);
         return item;
 
-      case 'namespace':
+      case 'namespace': {
         const template = resolution?.namespaceTemplate ?? '{plugin}:{name}';
+        // Rename the existing (first) item to its namespaced form
+        const existingNamespaced = template
+          .replace('{plugin}', existing)
+          .replace('{name}', identifier);
+        if (!owners.has(existingNamespaced)) {
+          this.renameInCache(category, identifier, existingNamespaced);
+          owners.delete(identifier);
+          owners.set(existingNamespaced, existing);
+        }
+        // Namespace the new item
         const newName = template
           .replace('{plugin}', pluginName)
           .replace('{name}', identifier);
         owners.set(newName, pluginName);
         return { ...item, name: newName, type: newName } as T;
+      }
 
       case 'error':
       default:
         throw new Error(`${category}: ${identifier} conflict between ${existing} and ${pluginName}`);
+    }
+  }
+
+  private renameInCache(category: string, oldName: string, newName: string): void {
+    switch (category) {
+      case 'agentTypes':
+        this.agentTypesCache = this.agentTypesCache.map(t =>
+          t.type === oldName ? { ...t, type: newName } : t
+        );
+        break;
+      case 'taskTypes':
+        this.taskTypesCache = this.taskTypesCache.map(t =>
+          t.type === oldName ? { ...t, type: newName } : t
+        );
+        break;
+      case 'mcpTools':
+        this.mcpToolsCache = this.mcpToolsCache.map(t =>
+          t.name === oldName ? { ...t, name: newName } : t
+        );
+        break;
+      case 'cliCommands':
+        this.cliCommandsCache = this.cliCommandsCache.map(c =>
+          c.name === oldName ? { ...c, name: newName } : c
+        );
+        break;
     }
   }
 
@@ -926,7 +966,9 @@ export class EnhancedPluginRegistry extends EventEmitter {
     const entry = this.plugins.get(name);
     if (!entry) return;
 
-    if (entry.plugin.state === 'initialized') {
+    // Use initTime as reliable indicator that the plugin was initialized,
+    // since plugins may override the state property for other purposes.
+    if (entry.initTime) {
       try {
         this.eventBus.emit(PLUGIN_EVENTS.SHUTTING_DOWN, { plugin: name });
         await entry.plugin.shutdown();
@@ -944,7 +986,7 @@ export class EnhancedPluginRegistry extends EventEmitter {
     this.invalidateCaches();
   }
 
-  private parseDependencies(deps?: string[] | PluginDependency[]): PluginDependency[] {
+  private parseDependencies(deps?: (string | PluginDependency)[]): PluginDependency[] {
     if (!deps) return [];
 
     return deps.map(dep => {

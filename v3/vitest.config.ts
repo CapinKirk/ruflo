@@ -69,9 +69,14 @@ export default defineConfig({
     },
 
     // Mock configuration for London School approach
-    mockReset: true,
+    // clearMocks: clears call history (mock.calls, mock.instances, mock.results)
+    // mockReset/restoreMocks disabled: vi.mock factories define return values once;
+    // resetting between tests clears those values, breaking tests that rely on
+    // persistent mock configurations (e.g., mockReturnValue, mockResolvedValue).
+    // Individual test files use vi.clearAllMocks() in beforeEach for isolation.
+    mockReset: false,
     clearMocks: true,
-    restoreMocks: true,
+    restoreMocks: false,
 
     // Timeout for async operations
     testTimeout: 10000,
@@ -80,14 +85,14 @@ export default defineConfig({
     // Reporter configuration
     reporters: ['default'],
 
-    // Parallel execution
-    pool: 'threads',
+    // Use forks to isolate memory-heavy tests (ReasoningBank + HNSW)
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: false,
-        isolate: true,
+      forks: {
+        singleFork: false,
+        execArgv: ['--max-old-space-size=4096'],
       },
-    },
+    } as any,
 
     // Globals for easier testing
     globals: true,

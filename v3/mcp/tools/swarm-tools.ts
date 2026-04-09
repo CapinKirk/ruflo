@@ -151,14 +151,14 @@ async function handleInitSwarm(
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
       // Initialize the coordinator with the config
-      await coordinator.initialize({
+      await (coordinator as any).initialize({
         topology: {
-          type: input.topology as any,
+          type: input.topology,
           maxAgents: input.maxAgents,
         },
         consensus: {
-          algorithm: input.config?.consensusMechanism === 'unanimous' ? 'byzantine' as any :
-                     input.config?.consensusMechanism === 'weighted' ? 'raft' as any : 'gossip' as any,
+          algorithm: input.config?.consensusMechanism === 'unanimous' ? 'byzantine' :
+                     input.config?.consensusMechanism === 'weighted' ? 'raft' : 'gossip',
           threshold: input.config?.consensusMechanism === 'unanimous' ? 1.0 :
                     input.config?.consensusMechanism === 'weighted' ? 0.66 : 0.5,
         },
@@ -168,11 +168,11 @@ async function handleInitSwarm(
         },
       });
 
-      const status = await coordinator.getStatus();
-      config.currentAgents = status.agents.length;
+      const status = await coordinator.getStatus() as any;
+      config.currentAgents = (status.agents?.length ?? 0);
 
       return {
-        swarmId: status.swarmId,
+        swarmId: String(status.swarmId),
         topology: input.topology,
         initializedAt,
         config,
@@ -205,14 +205,14 @@ async function handleSwarmStatus(
       const { UnifiedSwarmCoordinator } = await import('@claude-flow/swarm');
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
-      // Get swarm status
-      const status = await coordinator.getStatus();
-      const metrics = await coordinator.getMetrics();
+      // Get swarm status — cast to any since MCP tool types differ from coordinator types
+      const status = await coordinator.getStatus() as any;
+      const metrics = await coordinator.getMetrics() as any;
 
       const config: SwarmConfig = {
-        topology: status.topology.type as any,
-        maxAgents: status.topology.maxAgents,
-        currentAgents: status.agents.length,
+        topology: (status.topology?.type ?? status.topology) as any,
+        maxAgents: status.topology?.maxAgents ?? 15,
+        currentAgents: status.agents?.length ?? 0,
         communicationProtocol: 'message-bus',
         consensusMechanism: status.consensus?.algorithm === 'raft' ? 'weighted' :
                            status.consensus?.algorithm === 'byzantine' ? 'unanimous' : 'majority',
@@ -222,7 +222,7 @@ async function handleSwarmStatus(
       };
 
       const result: SwarmStatusResult = {
-        swarmId: status.swarmId,
+        swarmId: String(status.swarmId),
         status: status.state === 'ready' ? 'active' :
                 status.state === 'scaling' ? 'scaling' :
                 status.state === 'degraded' ? 'degraded' :
@@ -310,9 +310,9 @@ async function handleScaleSwarm(
       const { UnifiedSwarmCoordinator } = await import('@claude-flow/swarm');
       const coordinator = context.swarmCoordinator as InstanceType<typeof UnifiedSwarmCoordinator>;
 
-      // Get current status
-      const beforeStatus = await coordinator.getStatus();
-      const previousAgents = beforeStatus.agents.length;
+      // Get current status — cast to any since MCP tool types differ from coordinator types
+      const beforeStatus = await coordinator.getStatus() as any;
+      const previousAgents = beforeStatus.agents?.length ?? 0;
 
       // Perform scaling (note: UnifiedSwarmCoordinator may not have a direct scale method,
       // so we spawn or terminate agents to reach the target)
@@ -329,11 +329,10 @@ async function handleScaleSwarm(
           const agentId = `agent-scaled-${Date.now()}-${i}`;
 
           await coordinator.spawnAgent({
-            id: agentId,
             type: agentType as any,
+            name: agentId,
             capabilities: [],
-            priority: 3,
-          });
+          } as any);
 
           addedAgents.push(agentId);
         }
@@ -349,14 +348,15 @@ async function handleScaleSwarm(
       }
 
       // Get updated status
-      const afterStatus = await coordinator.getStatus();
+      const afterStatus = await coordinator.getStatus() as any;
+      const currentCount = afterStatus.agents?.length ?? 0;
 
       return {
-        swarmId: beforeStatus.swarmId,
+        swarmId: String(beforeStatus.swarmId),
         previousAgents,
         targetAgents: input.targetAgents,
-        currentAgents: afterStatus.agents.length,
-        scalingStatus: afterStatus.agents.length === input.targetAgents ? 'completed' : 'in-progress',
+        currentAgents: currentCount,
+        scalingStatus: currentCount === input.targetAgents ? 'completed' : 'in-progress',
         scaledAt,
         addedAgents: addedAgents.length > 0 ? addedAgents : undefined,
         removedAgents: removedAgents.length > 0 ? removedAgents : undefined,

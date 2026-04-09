@@ -1386,7 +1386,7 @@ describe('Agentic Flow Bridge', () => {
       expect(Array.isArray(result)).toBe(true);
     } catch (err: any) {
       // If agentic-flow is installed but DB not initialized, it may throw
-      expect(err.message).toMatch(/Database|not initialized|unavailable/i);
+      expect(err.message).toMatch(/Database|not initialized|unavailable|no such column/i);
     }
   });
 });

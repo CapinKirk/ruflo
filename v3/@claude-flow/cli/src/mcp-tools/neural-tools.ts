@@ -221,7 +221,7 @@ export const neuralTools: MCPTool[] = [
       const store = loadNeuralStore();
       const modelId = (input.modelId as string) || `model-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const modelType = input.modelType as NeuralModel['type'];
-      const epochs = (input.epochs as number) || 10;
+      const epochs = (input.epochs as number) ?? 10;
 
       const model: NeuralModel = {
         id: modelId,
@@ -309,7 +309,7 @@ export const neuralTools: MCPTool[] = [
       const store = loadNeuralStore();
       const modelId = input.modelId as string;
       const inputText = input.input as string;
-      const topK = (input.topK as number) || 3;
+      const topK = (input.topK as number) ?? 3;
 
       // Find model or use default
       const model = modelId ? store.models[modelId] : Object.values(store.models).find(m => m.status === 'ready');
@@ -497,7 +497,7 @@ export const neuralTools: MCPTool[] = [
 
       const store = loadNeuralStore();
       const method = (input.method as string) || 'quantize';
-      const targetReduction = (input.targetSize as number) || 0.5;
+      const targetReduction = (input.targetSize as number) ?? 0.5;
       const patterns = Object.values(store.patterns);
 
       if (patterns.length === 0) {

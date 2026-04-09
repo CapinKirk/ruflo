@@ -17,6 +17,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -686,7 +691,7 @@ export class SONAOptimizer {
    */
   private loadFromDisk(): boolean {
     try {
-      const fullPath = join(process.cwd(), this.persistencePath);
+      const fullPath = join(projectCwd(), this.persistencePath);
       if (!existsSync(fullPath)) {
         return false;
       }
@@ -728,7 +733,7 @@ export class SONAOptimizer {
    */
   private saveToDisk(): boolean {
     try {
-      const fullPath = join(process.cwd(), this.persistencePath);
+      const fullPath = join(projectCwd(), this.persistencePath);
       const dir = dirname(fullPath);
 
       // Ensure directory exists

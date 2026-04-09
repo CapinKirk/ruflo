@@ -13,6 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 import type { MCPTool } from './types.js';
+import { getProjectCwd } from './types.js';
 import { validateIdentifier } from './validate-input.js';
 
 // Legacy JSON store interface (for migration)
@@ -336,7 +337,7 @@ export const memoryTools: MCPTool[] = [
         query: { type: 'string', description: 'Search query (semantic similarity)' },
         namespace: { type: 'string', description: 'Namespace to search (default: "default")' },
         limit: { type: 'number', description: 'Maximum results (default: 10)' },
-        threshold: { type: 'number', description: 'Minimum similarity threshold 0-1 (default: 0.3)' },
+        threshold: { type: 'number', description: 'Minimum similarity threshold 0-1 (default: 0.15)' },
       },
       required: ['query'],
     },
@@ -347,7 +348,7 @@ export const memoryTools: MCPTool[] = [
       const query = input.query as string;
       const namespace = (input.namespace as string) || 'default';
       const limit = (input.limit as number) || 10;
-      const threshold = (input.threshold as number) || 0.3;
+      const threshold = (input.threshold as number) ?? 0.15;
 
       validateMemoryInput(undefined, undefined, query);
 
@@ -633,7 +634,7 @@ export const memoryTools: MCPTool[] = [
         }
       } else {
         // Current project only — find by CWD hash
-        const cwd = process.cwd();
+        const cwd = getProjectCwd();
         const projectHash = cwd.replace(/\//g, '-');
         const memDir = join(claudeProjectsDir, projectHash, 'memory');
         if (existsSync(memDir)) {

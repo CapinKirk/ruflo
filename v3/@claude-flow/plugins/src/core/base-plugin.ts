@@ -96,7 +96,18 @@ export abstract class BasePlugin extends EventEmitter implements IPlugin {
     return this._state;
   }
 
+  /**
+   * @deprecated Use setLifecycleState instead to avoid name collisions with subclasses.
+   */
   protected setState(state: PluginLifecycleState): void {
+    this.setLifecycleState(state);
+  }
+
+  /**
+   * Update the plugin lifecycle state.
+   * Uses a distinct name to avoid collisions with subclass state management.
+   */
+  private setLifecycleState(state: PluginLifecycleState): void {
     const previousState = this._state;
     this._state = state;
     this.emit('stateChange', { previousState, currentState: state });
@@ -146,7 +157,7 @@ export abstract class BasePlugin extends EventEmitter implements IPlugin {
       throw new Error(`Plugin ${this.metadata.name} already initialized`);
     }
 
-    this.setState('initializing');
+    this.setLifecycleState('initializing');
     this._context = context;
     this._initTime = new Date();
 
@@ -160,10 +171,10 @@ export abstract class BasePlugin extends EventEmitter implements IPlugin {
       // Call subclass initialization
       await this.onInitialize();
 
-      this.setState('initialized');
+      this.setLifecycleState('initialized');
       this.eventBus.emit(PLUGIN_EVENTS.INITIALIZED, { plugin: this.metadata.name });
     } catch (error) {
-      this.setState('error');
+      this.setLifecycleState('error');
       this.eventBus.emit(PLUGIN_EVENTS.ERROR, {
         plugin: this.metadata.name,
         error: error instanceof Error ? error.message : String(error),
@@ -181,14 +192,14 @@ export abstract class BasePlugin extends EventEmitter implements IPlugin {
       return; // Already shutdown or never initialized
     }
 
-    this.setState('shutting-down');
+    this.setLifecycleState('shutting-down');
 
     try {
       await this.onShutdown();
-      this.setState('shutdown');
+      this.setLifecycleState('shutdown');
       this.eventBus.emit(PLUGIN_EVENTS.SHUTDOWN, { plugin: this.metadata.name });
     } catch (error) {
-      this.setState('error');
+      this.setLifecycleState('error');
       throw error;
     } finally {
       this._context = null;

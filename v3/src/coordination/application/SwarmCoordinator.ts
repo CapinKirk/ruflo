@@ -202,7 +202,17 @@ export class SwarmCoordinator {
     }
 
     const startTime = Date.now();
-    const result = await agent.executeTask(task);
+    let result: TaskResult;
+    try {
+      result = await agent.executeTask(task);
+    } catch (error) {
+      result = {
+        taskId: task.id,
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+        agentId
+      };
+    }
     const duration = Date.now() - startTime;
 
     // Update metrics
@@ -322,20 +332,19 @@ export class SwarmCoordinator {
     );
 
     const currentCount = existingOfType.length;
-    const targetCount = currentCount + config.count;
 
-    if (config.count > 0) {
-      // Scale up
-      for (let i = currentCount; i < targetCount; i++) {
+    if (config.count >= currentCount) {
+      // Scale up: add config.count new agents of this type
+      for (let i = 0; i < config.count; i++) {
         await this.spawnAgent({
           id: `${config.type}-${Date.now()}-${i}`,
           type: config.type,
           capabilities: this.getDefaultCapabilities(config.type)
         });
       }
-    } else if (config.count < 0) {
-      // Scale down
-      const toRemove = existingOfType.slice(0, Math.abs(config.count));
+    } else {
+      // Scale down: reduce to config.count total agents of this type
+      const toRemove = existingOfType.slice(config.count);
       for (const agent of toRemove) {
         await this.terminateAgent(agent.id);
       }

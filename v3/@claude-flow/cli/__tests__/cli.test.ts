@@ -318,7 +318,8 @@ describe('CLI', () => {
         name: 'testnegate',
         description: 'Test command',
         action: async (ctx) => {
-          expect(ctx.flags.color).toBe(false);
+          // --no-color is a registered global option → flags.noColor = true
+          expect(ctx.flags.noColor).toBe(true);
           flagsPassed = true;
           return { success: true };
         }

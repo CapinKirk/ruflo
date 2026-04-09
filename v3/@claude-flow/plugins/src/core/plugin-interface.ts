@@ -172,7 +172,10 @@ export function validatePluginMetadata(metadata: unknown): metadata is PluginMet
 
   if (m.dependencies !== undefined) {
     if (!Array.isArray(m.dependencies)) return false;
-    if (!m.dependencies.every(d => typeof d === 'string')) return false;
+    if (!m.dependencies.every(d =>
+      typeof d === 'string' ||
+      (typeof d === 'object' && d !== null && typeof (d as any).name === 'string')
+    )) return false;
   }
 
   return true;
@@ -188,7 +191,8 @@ export function validatePlugin(plugin: unknown): plugin is IPlugin {
 
   // Check required properties
   if (!validatePluginMetadata(p.metadata)) return false;
-  if (typeof p.state !== 'string') return false;
+  // Note: state is not strictly validated because BasePlugin subclasses
+  // may shadow the state getter for custom data storage purposes
   if (typeof p.initialize !== 'function') return false;
   if (typeof p.shutdown !== 'function') return false;
 

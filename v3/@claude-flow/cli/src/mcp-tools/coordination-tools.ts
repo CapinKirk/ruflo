@@ -533,7 +533,7 @@ export const coordinationTools: MCPTool[] = [
       if (action === 'propose') {
         const proposalId = `proposal-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const quorumPreset = (input.quorumPreset as string) || 'majority';
-        const term = (input.term as number) || 1;
+        const term = (input.term as number) ?? 1;
         const required = calcRequired(strategy, nodeCount, quorumPreset);
 
         // Raft: one pending proposal per term

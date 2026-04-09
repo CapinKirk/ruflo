@@ -1,11 +1,12 @@
 {
   "name": "claude-flow",
-  "version": "3.5.72",
+  "version": "3.5.75",
   "description": "Ruflo - Enterprise AI agent orchestration for Claude Code. Deploy 60+ specialized agents in coordinated swarms with self-learning, fault-tolerant consensus, vector memory, and MCP integration",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "claude-flow": "./bin/cli.js"
+    "claude-flow": "./bin/cli.js",
+    "ruflo": "./bin/cli.js"
   },
   "homepage": "https://github.com/ruvnet/claude-flow#readme",
   "bugs": {
@@ -42,7 +43,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "build:ts": "cd v3/@claude-flow/cli && npm run build || true",
-    "test": "vitest",
+    "test": "NODE_OPTIONS='--max-old-space-size=8192' vitest",
     "test:ui": "vitest --ui",
     "test:security": "vitest run v3/__tests__/security/",
     "lint": "cd v3/@claude-flow/cli && npm run lint || true",
@@ -54,6 +55,7 @@
     "v3:security": "npm run security:audit && npm run security:test"
   },
   "dependencies": {
+    "dotenv": "^17.4.1",
     "semver": "^7.6.0",
     "zod": "^3.22.4"
   },

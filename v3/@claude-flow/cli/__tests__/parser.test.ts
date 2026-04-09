@@ -44,8 +44,9 @@ describe('CommandParser', () => {
     });
 
     it('should parse --no-flag as boolean false', () => {
+      // --no-color is a registered global option → flags.noColor = true
       const result = parser.parse(['--no-color']);
-      expect(result.flags.color).toBe(false);
+      expect(result.flags.noColor).toBe(true);
     });
 
     it('should parse short flag -V via global alias', () => {

@@ -287,6 +287,13 @@ export class CodexInitializer {
       }
 
       try {
+        // When initializing the Ruflo repo itself, the bundled source skill may
+        // already be the destination. Treat that as available instead of erroring.
+        if (path.resolve(srcPath) === path.resolve(destPath)) {
+          copied.push(skillName);
+          continue;
+        }
+
         // Check if skill already exists and we're not forcing
         if (!this.force && await fs.pathExists(destPath)) {
           warnings.push(`Skill ${skillName} already exists - skipped`);

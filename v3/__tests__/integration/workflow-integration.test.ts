@@ -399,8 +399,7 @@ describe('Full Workflow Integration Tests', () => {
     // Start workflow
     const execution = workflowEngine.startWorkflow(workflow);
 
-    // Simulate interruption after first task
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Pause immediately - the event loop yield between tasks allows this to take effect
     await workflowEngine.pauseWorkflow('resume-workflow');
 
     const checkpointState = await workflowEngine.getWorkflowState('resume-workflow');

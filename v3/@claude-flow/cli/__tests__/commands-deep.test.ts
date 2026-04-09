@@ -631,8 +631,9 @@ describe('CommandParser', () => {
     });
 
     it('should parse boolean negation --no-color', () => {
+      // --no-color is a registered global option → flags.noColor = true
       const result = parser.parse(['--no-color']);
-      expect(result.flags.color).toBe(false);
+      expect(result.flags.noColor).toBe(true);
     });
 
     it('should parse boolean negation --no-interactive', () => {
@@ -703,10 +704,10 @@ describe('CommandParser', () => {
   });
 
   describe('kebab-case to camelCase normalization', () => {
-    it('should convert --no-color to noColor flag (negation)', () => {
-      // --no-color is boolean negation => flags.color = false
+    it('should convert --no-color to noColor flag', () => {
+      // --no-color is a registered global option → flags.noColor = true
       const result = parser.parse(['--no-color']);
-      expect(result.flags.color).toBe(false);
+      expect(result.flags.noColor).toBe(true);
     });
 
     it('should convert --some-flag to someFlag', () => {

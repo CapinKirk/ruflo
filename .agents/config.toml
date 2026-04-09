@@ -88,14 +88,6 @@ enabled = true
 path = ".agents/skills/memory-management"
 enabled = true
 
-[[skills.config]]
-path = ".agents/skills/sparc-methodology"
-enabled = true
-
-[[skills.config]]
-path = ".agents/skills/security-audit"
-enabled = true
-
 # =============================================================================
 # Profiles
 # =============================================================================
@@ -183,7 +175,7 @@ blocked_patterns = ["\\.env$", "credentials\\.json$", "\\.pem$", "\\.key$"]
 
 [performance]
 # Maximum concurrent agents
-max_agents = 8
+max_agents = 15
 
 # Task timeout in seconds
 task_timeout = 300
@@ -245,7 +237,7 @@ learning_rate = 0.01
 default_topology = "hierarchical"
 
 # Default strategy: balanced, specialized, adaptive
-default_strategy = "specialized"
+default_strategy = "adaptive"
 
 # Consensus algorithm: raft, byzantine, gossip
 consensus = "raft"

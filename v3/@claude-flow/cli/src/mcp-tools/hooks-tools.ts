@@ -301,6 +301,10 @@ const TASK_PATTERNS: Record<string, { keywords: string[]; agents: string[] }> = 
     keywords: ['memory', 'cache', 'store', 'vector', 'embedding', 'persistence'],
     agents: ['memory-specialist', 'architect', 'coder'],
   },
+  'adr-task': {
+    keywords: ['adr', 'architecture decision', 'decision record', 'architectural decision', 'supersede', 'consequence', 'tradeoff', 'design decision', 'tech decision'],
+    agents: ['adr-architect', 'architect', 'reviewer'],
+  },
 };
 
 /**
@@ -597,6 +601,9 @@ const KEYWORD_PATTERNS: Record<string, { agents: string[]; confidence: number }>
   'memory': { agents: ['memory-specialist', 'architect', 'coder'], confidence: 0.88 },
   'deploy': { agents: ['devops', 'coder', 'tester'], confidence: 0.85 },
   'ci/cd': { agents: ['devops', 'coder'], confidence: 0.9 },
+  'adr': { agents: ['adr-architect', 'architect', 'reviewer'], confidence: 0.92 },
+  'architecture decision': { agents: ['adr-architect', 'architect', 'reviewer'], confidence: 0.95 },
+  'decision record': { agents: ['adr-architect', 'architect', 'reviewer'], confidence: 0.93 },
 };
 
 function getFileExtension(filePath: string): string {
@@ -612,17 +619,26 @@ function suggestAgentsForFile(filePath: string): string[] {
     return AGENT_PATTERNS['.test.ts'] || ['tester', 'reviewer'];
   }
 
+  // Check for ADR files (e.g., docs/adr/, implementation/adrs/, ADR-*.md)
+  if (/\/adrs?\//i.test(filePath) || /ADR-\d+/i.test(filePath)) {
+    return ['adr-architect', 'architect', 'reviewer'];
+  }
+
   return AGENT_PATTERNS[ext] || ['coder', 'architect'];
 }
 
 function suggestAgentsForTask(task: string): { agents: string[]; confidence: number } {
   const taskLower = task.toLowerCase();
 
-  // Check static keyword patterns first
+  // Find the highest-confidence keyword match (not just the first one)
+  let bestKeyword: { agents: string[]; confidence: number } | null = null;
   for (const [pattern, result] of Object.entries(KEYWORD_PATTERNS)) {
-    if (taskLower.includes(pattern)) {
-      return result;
+    if (taskLower.includes(pattern) && (!bestKeyword || result.confidence > bestKeyword.confidence)) {
+      bestKeyword = result;
     }
+  }
+  if (bestKeyword) {
+    return bestKeyword;
   }
 
   // Check runtime-learned patterns from successful task outcomes
@@ -993,16 +1009,28 @@ export const hooksRoute: MCPTool = {
     let confidence: number;
     let matchedPattern = '';
 
-    if (semanticResult.length > 0 && semanticResult[0].score > 0.4) {
-      const topMatch = semanticResult[0];
-      agents = (topMatch.metadata.agents as string[]) || ['coder', 'researcher'];
-      confidence = topMatch.score;
-      matchedPattern = topMatch.intent;
+    // Check keyword patterns first — high-confidence keyword matches override
+    // weak semantic results (e.g. "ADR" is a domain term the semantic embeddings
+    // can't reliably distinguish from generic patterns like "feature-task").
+    const keywordSuggestion = suggestAgentsForTask(task);
+    const semanticTop = semanticResult.length > 0 ? semanticResult[0] : null;
+    const keywordWins = keywordSuggestion.confidence >= 0.85 &&
+      (!semanticTop || keywordSuggestion.confidence > semanticTop.score);
+
+    if (keywordWins) {
+      agents = keywordSuggestion.agents;
+      confidence = keywordSuggestion.confidence;
+      matchedPattern = 'keyword-priority';
+      routingMethod = 'keyword-priority';
+      backendInfo = 'keyword match (high confidence override)';
+    } else if (semanticTop && semanticTop.score > 0.4) {
+      agents = (semanticTop.metadata.agents as string[]) || ['coder', 'researcher'];
+      confidence = semanticTop.score;
+      matchedPattern = semanticTop.intent;
     } else {
-      // Fall back to keyword matching
-      const suggestion = suggestAgentsForTask(task);
-      agents = suggestion.agents;
-      confidence = suggestion.confidence;
+      // Neither semantic nor keyword matched well — use keyword as last resort
+      agents = keywordSuggestion.agents;
+      confidence = keywordSuggestion.confidence;
       matchedPattern = 'keyword-fallback';
       routingMethod = 'keyword';
       backendInfo = 'keyword matching';
@@ -1272,7 +1300,7 @@ export const hooksPostTask: MCPTool = {
     const taskId = params.taskId as string;
     const success = params.success !== false;
     const agent = params.agent as string | undefined;
-    const quality = (params.quality as number) || (success ? 0.85 : 0.3);
+    const quality = (params.quality as number) ?? (success ? 0.85 : 0.3);
     const startTime = Date.now();
 
     { const v = validateIdentifier(taskId, 'taskId'); if (!v.valid) return { success: false, error: v.error }; }
@@ -1660,7 +1688,7 @@ export const hooksTransfer: MCPTool = {
   },
   handler: async (params: Record<string, unknown>) => {
     const sourcePath = params.sourcePath as string;
-    const minConfidence = (params.minConfidence as number) || 0.7;
+    const minConfidence = (params.minConfidence as number) ?? 0.7;
     const filter = params.filter as string;
 
     { const v = validatePath(sourcePath, 'sourcePath'); if (!v.valid) return { success: false, error: v.error }; }
@@ -2311,7 +2339,7 @@ export const hooksTrajectoryStep: MCPTool = {
     const trajectoryId = params.trajectoryId as string;
     const action = params.action as string;
     const result = (params.result as string) || 'success';
-    const quality = (params.quality as number) || 0.85;
+    const quality = (params.quality as number) ?? 0.85;
     const timestamp = new Date().toISOString();
     const stepId = `step-${Date.now()}`;
 
@@ -2505,7 +2533,7 @@ export const hooksPatternStore: MCPTool = {
   handler: async (params: Record<string, unknown>) => {
     const pattern = params.pattern as string;
     const type = (params.type as string) || 'general';
-    const confidence = (params.confidence as number) || 0.8;
+    const confidence = (params.confidence as number) ?? 0.8;
     const metadata = params.metadata as Record<string, unknown> | undefined;
     const timestamp = new Date().toISOString();
 
@@ -2577,8 +2605,8 @@ export const hooksPatternSearch: MCPTool = {
   },
   handler: async (params: Record<string, unknown>) => {
     const query = params.query as string;
-    const topK = (params.topK as number) || 5;
-    const minConfidence = (params.minConfidence as number) || 0.3;
+    const topK = (params.topK as number) ?? 5;
+    const minConfidence = (params.minConfidence as number) ?? 0.3;
     const namespace = (params.namespace as string) || 'pattern';
 
     { const v = validateText(query, 'query'); if (!v.valid) return { success: false, error: v.error }; }
@@ -2920,6 +2948,37 @@ export const hooksIntelligenceLearn: MCPTool = {
   },
 };
 
+// Helper: generate query embedding, preferring real ONNX embeddings over hash fallback
+async function getAttentionQueryEmbedding(text: string, dims: number): Promise<{ embedding: Float32Array; source: 'onnx' | 'hash-fallback' }> {
+  try {
+    const embeddingsModule = await import('@claude-flow/embeddings').catch(() => null);
+    if (embeddingsModule?.createEmbeddingService) {
+      const service = embeddingsModule.createEmbeddingService({ provider: 'onnx' });
+      const result = await service.embed(text);
+      const arr = new Float32Array(dims);
+      for (let i = 0; i < Math.min(dims, result.embedding.length); i++) arr[i] = result.embedding[i];
+      return { embedding: arr, source: 'onnx' };
+    }
+  } catch { /* ONNX not available */ }
+  try {
+    const embeddingsModule = await import('@claude-flow/embeddings').catch(() => null);
+    if (embeddingsModule?.createEmbeddingService) {
+      const service = embeddingsModule.createEmbeddingService({ provider: 'agentic-flow' });
+      const result = await service.embed(text);
+      const arr = new Float32Array(dims);
+      for (let i = 0; i < Math.min(dims, result.embedding.length); i++) arr[i] = result.embedding[i];
+      return { embedding: arr, source: 'onnx' };
+    }
+  } catch { /* agentic-flow not available */ }
+  const arr = new Float32Array(dims);
+  let seed = text.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+  for (let i = 0; i < dims; i++) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    arr[i] = (seed / 0x7fffffff) * 2 - 1;
+  }
+  return { embedding: arr, source: 'hash-fallback' };
+}
+
 // Intelligence attention hook
 export const hooksIntelligenceAttention: MCPTool = {
   name: 'hooks_intelligence_attention',
@@ -2936,144 +2995,68 @@ export const hooksIntelligenceAttention: MCPTool = {
   handler: async (params: Record<string, unknown>) => {
     const query = params.query as string;
     const mode = (params.mode as string) || 'flash';
-    const topK = (params.topK as number) || 5;
+    const topK = (params.topK as number) ?? 5;
     const startTime = performance.now();
-
     { const v = validateText(query, 'query'); if (!v.valid) return { success: false, error: v.error }; }
 
-    let implementation = 'placeholder';
+    let implementation = 'none';
     let embeddingSource: 'onnx' | 'hash-fallback' | 'none' = 'none';
     const results: Array<{ index: number; weight: number; pattern: string; expert?: string }> = [];
 
-    // Helper: generate query embedding, preferring real ONNX embeddings over hash fallback
-    async function getQueryEmbedding(text: string, dims: number): Promise<{ embedding: Float32Array; source: 'onnx' | 'hash-fallback' }> {
-      // Try ONNX via @claude-flow/embeddings
-      try {
-        const embeddingsModule = await import('@claude-flow/embeddings').catch(() => null);
-        if (embeddingsModule?.createEmbeddingService) {
-          const service = embeddingsModule.createEmbeddingService({ provider: 'onnx' });
-          const result = await service.embed(text);
-          const arr = new Float32Array(dims);
-          for (let i = 0; i < Math.min(dims, result.embedding.length); i++) {
-            arr[i] = result.embedding[i];
-          }
-          return { embedding: arr, source: 'onnx' };
-        }
-      } catch {
-        // ONNX not available, try agentic-flow
-      }
-
-      // Try agentic-flow embeddings
-      try {
-        const embeddingsModule = await import('@claude-flow/embeddings').catch(() => null);
-        if (embeddingsModule?.createEmbeddingService) {
-          const service = embeddingsModule.createEmbeddingService({ provider: 'agentic-flow' });
-          const result = await service.embed(text);
-          const arr = new Float32Array(dims);
-          for (let i = 0; i < Math.min(dims, result.embedding.length); i++) {
-            arr[i] = result.embedding[i];
-          }
-          return { embedding: arr, source: 'onnx' };
-        }
-      } catch {
-        // agentic-flow not available
-      }
-
-      // Hash-based fallback (deterministic but not semantic)
-      const arr = new Float32Array(dims);
-      let seed = text.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
-      for (let i = 0; i < dims; i++) {
-        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-        arr[i] = (seed / 0x7fffffff) * 2 - 1;
-      }
-      return { embedding: arr, source: 'hash-fallback' };
-    }
-
     if (mode === 'moe') {
-      // Try MoE routing
       const moe = await getMoERouter();
       if (moe) {
         try {
-          const embResult = await getQueryEmbedding(query, 384);
+          const embResult = await getAttentionQueryEmbedding(query, 384);
           embeddingSource = embResult.source;
-
           const routingResult = moe.route(embResult.embedding);
           for (let i = 0; i < Math.min(topK, routingResult.experts.length); i++) {
             const expert = routingResult.experts[i];
-            results.push({
-              index: i,
-              weight: expert.weight,
-              pattern: `Expert: ${expert.name}`,
-              expert: expert.name,
-            });
+            results.push({ index: i, weight: expert.weight, pattern: `Expert: ${expert.name}`, expert: expert.name });
           }
           implementation = 'real-moe-router';
-        } catch {
-          // Fall back to placeholder
-        }
+        } catch { /* Fall back */ }
       }
     } else if (mode === 'flash') {
-      // Try Flash Attention
       const flash = await getFlashAttention();
       if (flash) {
         try {
-          const embResult = await getQueryEmbedding(query, 384);
+          const embResult = await getAttentionQueryEmbedding(query, 384);
           embeddingSource = embResult.source;
           const q = embResult.embedding;
-          const keys: Float32Array[] = [];
-          const values: Float32Array[] = [];
-
-          // Generate some keys/values
+          const keys: Float32Array[] = [], values: Float32Array[] = [];
           for (let k = 0; k < topK; k++) {
-            const key = new Float32Array(384);
-            const value = new Float32Array(384);
-            for (let i = 0; i < 384; i++) {
-              key[i] = Math.cos((k + 1) * (i + 1) * 0.01);
-              value[i] = k + 1;
-            }
-            keys.push(key);
-            values.push(value);
+            const key = new Float32Array(384), value = new Float32Array(384);
+            for (let i = 0; i < 384; i++) { key[i] = Math.cos((k + 1) * (i + 1) * 0.01); value[i] = k + 1; }
+            keys.push(key); values.push(value);
           }
-
           const attentionResult = flash.attention([q], keys, values);
-          // Compute softmax weights from output magnitudes
           const outputMags = attentionResult.output[0]
             ? Array.from(attentionResult.output[0]).slice(0, topK).map(v => Math.abs(v))
             : new Array(topK).fill(1);
           const sumMags = outputMags.reduce((a, b) => a + b, 0) || 1;
           for (let i = 0; i < topK; i++) {
-            results.push({
-              index: i,
-              weight: outputMags[i] / sumMags,
-              pattern: `Flash attention target #${i + 1}`,
-            });
+            results.push({ index: i, weight: outputMags[i] / sumMags, pattern: `Flash attention target #${i + 1}` });
           }
           implementation = 'real-flash-attention';
-        } catch {
-          // Fall back to placeholder
-        }
+        } catch { /* Fall back */ }
       }
     }
 
     // If no real implementation worked, return empty with honest marker
-    if (results.length === 0) {
-      implementation = 'none';
-    }
-
+    if (results.length === 0) { implementation = 'none'; }
     const computeTimeMs = performance.now() - startTime;
 
     return {
-      query,
-      mode,
-      results,
+      query, mode, results,
       stats: {
-        computeTimeMs,
-        implementation,
+        computeTimeMs, implementation,
         _embeddingSource: embeddingSource,
         _stub: implementation === 'none',
-        _note: implementation === 'none' ? 'No attention backend available. Install @ruvector/attention for real computation.' : undefined,
+        speedup: implementation.startsWith('real-') ? computeTimeMs : null,
+        _note: implementation === 'none' ? 'No attention backend available.' : undefined,
         ...(embeddingSource === 'hash-fallback' && implementation !== 'none'
-          ? { _embeddingNote: 'Query embeddings are hash-based (not semantic). Install @claude-flow/embeddings for real ONNX embeddings.' }
+          ? { _embeddingNote: 'Hash-based embeddings (not semantic). Install @claude-flow/embeddings for ONNX.' }
           : {}),
       },
       implementation,

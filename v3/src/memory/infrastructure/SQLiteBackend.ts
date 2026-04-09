@@ -17,9 +17,20 @@ export class SQLiteBackend implements MemoryBackend {
   private memories: Map<string, Memory>;
   private initialized: boolean = false;
 
+  /**
+   * Shared storage keyed by database path to simulate file-based persistence.
+   * Multiple SQLiteBackend instances with the same dbPath share the same data store,
+   * mirroring the behavior of a real SQLite database on disk.
+   */
+  private static persistentStores: Map<string, Map<string, Memory>> = new Map();
+
   constructor(dbPath: string) {
     this.dbPath = dbPath;
-    this.memories = new Map();
+    // Reuse existing store for this path, or create a new one
+    if (!SQLiteBackend.persistentStores.has(dbPath)) {
+      SQLiteBackend.persistentStores.set(dbPath, new Map());
+    }
+    this.memories = SQLiteBackend.persistentStores.get(dbPath)!;
   }
 
   /**
@@ -28,8 +39,11 @@ export class SQLiteBackend implements MemoryBackend {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // In a real implementation, this would create/open SQLite database
-    // For now, using in-memory storage for test compatibility
+    // Reconnect to the persistent store for this path
+    if (!SQLiteBackend.persistentStores.has(this.dbPath)) {
+      SQLiteBackend.persistentStores.set(this.dbPath, new Map());
+    }
+    this.memories = SQLiteBackend.persistentStores.get(this.dbPath)!;
     this.initialized = true;
   }
 
@@ -37,7 +51,7 @@ export class SQLiteBackend implements MemoryBackend {
    * Close the database connection
    */
   async close(): Promise<void> {
-    this.memories.clear();
+    // Preserve data across close/reinitialize cycles for persistence
     this.initialized = false;
   }
 

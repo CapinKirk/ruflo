@@ -104,7 +104,7 @@ export class PluginBuilder {
     return this;
   }
 
-  withDependencies(dependencies: string[]): this {
+  withDependencies(dependencies: Array<string | { name: string; version: string; optional?: boolean }>): this {
     this.metadata = { ...this.metadata, dependencies };
     return this;
   }
@@ -399,8 +399,10 @@ export class HookBuilder {
   private name?: string;
   private description?: string;
   private priority: HookPriority = HookPriority.Normal;
-  private async: boolean = true;
-  private handler?: HookHandler;
+  private _async: boolean = true;
+  private _handler?: HookHandler;
+  private _condition?: (ctx: { event: HookEvent; data: unknown; timestamp: Date }) => boolean;
+  private _transformer?: (data: unknown) => unknown;
 
   constructor(event: HookEvent) {
     this.event = event;
@@ -422,27 +424,71 @@ export class HookBuilder {
   }
 
   synchronous(): this {
-    this.async = false;
+    this._async = false;
+    return this;
+  }
+
+  /**
+   * Add a condition that must be true for the hook handler to execute.
+   */
+  when(condition: (ctx: { event: HookEvent; data: unknown; timestamp: Date }) => boolean): this {
+    this._condition = condition;
+    return this;
+  }
+
+  /**
+   * Add a data transformer that runs before the handler.
+   */
+  transform(transformer: (data: unknown) => unknown): this {
+    this._transformer = transformer;
+    return this;
+  }
+
+  /**
+   * Set the hook handler. Alias for withHandler that supports both sync and async handlers.
+   */
+  handle(handler: HookHandler): this {
+    this._handler = handler;
     return this;
   }
 
   withHandler(handler: HookHandler): this {
-    this.handler = handler;
+    this._handler = handler;
     return this;
   }
 
   build(): HookDefinition {
-    if (!this.handler) {
+    if (!this._handler) {
       throw new Error(`Hook for event ${this.event} requires a handler`);
     }
 
+    const originalHandler = this._handler;
+    const condition = this._condition;
+    const transformer = this._transformer;
+
+    const wrappedHandler: HookHandler = async (ctx) => {
+      // Check condition if present
+      if (condition && !condition(ctx)) {
+        return { success: true };
+      }
+
+      // Apply transformer if present
+      let effectiveCtx = ctx;
+      if (transformer) {
+        const transformedData = transformer(ctx.data);
+        effectiveCtx = { ...ctx, data: transformedData };
+      }
+
+      return originalHandler(effectiveCtx);
+    };
+
     return {
       event: this.event,
-      handler: this.handler,
+      handler: wrappedHandler,
       priority: this.priority,
       name: this.name,
       description: this.description,
-      async: this.async,
+      async: this._async,
     };
   }
 }

@@ -8,6 +8,7 @@ import { output } from '../output.js';
 import { confirm, select, multiSelect, input } from '../prompt.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import {
   executeInit,
   executeUpgrade,
@@ -17,6 +18,135 @@ import {
   FULL_INIT_OPTIONS,
   type InitOptions,
 } from '../init/index.js';
+
+interface CodexInitResult {
+  success: boolean;
+  errors?: string[];
+  filesCreated: string[];
+  skillsGenerated: string[];
+  warnings?: string[];
+}
+
+type CodexInitializerCtor = new () => {
+  initialize: (options: Record<string, unknown>) => Promise<CodexInitResult>;
+};
+
+function findCliPackageRoot(startDir: string): string | undefined {
+  let currentDir = startDir;
+
+  while (true) {
+    const packageJsonPath = path.join(currentDir, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      try {
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { name?: string };
+        if (packageJson.name === '@claude-flow/cli') {
+          return currentDir;
+        }
+      } catch {
+        // Ignore invalid package.json files while walking upward.
+      }
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      return undefined;
+    }
+    currentDir = parentDir;
+  }
+}
+
+async function loadCodexInitializer(cwd: string): Promise<CodexInitializerCtor> {
+  const codexModuleId = '@claude-flow/codex';
+  const cliPackageRoot = findCliPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
+  const resolutionStrategies = [
+    // Strategy 1: Direct import (works if installed as CLI dependency)
+    async () => (await import(codexModuleId)).CodexInitializer as CodexInitializerCtor,
+    // Strategy 2: Sibling workspace/package dist directory
+    async () => {
+      if (!cliPackageRoot) {
+        throw new Error('CLI package root not found');
+      }
+
+      const siblingCodexPath = path.join(cliPackageRoot, '..', 'codex', 'dist', 'index.js');
+      if (fs.existsSync(siblingCodexPath)) {
+        const mod = await import(`file://${siblingCodexPath}`);
+        return mod.CodexInitializer as CodexInitializerCtor;
+      }
+
+      throw new Error('Not found in sibling workspace');
+    },
+    // Strategy 3: Project node_modules (works if installed in user's project)
+    async () => {
+      const projectPath = path.join(cwd, 'node_modules', '@claude-flow', 'codex', 'dist', 'index.js');
+      if (fs.existsSync(projectPath)) {
+        const mod = await import(`file://${projectPath}`);
+        return mod.CodexInitializer as CodexInitializerCtor;
+      }
+      throw new Error('Not found in project');
+    },
+    // Strategy 4: Global node_modules
+    async () => {
+      const { execSync } = await import('child_process');
+      const globalPath = execSync('npm root -g', { encoding: 'utf-8' }).trim();
+      const codexPath = path.join(globalPath, '@claude-flow', 'codex', 'dist', 'index.js');
+      if (fs.existsSync(codexPath)) {
+        const mod = await import(`file://${codexPath}`);
+        return mod.CodexInitializer as CodexInitializerCtor;
+      }
+      throw new Error('Not found globally');
+    },
+  ];
+
+  for (const strategy of resolutionStrategies) {
+    try {
+      const CodexInitializer = await strategy();
+      if (CodexInitializer) {
+        return CodexInitializer;
+      }
+    } catch {
+      // Try next strategy.
+    }
+  }
+
+  throw new Error('Cannot find module @claude-flow/codex');
+}
+
+function buildClaudeInitOptions(
+  cwd: string,
+  interactive: boolean,
+  force: boolean,
+  minimal: boolean,
+  full: boolean,
+  dualMode: boolean
+): InitOptions {
+  let options: InitOptions;
+
+  if (minimal) {
+    options = { ...MINIMAL_INIT_OPTIONS, targetDir: cwd, force, interactive };
+  } else if (full) {
+    options = { ...FULL_INIT_OPTIONS, targetDir: cwd, force, interactive };
+  } else {
+    options = { ...DEFAULT_INIT_OPTIONS, targetDir: cwd, force, interactive };
+  }
+
+  return {
+    ...options,
+    components: {
+      ...options.components,
+      // In dual mode, Codex generates the bridge CLAUDE.md while Claude init
+      // lays down the actual .claude/.mcp runtime assets.
+      claudeMd: dualMode ? false : options.components.claudeMd,
+    },
+    skills: {
+      ...options.skills,
+      dualMode: dualMode || options.skills.dualMode,
+    },
+    agents: {
+      ...options.agents,
+      dualMode: dualMode || options.agents.dualMode,
+    },
+  };
+}
 
 // Codex initialization action
 async function initCodexAction(
@@ -36,57 +166,7 @@ async function initCodexAction(
   spinner.start();
 
   try {
-    // Dynamic import of the Codex initializer with lazy loading fallback
-    interface CodexInitResult {
-      success: boolean;
-      errors?: string[];
-      filesCreated: string[];
-      skillsGenerated: string[];
-      warnings?: string[];
-    }
-    let CodexInitializer: (new () => { initialize: (options: Record<string, unknown>) => Promise<CodexInitResult> }) | undefined;
-
-    // Try multiple resolution strategies for the @claude-flow/codex package
-    // Use a variable to prevent TypeScript from statically resolving the optional module
-    const codexModuleId = '@claude-flow/codex';
-    const resolutionStrategies = [
-      // Strategy 1: Direct import (works if installed as CLI dependency)
-      async () => (await import(codexModuleId)).CodexInitializer,
-      // Strategy 2: Project node_modules (works if installed in user's project)
-      async () => {
-        const projectPath = path.join(ctx.cwd, 'node_modules', '@claude-flow', 'codex', 'dist', 'index.js');
-        if (fs.existsSync(projectPath)) {
-          const mod = await import(`file://${projectPath}`);
-          return mod.CodexInitializer;
-        }
-        throw new Error('Not found in project');
-      },
-      // Strategy 3: Global node_modules
-      async () => {
-        const { execSync } = await import('child_process');
-        const globalPath = execSync('npm root -g', { encoding: 'utf-8' }).trim();
-        const codexPath = path.join(globalPath, '@claude-flow', 'codex', 'dist', 'index.js');
-        if (fs.existsSync(codexPath)) {
-          const mod = await import(`file://${codexPath}`);
-          return mod.CodexInitializer;
-        }
-        throw new Error('Not found globally');
-      },
-    ];
-
-    for (const strategy of resolutionStrategies) {
-      try {
-        CodexInitializer = await strategy();
-        if (CodexInitializer) break;
-      } catch {
-        // Try next strategy
-      }
-    }
-
-    if (!CodexInitializer) {
-      throw new Error('Cannot find module @claude-flow/codex');
-    }
-
+    const CodexInitializer = await loadCodexInitializer(ctx.cwd);
     const initializer = new CodexInitializer();
 
     const result = await initializer.initialize({
@@ -109,10 +189,43 @@ async function initCodexAction(
     spinner.succeed('Codex project initialized successfully!');
     output.writeln();
 
+    let claudeResult: Awaited<ReturnType<typeof executeInit>> | undefined;
+
+    if (dualMode) {
+      const claudeSpinner = output.createSpinner({ text: 'Initializing Claude Code project...' });
+      claudeSpinner.start();
+
+      const claudeOptions = buildClaudeInitOptions(
+        ctx.cwd,
+        ctx.interactive,
+        force,
+        minimal,
+        full,
+        true
+      );
+
+      claudeResult = await executeInit(claudeOptions);
+
+      if (!claudeResult.success) {
+        claudeSpinner.fail('Claude Code initialization failed');
+        for (const error of claudeResult.errors) {
+          output.printError(error);
+        }
+        return { success: false, exitCode: 1 };
+      }
+
+      claudeSpinner.succeed('Claude Code project initialized successfully!');
+      output.writeln();
+    }
+
     // Display summary
     const summary: string[] = [];
-    summary.push(`Files: ${result.filesCreated.length} created`);
-    summary.push(`Skills: ${result.skillsGenerated.length} installed`);
+    summary.push(`Codex files: ${result.filesCreated.length} created`);
+    summary.push(`Codex skills: ${result.skillsGenerated.length} installed`);
+    if (claudeResult) {
+      summary.push(`Claude files: ${claudeResult.created.files.length} created`);
+      summary.push(`Claude directories: ${claudeResult.created.directories.length} created`);
+    }
 
     output.printBox(summary.join('\n'), 'Summary');
     output.writeln();
@@ -130,14 +243,34 @@ async function initCodexAction(
     );
     output.writeln();
 
+    if (claudeResult) {
+      output.printBox(
+        [
+          `.claude/settings.json: Hook and permission config`,
+          `.claude/skills/: ${claudeResult.summary.skillsCount} Claude skills`,
+          `.claude/commands/: ${claudeResult.summary.commandsCount} command sets`,
+          `.claude/agents/: ${claudeResult.summary.agentsCount} agent definitions`,
+          `.mcp.json: Project MCP configuration`,
+          `.claude-flow/: Shared runtime and memory data`,
+        ].join('\n'),
+        'Claude Code Integration'
+      );
+      output.writeln();
+    }
+
     // Warnings
-    if (result.warnings && result.warnings.length > 0) {
+    const warnings = [...(result.warnings ?? [])];
+    if (claudeResult && claudeResult.skipped.length > 0) {
+      warnings.push(`${claudeResult.skipped.length} Claude Code files were skipped because they already exist`);
+    }
+
+    if (warnings.length > 0) {
       output.printWarning('Warnings:');
-      for (const warning of result.warnings.slice(0, 5)) {
+      for (const warning of warnings.slice(0, 5)) {
         output.printInfo(`  • ${warning}`);
       }
-      if (result.warnings.length > 5) {
-        output.printInfo(`  ... and ${result.warnings.length - 5} more`);
+      if (warnings.length > 5) {
+        output.printInfo(`  ... and ${warnings.length - 5} more`);
       }
       output.writeln();
     }
@@ -148,10 +281,10 @@ async function initCodexAction(
       `Review ${output.highlight('AGENTS.md')} for project instructions`,
       `Add skills with ${output.highlight('$skill-name')} syntax`,
       `Configure ${output.highlight('.agents/config.toml')} for your project`,
-      dualMode ? `Claude Code users can use ${output.highlight('CLAUDE.md')}` : '',
+      dualMode ? `Claude Code users can work from ${output.highlight('CLAUDE.md')} and ${output.highlight('.claude/settings.json')}` : '',
     ].filter(Boolean));
 
-    return { success: true, data: result };
+    return { success: true, data: { codex: result, claude: claudeResult } };
   } catch (error) {
     spinner.fail('Codex initialization failed');
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -182,13 +315,13 @@ function isInitialized(cwd: string): { claude: boolean; claudeFlow: boolean } {
 
 // Init subcommand (default)
 const initAction = async (ctx: CommandContext): Promise<CommandResult> => {
-  const force = ctx.flags.force as boolean;
-  const minimal = ctx.flags.minimal as boolean;
-  const full = ctx.flags.full as boolean;
-  const skipClaude = ctx.flags['skip-claude'] as boolean;
-  const onlyClaude = ctx.flags['only-claude'] as boolean;
-  const codexMode = ctx.flags.codex as boolean;
-  const dualMode = ctx.flags.dual as boolean;
+  const force = Boolean(ctx.flags.force);
+  const minimal = Boolean(ctx.flags.minimal);
+  const full = Boolean(ctx.flags.full);
+  const skipClaude = Boolean(ctx.flags['skip-claude']);
+  const onlyClaude = Boolean(ctx.flags['only-claude']);
+  const codexMode = Boolean(ctx.flags.codex);
+  const dualMode = Boolean(ctx.flags.dual);
   const cwd = ctx.cwd;
 
   // If codex mode, use the Codex initializer

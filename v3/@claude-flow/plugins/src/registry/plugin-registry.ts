@@ -346,7 +346,7 @@ export class PluginRegistry extends EventEmitter {
 
       const deps = entry.plugin.metadata.dependencies ?? [];
       for (const dep of deps) {
-        visit(dep);
+        visit(typeof dep === 'string' ? dep : dep.name);
       }
 
       visiting.delete(name);

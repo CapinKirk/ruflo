@@ -54,7 +54,8 @@ function checkAuthorization(toolName: string, context?: ToolContext): boolean {
   if (!context?.userRoles) return true;
 
   for (const role of context.userRoles) {
-    const permissions = FinancialRolePermissions[role];
+    const normalizedRole = (typeof role === 'string' ? role.toUpperCase() : role) as keyof typeof FinancialRolePermissions;
+    const permissions = FinancialRolePermissions[normalizedRole];
     if (permissions?.includes(toolName)) return true;
   }
 
@@ -152,7 +153,7 @@ async function portfolioRiskHandler(
     const { holdings, confidenceLevel, horizon } = validation.data;
 
     // Initialize bridge
-    const economyBridge = context?.bridge?.economy ?? new FinancialEconomyBridge();
+    const economyBridge = context?.bridge?.economy ?? (() => { const B = FinancialEconomyBridge as any; try { return new B(); } catch { return B(); } })();
     if (!economyBridge.initialized) {
       await economyBridge.initialize();
     }
@@ -294,7 +295,7 @@ async function anomalyDetectHandler(
     const { transactions, sensitivity } = validation.data;
 
     // Initialize bridge
-    const sparseBridge = context?.bridge?.sparse ?? new FinancialSparseBridge();
+    const sparseBridge = context?.bridge?.sparse ?? (() => { const B = FinancialSparseBridge as any; try { return new B(); } catch { return B(); } })();
     if (!sparseBridge.initialized) {
       await sparseBridge.initialize();
     }
@@ -425,7 +426,7 @@ async function marketRegimeHandler(
     const { marketData } = validation.data;
 
     // Initialize bridge
-    const sparseBridge = context?.bridge?.sparse ?? new FinancialSparseBridge();
+    const sparseBridge = context?.bridge?.sparse ?? (() => { const B = FinancialSparseBridge as any; try { return new B(); } catch { return B(); } })();
     if (!sparseBridge.initialized) {
       await sparseBridge.initialize();
     }
@@ -752,7 +753,7 @@ async function stressTestHandler(
     const { portfolio, scenarios } = validation.data;
 
     // Initialize bridge
-    const economyBridge = context?.bridge?.economy ?? new FinancialEconomyBridge();
+    const economyBridge = context?.bridge?.economy ?? (() => { const B = FinancialEconomyBridge as any; try { return new B(); } catch { return B(); } })();
     if (!economyBridge.initialized) {
       await economyBridge.initialize();
     }

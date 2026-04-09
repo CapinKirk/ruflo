@@ -21,6 +21,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ============================================================================
 // Types & Constants
 // ============================================================================
@@ -121,7 +126,7 @@ const DEFAULT_CONFIG: LoRAConfig = {
   inputDim: INPUT_DIM,
   outputDim: OUTPUT_DIM,
   learningRate: 0.001,
-  weightsPath: join(process.cwd(), '.swarm', 'lora-weights.json'),
+  weightsPath: join(projectCwd(), '.swarm', 'lora-weights.json'),
   enableDropout: true,
   dropoutProb: 0.1,
   autoSaveInterval: 50,

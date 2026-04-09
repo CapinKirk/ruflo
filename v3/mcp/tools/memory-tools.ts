@@ -132,7 +132,7 @@ async function handleStoreMemory(
   if (resourceManager?.memoryService) {
     try {
       const { UnifiedMemoryService } = await import('@claude-flow/memory');
-      const memoryService = resourceManager.memoryService as UnifiedMemoryService;
+      const memoryService = resourceManager.memoryService as InstanceType<typeof UnifiedMemoryService>;
 
       // Store the memory entry
       const entry = await memoryService.storeEntry({
@@ -152,7 +152,7 @@ async function handleStoreMemory(
       return {
         id: entry.id,
         stored: true,
-        storedAt: entry.createdAt.toISOString(),
+        storedAt: new Date(entry.createdAt).toISOString(),
       };
     } catch (error) {
       console.error('Failed to store memory via memory service:', error);
@@ -182,7 +182,7 @@ async function handleSearchMemory(
   if (resourceManager?.memoryService) {
     try {
       const { UnifiedMemoryService } = await import('@claude-flow/memory');
-      const memoryService = resourceManager.memoryService as UnifiedMemoryService;
+      const memoryService = resourceManager.memoryService as InstanceType<typeof UnifiedMemoryService>;
 
       let searchResults: any[];
 
@@ -196,11 +196,11 @@ async function handleSearchMemory(
       } else {
         // Perform keyword search via query
         const entries = await memoryService.query({
-          type: input.searchType === 'keyword' ? 'keyword' : 'hybrid',
-          keyword: input.query,
+          type: (input.searchType === 'keyword' ? 'keyword' : 'hybrid') as any,
+          content: input.query,
           limit: input.limit,
           namespace: input.category,
-        });
+        } as any);
 
         searchResults = entries.map(e => ({
           entry: e,
@@ -275,7 +275,7 @@ async function handleListMemory(
   if (resourceManager?.memoryService) {
     try {
       const { UnifiedMemoryService } = await import('@claude-flow/memory');
-      const memoryService = resourceManager.memoryService as UnifiedMemoryService;
+      const memoryService = resourceManager.memoryService as InstanceType<typeof UnifiedMemoryService>;
 
       // Query all entries
       const entries = await memoryService.query({
@@ -285,15 +285,15 @@ async function handleListMemory(
       });
 
       // Convert to Memory format
-      let memories: Memory[] = entries.map(e => ({
+      let memories: Memory[] = entries.map((e: any) => ({
         id: e.id,
         content: e.content,
         type: e.type,
         category: e.namespace,
         tags: e.tags,
-        importance: e.metadata.importance as number,
-        createdAt: e.createdAt.toISOString(),
-        accessedAt: e.lastAccessedAt?.toISOString(),
+        importance: e.metadata?.importance as number ?? 0.5,
+        createdAt: new Date(e.createdAt).toISOString(),
+        accessedAt: e.lastAccessedAt ? new Date(e.lastAccessedAt).toISOString() : undefined,
         accessCount: e.accessCount,
         metadata: input.includeMetadata ? e.metadata : undefined,
       }));

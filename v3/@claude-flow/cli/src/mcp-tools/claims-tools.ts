@@ -836,7 +836,7 @@ export const claimsTools: MCPTool[] = [
     },
     handler: async (input) => {
       const dryRun = input.dryRun !== false;
-      const targetUtilization = (input.targetUtilization as number) || 0.7;
+      const targetUtilization = (input.targetUtilization as number) ?? 0.7;
 
       const store = loadClaims();
       const claims = Object.values(store.claims);

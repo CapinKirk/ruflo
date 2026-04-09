@@ -1,12 +1,16 @@
 {
   "mcpServers": {
-    "flow-nexus": {
+    "claude-flow": {
       "command": "node",
-      "args": ["/workspaces/flow-cloud/mcp/flow-nexus-sse/mcp-server-supabase.js"],
+      "args": [
+        "/Users/prestonharris/Claude-Codex/Ruflo/v3/@claude-flow/cli/bin/cli.js",
+        "mcp",
+        "start"
+      ],
       "env": {
-        "SUPABASE_URL": "${SUPABASE_URL}",
-        "SUPABASE_ANON_KEY": "${SUPABASE_ANON_KEY}",
-        "NODE_NO_WARNINGS": "1"
+        "CLAUDE_FLOW_MODE": "v3",
+        "CLAUDE_FLOW_PROVIDER": "claude-code",
+        "CLAUDE_FLOW_CWD": "/Users/prestonharris/Claude-Codex/Ruflo"
       }
     }
   }

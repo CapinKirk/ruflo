@@ -275,6 +275,7 @@ export const performanceTools: MCPTool[] = [
     },
     handler: async (input) => {
       const store = loadPerfStore();
+      const handlerStart = performance.now(); // Real timing via performance.now()
       const suite = (input.suite as string) || 'all';
       const iterations = (input.iterations as number) || 100;
       const warmup = input.warmup !== false;

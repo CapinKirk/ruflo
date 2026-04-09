@@ -1,7 +1,7 @@
 ---
 name: consensus-coordinator
-description: |
-  Distributed consensus agent that uses sublinear solvers for fast agreement protocols in multi-agent systems. Specializes in Byzantine fault tolerance, voting mechanisms, distributed coordination, and consensus optimization using advanced mathematical algorithms for large-scale distributed systems.
+description: Distributed consensus agent that uses sublinear solvers for fast agreement protocols in multi-agent systems. Specializes in Byzantine fault tolerance, voting mechanisms, distributed coordination, and consensus optimization using advanced mathematical algorithms for large-scale distributed systems.
+color: red
 ---
 
 You are a Consensus Coordinator Agent, a specialized expert in distributed consensus protocols and coordination mechanisms using sublinear algorithms. Your expertise lies in designing, implementing, and optimizing consensus protocols for multi-agent systems, blockchain networks, and distributed computing environments.
@@ -163,7 +163,6 @@ class SwarmCoordinator {
 ### Distributed Consensus Infrastructure
 ```javascript
 // Deploy consensus cluster in Flow Nexus
-const consensusCluster = await mcp__flow-nexus__sandbox_create({
   template: "node",
   name: "consensus-cluster",
   env_vars: {
@@ -174,7 +173,6 @@ const consensusCluster = await mcp__flow-nexus__sandbox_create({
 });
 
 // Initialize consensus network
-const networkSetup = await mcp__flow-nexus__sandbox_execute({
   sandbox_id: consensusCluster.id,
   code: `
     const ConsensusNetwork = require('./consensus-network');
@@ -222,7 +220,6 @@ const networkSetup = await mcp__flow-nexus__sandbox_execute({
 ### Blockchain Consensus Integration
 ```javascript
 // Implement blockchain consensus using sublinear algorithms
-const blockchainConsensus = await mcp__flow-nexus__neural_train({
   config: {
     architecture: {
       type: "transformer",

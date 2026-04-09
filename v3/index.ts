@@ -121,23 +121,22 @@ export type ModuleName = (typeof MODULES)[number];
 
 // =============================================================================
 // Legacy Compatibility Layer (Gradual Migration Support)
+//
+// NOTE: The following re-exports were removed because the source modules
+// (./core/, ./shared/, ./types/, ./coordination/) were never created in the
+// v3 monorepo restructuring. The canonical imports are the @claude-flow/*
+// package exports above. See ADR-002 for the DDD module structure.
 // =============================================================================
 
-// =============================================================================
-// V3 Core Architecture (Decomposed Orchestrator)
-// =============================================================================
+/* Legacy re-exports removed — use @claude-flow/* package imports instead.
 
-// Core Interfaces
 export type {
-  // Task interfaces
   ITask,
   ITaskCreate,
   ITaskResult,
   ITaskManager,
   ITaskQueue,
   TaskManagerMetrics,
-
-  // Agent interfaces
   IAgent,
   IAgentConfig,
   IAgentSession,
@@ -145,8 +144,6 @@ export type {
   IAgentLifecycleManager,
   IAgentRegistry,
   IAgentCapability,
-
-  // Event interfaces
   IEvent,
   IEventCreate,
   IEventBus as IEventBusCore,
@@ -155,370 +152,19 @@ export type {
   IEventFilter,
   IEventStore,
   IEventCoordinator,
-
-  // Memory interfaces
-  IMemoryEntry,
-  IMemoryEntryCreate,
-  IMemoryBackend,
-  IVectorMemoryBackend,
-  IMemoryBank,
-  IMemoryManager,
-  IPatternStorage,
-  IVectorSearchParams,
-  IVectorSearchResult,
-
-  // Coordinator interfaces
-  ISwarmConfig,
-  ISwarmState,
-  ICoordinator,
-  ICoordinationManager,
-  IHealthMonitor,
-  IMetricsCollector,
-  IHealthStatus,
-  IComponentHealth,
-  IOrchestratorMetrics,
-} from './core/interfaces/index.js';
-
-export { SystemEventTypes } from './core/interfaces/event.interface.js';
-
-// Orchestrator Components
-export {
-  // Task management
-  TaskManager,
-  TaskQueue,
-
-  // Session management
-  SessionManager,
-  type ISessionManager,
-  type SessionManagerConfig,
-  type SessionPersistence,
-
-  // Health monitoring
-  HealthMonitor,
-  type HealthMonitorConfig,
-  type HealthCheckFn,
-
-  // Lifecycle management
-  LifecycleManager,
-  AgentPool,
-  type LifecycleManagerConfig,
-
-  // Event coordination
-  EventCoordinator,
-
-  // Factory function
-  createOrchestrator,
-  defaultOrchestratorConfig,
-  type OrchestratorConfig,
-  type OrchestratorComponents,
-} from './core/orchestrator/index.js';
-
-// Event Bus
-export { EventBus as EventBusCore, createEventBus } from './core/event-bus.js';
-
-// Configuration
-export {
-  // Schemas
-  AgentConfigSchema,
-  TaskConfigSchema,
-  SwarmConfigSchema,
-  MemoryConfigSchema,
-  MCPServerConfigSchema,
-  OrchestratorConfigSchema,
-  SystemConfigSchema,
-
-  // Validation
-  validateAgentConfig,
-  validateTaskConfig,
-  validateSwarmConfig,
-  validateMemoryConfig,
-  validateMCPServerConfig,
-  validateOrchestratorConfig,
-  validateSystemConfig,
-  ConfigValidator,
-  type ValidationResult,
-  type ValidationError,
-
-  // Defaults
-  defaultAgentConfig,
-  defaultTaskConfig,
-  defaultSwarmConfigCore,
-  defaultMemoryConfig,
-  defaultMCPServerConfig,
-  defaultSystemConfig,
-  agentTypePresets,
-  mergeWithDefaults,
-
-  // Loader
-  ConfigLoader,
-  loadConfig,
-  type LoadedConfig,
-  type ConfigSource,
-} from './core/config/index.js';
-
-// V3 Extended Types
-export type {
-  // Agent types
-  AgentProfile,
-  AgentPermissions,
-  AgentSpawnOptions,
-  AgentSpawnResult,
-  AgentTerminationOptions,
-  AgentTerminationResult,
-  AgentHealthCheckResult,
-  AgentBatchResult,
-  AgentEventPayloads,
-
-  // Task types
-  TaskInput,
-  TaskMetadata as TaskMetadataExtended,
-  TaskExecutionContext,
-  TaskExecutionResult,
-  TaskArtifact,
-  TaskQueueConfig,
-  TaskAssignmentConfig,
-  TaskRetryPolicy,
-  TaskFilter,
-  TaskSortOptions,
-  TaskQueryOptions,
-  TaskEventPayloads,
-
-  // Swarm types
-  SwarmInitOptions,
-  SwarmInitResult,
-  SwarmScaleOptions,
-  SwarmScaleResult,
-  SwarmMessage,
-  ConsensusRequest,
-  ConsensusResponse,
-  DistributedLock,
-  LockAcquisitionResult,
-  DeadlockDetectionResult,
-  SwarmMetrics as SwarmMetricsExtended,
-  SwarmEventPayloads,
-
-  // Memory types
-  MemoryBackendConfig,
-  MemoryStoreOptions,
-  MemoryRetrieveOptions,
-  MemoryListOptions,
-  MemorySearchOptions,
-  MemoryBatchOperation,
-  MemoryBatchResult,
-  MemoryStats,
-  MemoryBankStats,
-  LearnedPattern,
-  PatternSearchResult,
-  MemoryEventPayloads,
-  CacheConfig,
-  VectorIndexConfig,
-  FlashAttentionConfig,
-
-  // MCP types
-  MCPTool,
-  MCPToolHandler,
-  MCPToolResult,
-  MCPContent,
-  MCPServerConfig as MCPServerConfigExtended,
-  MCPTransportConfig,
-  MCPResource,
-  MCPPrompt,
-  MCPCapabilities,
-  MCPRequest,
-  MCPResponse,
-  MCPError,
-  MCPEventPayloads,
-  MCPServerStatus,
-} from './types/index.js';
-
-export {
-  priorityToNumber,
-  numberToPriority,
-  TopologyPresets,
-} from './types/index.js';
-
-// =============================================================================
-// Legacy/Shared Exports (Preserved for Backward Compatibility)
-// =============================================================================
-
-// Shared Types
-export type {
-  AgentId,
-  AgentRole,
-  AgentDomain,
-  AgentStatus,
-  AgentDefinition,
-  AgentState,
-  AgentCapability,
-  AgentMetrics,
-  TaskId,
-  TaskType,
-  TaskStatus,
-  TaskPriority,
-  TaskDefinition,
-  TaskMetadata,
-  TaskResult,
-  TaskResultMetrics,
-  PhaseId,
-  PhaseDefinition,
-  MilestoneDefinition,
-  MilestoneStatus,
-  MilestoneCriteria,
-  TopologyType,
-  SwarmConfig,
-  SwarmState,
-  SwarmMetrics,
-  EventType,
-  SwarmEvent,
-  EventHandler,
-  MessageType,
-  SwarmMessage,
-  MessageHandler,
-  PerformanceTargets,
-  DeepPartial,
-  AsyncCallback,
-  Result
-} from './shared/types';
-
-export {
-  V3_PERFORMANCE_TARGETS,
-  success,
-  failure
-} from './shared/types';
-
-// Event System
-export type {
-  IEventBus,
-  IEventStore,
-  EventFilter,
-  EventStoreSnapshot
-} from './shared/events';
-
-export {
-  EventBus,
-  InMemoryEventStore,
-  createEvent,
-  agentSpawnedEvent,
-  agentStatusChangedEvent,
-  agentTaskAssignedEvent,
-  agentTaskCompletedEvent,
-  agentErrorEvent,
-  taskCreatedEvent,
-  taskQueuedEvent,
-  taskAssignedEvent,
-  taskStartedEvent,
-  taskCompletedEvent,
-  taskFailedEvent,
-  taskBlockedEvent,
-  swarmInitializedEvent,
-  swarmPhaseChangedEvent,
-  swarmMilestoneReachedEvent,
-  swarmErrorEvent
-} from './shared/events';
-
-// Agent Registry
-export type {
-  IAgentRegistry,
-  HealthStatus
-} from './coordination/agent-registry';
-
-export {
-  AgentRegistry,
-  createAgentRegistry
-} from './coordination/agent-registry';
-
-// Task Orchestrator
-export type {
-  ITaskOrchestrator,
-  TaskSpec,
-  TaskOrchestratorMetrics
-} from './coordination/task-orchestrator';
-
-export {
-  TaskOrchestrator,
-  createTaskOrchestrator
-} from './coordination/task-orchestrator';
-
-// Swarm Hub
-export type {
-  ISwarmHub
-} from './coordination/swarm-hub';
-
-export {
-  SwarmHub,
-  createSwarmHub,
-  getSwarmHub,
-  resetSwarmHub
-} from './coordination/swarm-hub';
-
-// Configuration
-export type {
-  V3SwarmConfig,
-  DomainConfig,
-  PhaseConfig,
-  GitHubConfig,
-  LoggingConfig,
-  TopologyConfig
-} from './swarm.config';
-
-export {
-  defaultSwarmConfig,
-  agentRoleMapping,
-  getAgentsByDomain,
-  getAgentConfig,
-  getPhaseConfig,
-  getActiveAgentsForPhase,
-  createCustomConfig,
-  topologyConfigs,
-  getTopologyConfig
-} from './swarm.config';
+  ...types from ./core/interfaces, ./core/orchestrator, ./core/event-bus,
+  ./core/config, ./types/index, ./shared/types, ./shared/events,
+  ./coordination/agent-registry, ./coordination/task-orchestrator,
+  ./coordination/swarm-hub, ./swarm.config
+*/
 
 // =============================================================================
 // Quick Start Functions
 // =============================================================================
 
-/**
- * Initialize the V3 swarm with default configuration
- *
- * @example
- * ```typescript
- * import { initializeV3Swarm } from './v3';
- *
- * const swarm = await initializeV3Swarm();
- * await swarm.spawnAllAgents();
- *
- * // Submit a task
- * const task = swarm.submitTask({
- *   type: 'implementation',
- *   title: 'Implement feature X',
- *   description: 'Detailed description...',
- *   domain: 'core',
- *   phase: 'phase-2-core',
- *   priority: 'high'
- * });
- * ```
- */
-export async function initializeV3Swarm(config?: Partial<SwarmConfig>): Promise<ISwarmHub> {
-  const { createSwarmHub } = await import('./coordination/swarm-hub');
-  const swarm = createSwarmHub();
-  await swarm.initialize(config);
-  return swarm;
-}
-
-/**
- * Get the current V3 swarm instance
- * Creates a new one if none exists
- */
-export async function getOrCreateSwarm(): Promise<ISwarmHub> {
-  const { getSwarmHub } = await import('./coordination/swarm-hub');
-  const swarm = getSwarmHub();
-
-  if (!swarm.isInitialized()) {
-    await swarm.initialize();
-  }
-
-  return swarm;
-}
+// TODO: Re-enable when ./coordination/swarm-hub module is created
+// These functions depend on SwarmConfig and ISwarmHub from non-existent modules.
+// Use @claude-flow/swarm package imports directly instead.
 
 // =============================================================================
 // Version Info
@@ -572,19 +218,7 @@ export const V3_INFO = {
 // Default Export
 // =============================================================================
 
-import type { ISwarmHub } from './coordination/swarm-hub';
-import type { SwarmConfig } from './shared/types';
-import { V3_PERFORMANCE_TARGETS as PERF_TARGETS } from './shared/types';
-
 export default {
-  // Quick start
-  initializeV3Swarm,
-  getOrCreateSwarm,
-
-  // Version info
   version: V3_VERSION,
   info: V3_INFO,
-
-  // Performance targets
-  performanceTargets: PERF_TARGETS
 };

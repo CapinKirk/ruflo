@@ -5,7 +5,7 @@
  * Includes model routing integration for intelligent model selection.
  */
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type MCPTool, getProjectCwd } from './types.js';
 import { validateIdentifier, validateText, validateAgentSpawn } from './validate-input.js';
@@ -39,6 +39,33 @@ interface AgentStore {
 
 function getAgentDir(): string {
   return join(getProjectCwd(), STORAGE_DIR, AGENT_DIR);
+}
+
+// Domain event log — shared with swarm-tools for cross-tool observability
+const DOMAIN_EVENT_LOG = 'domain-events.jsonl';
+let domainEventCounter = 0;
+
+function emitDomainEvent(
+  type: string,
+  aggregateId: string,
+  aggregateType: 'swarm' | 'agent' | 'task' | 'memory',
+  payload: Record<string, unknown>,
+): void {
+  try {
+    const event = {
+      id: `evt-${Date.now()}-${++domainEventCounter}`,
+      type,
+      aggregateId,
+      aggregateType,
+      version: 1,
+      timestamp: Date.now(),
+      source: aggregateType,
+      payload,
+    };
+    const logDir = join(getProjectCwd(), STORAGE_DIR, 'swarm');
+    if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true, mode: 0o700 });
+    appendFileSync(join(logDir, DOMAIN_EVENT_LOG), JSON.stringify(event) + '\n', 'utf-8');
+  } catch { /* domain events are non-fatal */ }
 }
 
 function getAgentPath(): string {
@@ -239,6 +266,15 @@ export const agentTools: MCPTool[] = [
 
       store.agents[agentId] = agent;
       saveAgentStore(store);
+
+      // Emit domain event (ADR-007)
+      emitDomainEvent('agent:spawned', agentId, 'agent', {
+        agentId,
+        role: agentType,
+        domain: (input.domain as string) || 'default',
+        capabilities: [],
+        model: routingResult.model,
+      });
 
       // Include Agent Booster routing info if applicable
       const response: Record<string, unknown> = {
@@ -455,7 +491,7 @@ export const agentTools: MCPTool[] = [
       }
 
       if (action === 'scale') {
-        const targetSize = (input.targetSize as number) || 5;
+        const targetSize = (input.targetSize as number) ?? 5;
         const agentType = (input.agentType as string) || 'worker';
         const currentSize = agents.filter(a => a.agentType === agentType).length;
         const delta = targetSize - currentSize;
@@ -538,7 +574,7 @@ export const agentTools: MCPTool[] = [
 
       const store = loadAgentStore();
       const agents = Object.values(store.agents).filter(a => a.status !== 'terminated');
-      const threshold = (input.threshold as number) || 0.5;
+      const threshold = (input.threshold as number) ?? 0.5;
 
       if (input.agentId) {
         const agent = store.agents[input.agentId as string];

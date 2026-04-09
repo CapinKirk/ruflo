@@ -600,7 +600,7 @@ class HttpConnectionFactory implements ConnectionFactory<{ transport: HttpTransp
  * - Load balancing across multiple transports
  */
 export class PooledHttpTransport {
-  private pool: ConnectionPool<{ transport: HttpTransport; id: string }>;
+  private pool: ConnectionPool<{ transport: HttpTransport }>;
 
   constructor(
     private readonly logger: ILogger,

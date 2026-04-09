@@ -47,7 +47,7 @@ export {
   isError,
 
   // Namespace
-  RuVector,
+  type RuVector,
 
   // Attention Mechanisms
   AttentionRegistry,

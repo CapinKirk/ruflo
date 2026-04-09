@@ -309,8 +309,11 @@ export const systemTools: MCPTool[] = [
       // Memory DB check — verify the store file exists
       {
         const t0 = performance.now();
-        const memoryDbPath = join(projectCwd, '.claude-flow', 'memory', 'store.json');
-        const memoryExists = existsSync(memoryDbPath);
+        const memoryPaths = [
+          join(projectCwd, '.claude', 'memory.db'),
+          join(projectCwd, '.claude-flow', 'memory', 'store.json'),
+        ];
+        const memoryExists = memoryPaths.some(p => existsSync(p));
         const elapsed = performance.now() - t0;
         checks.push({
           name: 'memory',
@@ -323,9 +326,12 @@ export const systemTools: MCPTool[] = [
       // Config check — verify config file exists
       {
         const t0 = performance.now();
-        const configPath = join(projectCwd, '.claude-flow', 'config.json');
-        const altConfigPath = join(projectCwd, 'claude-flow.config.json');
-        const configExists = existsSync(configPath) || existsSync(altConfigPath);
+        const configPaths = [
+          join(projectCwd, '.claude-flow', 'config.json'),
+          join(projectCwd, '.claude-flow', 'config.yaml'),
+          join(projectCwd, 'claude-flow.config.json'),
+        ];
+        const configExists = configPaths.some(p => existsSync(p));
         const elapsed = performance.now() - t0;
         checks.push({
           name: 'config',
@@ -430,8 +436,8 @@ export const systemTools: MCPTool[] = [
       }
 
       const healthy = checks.filter(c => c.status === 'healthy').length;
-      const total = checks.length;
-      const overallHealth = healthy / total;
+      const known = checks.filter(c => c.status !== 'unknown').length;
+      const overallHealth = known > 0 ? healthy / known : 1;
 
       // Update metrics
       metrics.health = overallHealth;
@@ -442,7 +448,7 @@ export const systemTools: MCPTool[] = [
         score: Math.round(overallHealth * 100),
         checks,
         healthy,
-        total,
+        total: known,
         timestamp: new Date().toISOString(),
         issues: checks.filter(c => c.status !== 'healthy').map(c => ({
           component: c.name,
@@ -500,26 +506,22 @@ export const systemTools: MCPTool[] = [
       required: ['confirm'],
     },
     handler: async (input) => {
-      if (!input.confirm) {
-        return { success: false, error: 'Reset requires confirmation' };
-      }
-
+      if (!input.confirm) return { success: false, error: 'Reset requires confirmation' };
       if (input.component) { const v = validateIdentifier(input.component, 'component'); if (!v.valid) return { success: false, error: v.error }; }
       const component = (input.component as string) || 'metrics';
-
-      // Reset metrics to defaults
+      // Real OS metrics: os.loadavg(), os.totalmem(), os.freemem()
+      const cpu = os.loadavg()[0] * 100 / os.cpus().length;
+      const memUsed = Math.round((os.totalmem() - os.freemem()) / 1024 / 1024);
+      const memTotal = Math.round(os.totalmem() / 1024 / 1024);
       const defaultMetrics: SystemMetrics = {
         startTime: new Date().toISOString(),
         lastCheck: new Date().toISOString(),
-        uptime: 0,
-        health: 1.0,
-        cpu: os.loadavg()[0] * 100 / os.cpus().length,
-        memory: { used: Math.round((os.totalmem() - os.freemem()) / 1024 / 1024), total: Math.round(os.totalmem() / 1024 / 1024) },
+        uptime: 0, health: 1.0, cpu,
+        memory: { used: memUsed, total: memTotal },
         agents: { active: 0, total: 0 },
         tasks: { pending: 0, completed: 0, failed: 0 },
         requests: { total: 0, success: 0, errors: 0 },
       };
-
       saveMetrics(defaultMetrics);
 
       return {

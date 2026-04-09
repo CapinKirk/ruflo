@@ -12,6 +12,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 // ADR-053: Lazy import of AgentDB v3 bridge
 let _bridge: typeof import('./memory-bridge.js') | null | undefined;
 async function getBridge(): Promise<typeof import('./memory-bridge.js') | null> {
@@ -389,7 +394,7 @@ export async function getHNSWIndex(options?: {
     const { VectorDb } = ruvectorCore;
 
     // Persistent storage paths — resolve to absolute to survive CWD changes
-    const swarmDir = path.resolve(process.cwd(), '.swarm');
+    const swarmDir = path.resolve(projectCwd(), '.swarm');
     if (!fs.existsSync(swarmDir)) {
       fs.mkdirSync(swarmDir, { recursive: true });
     }
@@ -498,7 +503,7 @@ function saveHNSWMetadata(): void {
   if (!hnswIndex?.entries) return;
 
   try {
-    const swarmDir = path.join(process.cwd(), '.swarm');
+    const swarmDir = path.join(projectCwd(), '.swarm');
     const metadataPath = path.join(swarmDir, 'hnsw.metadata.json');
     const metadata = Array.from(hnswIndex.entries.entries());
     fs.writeFileSync(metadataPath, JSON.stringify(metadata));
@@ -1052,10 +1057,10 @@ export async function checkAndMigrateLegacy(options: {
 
   // Check for legacy locations
   const legacyPaths = [
-    path.join(process.cwd(), 'memory.db'),
-    path.join(process.cwd(), '.claude/memory.db'),
-    path.join(process.cwd(), 'data/memory.db'),
-    path.join(process.cwd(), '.claude-flow/memory.db')
+    path.join(projectCwd(), 'memory.db'),
+    path.join(projectCwd(), '.claude/memory.db'),
+    path.join(projectCwd(), 'data/memory.db'),
+    path.join(projectCwd(), '.claude-flow/memory.db')
   ];
 
   for (const legacyPath of legacyPaths) {
@@ -1166,7 +1171,7 @@ export async function initializeMemoryDatabase(options: {
     migrate = true
   } = options;
 
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const dbPath = customPath || path.join(swarmDir, 'memory.db');
   const dbDir = path.dirname(dbPath);
 
@@ -1374,7 +1379,7 @@ export async function checkMemoryInitialization(dbPath?: string): Promise<{
   };
   tables?: string[];
 }> {
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const path_ = dbPath || path.join(swarmDir, 'memory.db');
 
   if (!fs.existsSync(path_)) {
@@ -1434,7 +1439,7 @@ export async function applyTemporalDecay(dbPath?: string): Promise<{
   patternsDecayed: number;
   error?: string;
 }> {
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const path_ = dbPath || path.join(swarmDir, 'memory.db');
 
   try {
@@ -1536,12 +1541,17 @@ export async function loadEmbeddingModel(options?: {
 
   try {
     // Try to import @xenova/transformers for ONNX embeddings
+    // Prefer WASM backend — onnxruntime-node 1.14 crashes on Apple Silicon
+    // with "DefaultLogger not registered". WASM is stable and fast enough.
     const transformers = await import('@xenova/transformers').catch(() => null);
 
     if (transformers) {
       if (verbose) {
         console.log('Loading ONNX embedding model (all-MiniLM-L6-v2)...');
       }
+
+      // Note: onnxruntime-node may log a harmless stderr warning on Apple Silicon
+      // ("DefaultLogger not registered") — the library auto-falls back to WASM.
 
       // Use small, fast model for local embeddings
       const { pipeline } = transformers;
@@ -2058,7 +2068,7 @@ export async function storeEntry(options: {
     upsert = false
   } = options;
 
-  const swarmDir = path.resolve(process.cwd(), '.swarm');
+  const swarmDir = path.resolve(projectCwd(), '.swarm');
   const dbPath = customPath ? path.resolve(customPath) : path.join(swarmDir, 'memory.db');
 
   try {
@@ -2182,12 +2192,12 @@ export async function searchEntries(options: {
     query,
     namespace,
     limit = 10,
-    threshold = 0.3,
+    threshold = 0.15,
     dbPath: customPath
   } = options;
   const effectiveNamespace = namespace || 'all';
 
-  const swarmDir = path.resolve(process.cwd(), '.swarm');
+  const swarmDir = path.resolve(projectCwd(), '.swarm');
   const dbPath = customPath ? path.resolve(customPath) : path.join(swarmDir, 'memory.db');
   const startTime = Date.now();
 
@@ -2359,7 +2369,7 @@ export async function listEntries(options: {
     dbPath: customPath
   } = options;
 
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const dbPath = customPath || path.join(swarmDir, 'memory.db');
 
   try {
@@ -2487,7 +2497,7 @@ export async function getEntry(options: {
     dbPath: customPath
   } = options;
 
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const dbPath = customPath || path.join(swarmDir, 'memory.db');
 
   try {
@@ -2621,7 +2631,7 @@ export async function deleteEntry(options: {
     dbPath: customPath
   } = options;
 
-  const swarmDir = path.join(process.cwd(), '.swarm');
+  const swarmDir = path.join(projectCwd(), '.swarm');
   const dbPath = customPath || path.join(swarmDir, 'memory.db');
 
   try {

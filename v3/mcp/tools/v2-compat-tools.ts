@@ -39,7 +39,7 @@ import { pretrainTool, metricsTool } from './hooks-tools.js';
  * swarm_init - V2 compatible swarm initialization
  * Maps to swarm/init
  */
-export const swarmInitTool: MCPTool = {
+export const swarmInitTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'swarm_init',
   description: 'Initialize swarm with topology (V2 compatible). Deprecated: Use swarm/init instead.',
   inputSchema: {
@@ -90,7 +90,7 @@ export const swarmInitTool: MCPTool = {
 /**
  * swarm_status - V2 compatible swarm status
  */
-export const swarmStatusV2Tool: MCPTool = {
+export const swarmStatusV2Tool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'swarm_status',
   description: 'Get swarm status and metrics (V2 compatible). Deprecated: Use swarm/status instead.',
   inputSchema: {
@@ -119,7 +119,7 @@ export const swarmStatusV2Tool: MCPTool = {
 /**
  * swarm_monitor - V2 compatible swarm monitoring
  */
-export const swarmMonitorTool: MCPTool = {
+export const swarmMonitorTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'swarm_monitor',
   description: 'Monitor swarm activity (V2 compatible). Deprecated: Use swarm/status with includeMetrics instead.',
   inputSchema: {
@@ -158,7 +158,7 @@ export const swarmMonitorTool: MCPTool = {
 /**
  * agent_spawn - V2 compatible agent spawning
  */
-export const agentSpawnTool: MCPTool = {
+export const agentSpawnTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'agent_spawn',
   description: 'Spawn a new agent in the swarm (V2 compatible). Deprecated: Use agent/spawn instead.',
   inputSchema: {
@@ -187,7 +187,7 @@ export const agentSpawnTool: MCPTool = {
 /**
  * agent_list - V2 compatible agent listing
  */
-export const agentListTool: MCPTool = {
+export const agentListTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'agent_list',
   description: 'List all active agents (V2 compatible). Deprecated: Use agent/list instead.',
   inputSchema: {
@@ -212,7 +212,7 @@ export const agentListTool: MCPTool = {
 /**
  * agent_metrics - V2 compatible agent metrics
  */
-export const agentMetricsTool: MCPTool = {
+export const agentMetricsTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'agent_metrics',
   description: 'Get performance metrics for agents (V2 compatible). Deprecated: Use agent/status with includeMetrics instead.',
   inputSchema: {
@@ -251,7 +251,7 @@ export const agentMetricsTool: MCPTool = {
 /**
  * task_orchestrate - V2 compatible task orchestration
  */
-export const taskOrchestrateTool: MCPTool = {
+export const taskOrchestrateTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'task_orchestrate',
   description: 'Orchestrate a task across the swarm (V2 compatible). Deprecated: Use tasks/create instead.',
   inputSchema: {
@@ -283,7 +283,7 @@ export const taskOrchestrateTool: MCPTool = {
 /**
  * task_status - V2 compatible task status
  */
-export const taskStatusV2Tool: MCPTool = {
+export const taskStatusV2Tool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'task_status',
   description: 'Check progress of running tasks (V2 compatible). Deprecated: Use tasks/status instead.',
   inputSchema: {
@@ -315,7 +315,7 @@ export const taskStatusV2Tool: MCPTool = {
 /**
  * task_results - V2 compatible task results
  */
-export const taskResultsV2Tool: MCPTool = {
+export const taskResultsV2Tool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'task_results',
   description: 'Retrieve results from completed tasks (V2 compatible). Deprecated: Use tasks/results instead.',
   inputSchema: {
@@ -348,7 +348,7 @@ export const taskResultsV2Tool: MCPTool = {
 /**
  * memory_usage - V2 compatible memory operations
  */
-export const memoryUsageTool: MCPTool = {
+export const memoryUsageTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'memory_usage',
   description: 'Manage coordination memory (V2 compatible). Deprecated: Use memory/store, memory/search, or memory/list instead.',
   inputSchema: {
@@ -415,7 +415,7 @@ export const memoryUsageTool: MCPTool = {
 /**
  * neural_status - V2 compatible neural status
  */
-export const neuralStatusTool: MCPTool = {
+export const neuralStatusTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'neural_status',
   description: 'Get neural agent status (V2 compatible). Deprecated: Use system/status instead.',
   inputSchema: {
@@ -444,7 +444,7 @@ export const neuralStatusTool: MCPTool = {
 /**
  * neural_train - V2 compatible neural training
  */
-export const neuralTrainTool: MCPTool = {
+export const neuralTrainTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'neural_train',
   description: 'Train neural agents (V2 compatible). Deprecated: Use hooks/pretrain instead.',
   inputSchema: {
@@ -467,7 +467,7 @@ export const neuralTrainTool: MCPTool = {
 /**
  * neural_patterns - V2 compatible pattern retrieval
  */
-export const neuralPatternsTool: MCPTool = {
+export const neuralPatternsTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'neural_patterns',
   description: 'Get cognitive pattern information (V2 compatible). Deprecated: Use hooks/metrics instead.',
   inputSchema: {
@@ -493,7 +493,7 @@ export const neuralPatternsTool: MCPTool = {
 /**
  * benchmark_run - V2 compatible benchmarking
  */
-export const benchmarkRunTool: MCPTool = {
+export const benchmarkRunTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'benchmark_run',
   description: 'Execute performance benchmarks (V2 compatible). Deprecated: Use system/metrics instead.',
   inputSchema: {
@@ -525,7 +525,7 @@ export const benchmarkRunTool: MCPTool = {
 /**
  * features_detect - V2 compatible feature detection
  */
-export const featuresDetectTool: MCPTool = {
+export const featuresDetectTool: MCPTool<Record<string, unknown>, unknown> = {
   name: 'features_detect',
   description: 'Detect runtime features (V2 compatible). Deprecated: Use system/info instead.',
   inputSchema: {
@@ -540,7 +540,7 @@ export const featuresDetectTool: MCPTool = {
       ...info as object,
       category: input.category || 'all',
       features: {
-        wasm: typeof WebAssembly !== 'undefined',
+        wasm: typeof globalThis !== 'undefined' && 'WebAssembly' in globalThis,
         simd: false,
         memory: true,
         platform: process.platform,
@@ -560,7 +560,7 @@ export const featuresDetectTool: MCPTool = {
 /**
  * All V2 compatibility tools
  */
-export const v2CompatTools: MCPTool[] = [
+export const v2CompatTools: MCPTool<any, any>[] = [
   // Swarm tools
   swarmInitTool,
   swarmStatusV2Tool,

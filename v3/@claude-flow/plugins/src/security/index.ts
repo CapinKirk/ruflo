@@ -219,15 +219,29 @@ export async function safePathAsync(baseDir: string, ...segments: string[]): Pro
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /**
+ * Recursively strip dangerous keys from parsed JSON objects.
+ * Uses Object.create(null) so that __proto__ access returns undefined
+ * rather than the default Object prototype.
+ */
+function stripDangerousKeys(obj: unknown): unknown {
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(stripDangerousKeys);
+
+  const cleaned = Object.create(null) as Record<string, unknown>;
+  for (const key of Object.keys(obj as Record<string, unknown>)) {
+    if (!DANGEROUS_KEYS.has(key)) {
+      cleaned[key] = stripDangerousKeys((obj as Record<string, unknown>)[key]);
+    }
+  }
+  return cleaned;
+}
+
+/**
  * Parse JSON safely, stripping dangerous keys.
  */
 export function safeJsonParse<T = unknown>(content: string): T {
-  return JSON.parse(content, (key, value) => {
-    if (DANGEROUS_KEYS.has(key)) {
-      return undefined;
-    }
-    return value;
-  }) as T;
+  const parsed = JSON.parse(content);
+  return stripDangerousKeys(parsed) as T;
 }
 
 /**

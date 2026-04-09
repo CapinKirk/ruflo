@@ -240,9 +240,16 @@ export class CommandParser {
         const value = arg.slice(equalIndex + 1);
         flags[this.normalizeKey(key)] = this.parseValue(value);
       } else if (arg.startsWith('--no-')) {
-        // --no-flag (boolean negation)
-        const key = arg.slice(5);
-        flags[this.normalizeKey(key)] = false;
+        // Check if the full name (e.g. 'no-color') is a registered option
+        const fullKey = this.normalizeKey(arg.slice(2)); // 'noColor'
+        if (booleanFlags.has(fullKey)) {
+          // Registered option like --no-color → set noColor = true
+          flags[fullKey] = true;
+        } else {
+          // Boolean negation of another flag → set color = false
+          const key = arg.slice(5);
+          flags[this.normalizeKey(key)] = false;
+        }
       } else {
         const key = arg.slice(2);
         const normalizedKey = this.normalizeKey(key);

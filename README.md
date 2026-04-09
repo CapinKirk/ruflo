@@ -422,13 +422,17 @@ swarm_init({
 - **Node.js 20+** (required)
 - **npm 9+** / **pnpm** / **bun** package manager
 
-**IMPORTANT**: Claude Code must be installed first:
+**Install the CLI that matches your subscription flow:**
 
 ```bash
-# 1. Install Claude Code globally
+# Claude Code
 npm install -g @anthropic-ai/claude-code
 
-# 2. (Optional) Skip permissions check for faster setup
+# OpenAI Codex
+npm install -g @openai/codex
+
+# Optional: if you use both subscriptions, install both and initialize Ruflo in dual mode.
+# (Optional) Skip permissions check for faster Claude setup
 claude --dangerously-skip-permissions
 ```
 
@@ -451,7 +455,7 @@ curl -fsSL https://cdn.jsdelivr.net/gh/ruvnet/ruflo@main/scripts/install.sh | ba
 |--------|-------------|
 | `--global`, `-g` | Install globally (`npm install -g`) |
 | `--minimal`, `-m` | Skip optional deps (faster, ~15s) |
-| `--setup-mcp` | Auto-configure MCP server for Claude Code |
+| `--setup-mcp` | Auto-configure MCP server for Claude Code and Codex when available |
 | `--doctor`, `-d` | Run diagnostics after install |
 | `--no-init` | Skip project initialization (init runs by default) |
 | `--full`, `-f` | Full setup: global + MCP + doctor |
@@ -482,15 +486,21 @@ curl ... | bash -s -- --full
 #### npm/npx Install
 
 ```bash
-# Quick start (no install needed)
+# Quick start when you use both subscriptions
+npx ruflo@latest init --dual
+
+# Claude-first project
 npx ruflo@latest init
+
+# Codex-only project
+npx ruflo@latest init --codex
 
 # Or install globally
 npm install -g ruflo@latest
-ruflo init
+ruflo init --dual
 
 # With Bun (faster)
-bunx ruflo@latest init
+bunx ruflo@latest init --dual
 ```
 
 #### Install Profiles
@@ -504,6 +514,8 @@ bunx ruflo@latest init
 # Minimal install (skip ML/embeddings)
 npm install -g ruflo@latest --omit=optional
 ```
+
+Use the default install for `init --codex` or `init --dual`; the minimal profile skips optional adapters such as the Codex integration package.
 
 <details>
 <summary>🤖 <strong>OpenAI Codex CLI Support</strong> — Full Codex integration with self-learning</summary>

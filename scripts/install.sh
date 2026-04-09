@@ -40,6 +40,8 @@ GLOBAL="${CLAUDE_FLOW_GLOBAL:-0}"
 SETUP_MCP="${CLAUDE_FLOW_SETUP_MCP:-0}"
 RUN_DOCTOR="${CLAUDE_FLOW_DOCTOR:-0}"
 RUN_INIT="${CLAUDE_FLOW_INIT:-1}"
+HAS_CLAUDE="0"
+HAS_CODEX="0"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -87,7 +89,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --global, -g     Install globally (npm install -g ruflo)"
             echo "  --minimal, -m    Minimal install (skip optional deps)"
-            echo "  --setup-mcp      Auto-configure MCP server for Claude Code"
+            echo "  --setup-mcp      Auto-configure MCP server for Claude Code and Codex"
             echo "  --doctor, -d     Run diagnostics after install"
             echo "  --no-init        Skip project initialization (enabled by default)"
             echo "  --full, -f       Full setup (global + mcp + doctor + init)"
@@ -115,7 +117,7 @@ spinner() {
 print_banner() {
     echo ""
     echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC}  ${BOLD}Ruflo${NC} — AI Agent Orchestration for Claude Code     ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}Ruflo${NC} — AI Agent Orchestration for Claude + Codex${CYAN}║${NC}"
     echo -e "${CYAN}╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -183,6 +185,7 @@ check_requirements() {
     if command -v claude &> /dev/null; then
         CLAUDE_VERSION=$(claude --version 2>/dev/null | head -1 || echo "installed")
         print_substep "Claude Code ${GREEN}${CLAUDE_VERSION}${NC} ✓"
+        HAS_CLAUDE="1"
     else
         print_warning "Claude Code CLI not found"
         print_substep "Installing Claude Code CLI via npm..."
@@ -190,6 +193,7 @@ check_requirements() {
             if command -v claude &> /dev/null; then
                 CLAUDE_VERSION=$(claude --version 2>/dev/null | head -1 || echo "installed")
                 print_substep "Claude Code ${GREEN}${CLAUDE_VERSION}${NC} ✓"
+                HAS_CLAUDE="1"
             else
                 print_substep "Installed. Restart terminal to use 'claude' command"
             fi
@@ -197,6 +201,16 @@ check_requirements() {
             print_warning "npm install failed. Try manually:"
             print_substep "${BOLD}npm install -g @anthropic-ai/claude-code${NC}"
         fi
+    fi
+
+    # Check OpenAI Codex CLI
+    if command -v codex &> /dev/null; then
+        CODEX_VERSION=$(codex --version 2>/dev/null | head -1 || echo "installed")
+        print_substep "Codex ${GREEN}${CODEX_VERSION}${NC} ✓"
+        HAS_CODEX="1"
+    else
+        print_warning "Codex CLI not found"
+        print_substep "Install manually for dual-subscription support: ${BOLD}npm install -g @openai/codex${NC}"
     fi
 
     echo ""
@@ -212,6 +226,7 @@ show_install_options() {
     fi
     if [ "$MINIMAL" = "1" ]; then
         print_substep "Profile: ${BOLD}Minimal${NC} (--omit=optional)"
+        print_substep "Note: minimal profile skips optional adapters such as Codex integration"
     else
         print_substep "Profile: ${BOLD}Full${NC} (all features)"
     fi
@@ -285,22 +300,48 @@ show_quickstart() {
 
     if [ "$GLOBAL" = "1" ]; then
         echo -e "  ${DIM}# Initialize project${NC}"
-        echo -e "  ${BOLD}ruflo init --wizard${NC}"
+        if [ "$HAS_CLAUDE" = "1" ] && [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${BOLD}ruflo init --dual${NC}"
+        elif [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${BOLD}ruflo init --codex${NC}"
+        else
+            echo -e "  ${BOLD}ruflo init --wizard${NC}"
+        fi
         echo ""
         echo -e "  ${DIM}# Run system diagnostics${NC}"
         echo -e "  ${BOLD}ruflo doctor${NC}"
         echo ""
-        echo -e "  ${DIM}# Add as MCP server to Claude Code${NC}"
-        echo -e "  ${BOLD}claude mcp add ruflo -- ruflo mcp start${NC}"
+        if [ "$HAS_CLAUDE" = "1" ]; then
+            echo -e "  ${DIM}# Add as MCP server to Claude Code${NC}"
+            echo -e "  ${BOLD}claude mcp add ruflo -- ruflo mcp start${NC}"
+            echo ""
+        fi
+        if [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${DIM}# Add as MCP server to Codex${NC}"
+            echo -e "  ${BOLD}codex mcp add ruflo -- ruflo mcp start${NC}"
+        fi
     else
         echo -e "  ${DIM}# Initialize project${NC}"
-        echo -e "  ${BOLD}npx ruflo@latest init --wizard${NC}"
+        if [ "$HAS_CLAUDE" = "1" ] && [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${BOLD}npx ruflo@latest init --dual${NC}"
+        elif [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${BOLD}npx ruflo@latest init --codex${NC}"
+        else
+            echo -e "  ${BOLD}npx ruflo@latest init --wizard${NC}"
+        fi
         echo ""
         echo -e "  ${DIM}# Run system diagnostics${NC}"
         echo -e "  ${BOLD}npx ruflo@latest doctor${NC}"
         echo ""
-        echo -e "  ${DIM}# Add as MCP server to Claude Code${NC}"
-        echo -e "  ${BOLD}claude mcp add ruflo -- npx -y ruflo@latest mcp start${NC}"
+        if [ "$HAS_CLAUDE" = "1" ]; then
+            echo -e "  ${DIM}# Add as MCP server to Claude Code${NC}"
+            echo -e "  ${BOLD}claude mcp add ruflo -- npx -y ruflo@latest mcp start${NC}"
+            echo ""
+        fi
+        if [ "$HAS_CODEX" = "1" ]; then
+            echo -e "  ${DIM}# Add as MCP server to Codex${NC}"
+            echo -e "  ${BOLD}codex mcp add ruflo -- npx -y ruflo@latest mcp start${NC}"
+        fi
     fi
 
     echo ""
@@ -316,27 +357,42 @@ setup_mcp_server() {
 
     print_step "Setting up MCP server..."
 
-    if ! command -v claude &> /dev/null; then
-        print_warning "Claude CLI not found, skipping MCP setup"
-        return 0
-    fi
-
-    # Check if already configured
-    if claude mcp list 2>/dev/null | grep -q "ruflo\|claude-flow"; then
-        print_substep "MCP server already configured ✓"
-        return 0
-    fi
-
-    # Add MCP server (pass CLAUDE_FLOW_CWD so tools resolve paths correctly
-    # even when the MCP server is spawned with cwd='/')
-    if [ "$GLOBAL" = "1" ]; then
-        claude mcp add ruflo -e CLAUDE_FLOW_CWD="$HOME" -- ruflo mcp start 2>/dev/null && \
-            print_substep "MCP server configured ✓" || \
-            print_warning "MCP setup failed - run manually: claude mcp add ruflo -e CLAUDE_FLOW_CWD=\"\$HOME\" -- ruflo mcp start"
+    if command -v claude &> /dev/null; then
+        if claude mcp list 2>/dev/null | grep -q "ruflo\|claude-flow"; then
+            print_substep "Claude Code MCP already configured ✓"
+        else
+            # Add MCP server (pass CLAUDE_FLOW_CWD so tools resolve paths correctly
+            # even when the MCP server is spawned with cwd='/')
+            if [ "$GLOBAL" = "1" ]; then
+                claude mcp add ruflo -e CLAUDE_FLOW_CWD="$HOME" -- ruflo mcp start 2>/dev/null && \
+                    print_substep "Claude Code MCP configured ✓" || \
+                    print_warning "Claude Code MCP setup failed - run manually: claude mcp add ruflo -e CLAUDE_FLOW_CWD=\"\$HOME\" -- ruflo mcp start"
+            else
+                claude mcp add ruflo -e CLAUDE_FLOW_CWD="$HOME" -- npx -y ruflo@${VERSION} mcp start 2>/dev/null && \
+                    print_substep "Claude Code MCP configured ✓" || \
+                    print_warning "Claude Code MCP setup failed - run manually: claude mcp add ruflo -e CLAUDE_FLOW_CWD=\"\$HOME\" -- npx -y ruflo@latest mcp start"
+            fi
+        fi
     else
-        claude mcp add ruflo -e CLAUDE_FLOW_CWD="$HOME" -- npx -y ruflo@${VERSION} mcp start 2>/dev/null && \
-            print_substep "MCP server configured ✓" || \
-            print_warning "MCP setup failed - run manually: claude mcp add ruflo -e CLAUDE_FLOW_CWD=\"\$HOME\" -- npx -y ruflo@latest mcp start"
+        print_warning "Claude CLI not found, skipping Claude Code MCP setup"
+    fi
+
+    if command -v codex &> /dev/null; then
+        if codex mcp list 2>/dev/null | grep -q "ruflo\|claude-flow"; then
+            print_substep "Codex MCP already configured ✓"
+        else
+            if [ "$GLOBAL" = "1" ]; then
+                codex mcp add ruflo -- ruflo mcp start 2>/dev/null && \
+                    print_substep "Codex MCP configured ✓" || \
+                    print_warning "Codex MCP setup failed - run manually: codex mcp add ruflo -- ruflo mcp start"
+            else
+                codex mcp add ruflo -- npx -y ruflo@${VERSION} mcp start 2>/dev/null && \
+                    print_substep "Codex MCP configured ✓" || \
+                    print_warning "Codex MCP setup failed - run manually: codex mcp add ruflo -- npx -y ruflo@latest mcp start"
+            fi
+        fi
+    else
+        print_warning "Codex CLI not found, skipping Codex MCP setup"
     fi
     echo ""
 }
@@ -365,10 +421,17 @@ run_init() {
     print_step "Initializing project..."
     echo ""
 
+    local init_args=()
+    if [ "$HAS_CLAUDE" = "1" ] && [ "$HAS_CODEX" = "1" ]; then
+        init_args+=(--dual)
+    elif [ "$HAS_CODEX" = "1" ]; then
+        init_args+=(--codex)
+    fi
+
     if [ "$GLOBAL" = "1" ]; then
-        ruflo init --yes 2>&1 || true
+        ruflo init "${init_args[@]}" 2>&1 || true
     else
-        npx ruflo@${VERSION} init --yes 2>&1 || true
+        npx ruflo@${VERSION} init "${init_args[@]}" 2>&1 || true
     fi
     echo ""
 }

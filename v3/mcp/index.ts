@@ -22,7 +22,7 @@
  */
 
 // Core types
-export {
+export type {
   // Protocol types
   JsonRpcVersion,
   RequestId,
@@ -91,11 +91,8 @@ export {
 } from './types.js';
 
 // Server
-export {
-  MCPServer,
-  IMCPServer,
-  createMCPServer,
-} from './server.js';
+export type { IMCPServer } from './server.js';
+export { MCPServer, createMCPServer } from './server.js';
 
 // Tool Registry
 export {
@@ -105,11 +102,8 @@ export {
 } from './tool-registry.js';
 
 // Session Manager
-export {
-  SessionManager,
-  SessionConfig,
-  createSessionManager,
-} from './session-manager.js';
+export type { SessionConfig } from './session-manager.js';
+export { SessionManager, createSessionManager } from './session-manager.js';
 
 // Connection Pool
 export {
@@ -118,22 +112,21 @@ export {
 } from './connection-pool.js';
 
 // Transport layer
+export type {
+  TransportConfig,
+  StdioTransportConfig,
+  HttpTransportConfig,
+  WebSocketTransportConfig,
+} from './transport/index.js';
 export {
-  // Factory
   createTransport,
   createInProcessTransport,
   TransportManager,
   createTransportManager,
-  TransportConfig,
   DEFAULT_TRANSPORT_CONFIGS,
-
-  // Specific transports
   StdioTransport,
-  StdioTransportConfig,
   HttpTransport,
-  HttpTransportConfig,
   WebSocketTransport,
-  WebSocketTransportConfig,
 } from './transport/index.js';
 
 /**
@@ -161,18 +154,19 @@ export {
  * ```
  */
 export async function quickStart(
-  config: Partial<MCPServerConfig>,
-  logger?: ILogger
-): Promise<MCPServer> {
+  config: Partial<import('./types.js').MCPServerConfig>,
+  logger?: import('./types.js').ILogger
+): Promise<import('./server.js').MCPServer> {
+  const { createMCPServer: create } = await import('./server.js');
   // Create default logger if not provided
-  const defaultLogger: ILogger = logger || {
-    debug: (msg, data) => console.debug(`[DEBUG] ${msg}`, data || ''),
-    info: (msg, data) => console.info(`[INFO] ${msg}`, data || ''),
-    warn: (msg, data) => console.warn(`[WARN] ${msg}`, data || ''),
-    error: (msg, data) => console.error(`[ERROR] ${msg}`, data || ''),
+  const defaultLogger: import('./types.js').ILogger = logger || {
+    debug: (msg: string, data?: unknown) => console.debug(`[DEBUG] ${msg}`, data || ''),
+    info: (msg: string, data?: unknown) => console.info(`[INFO] ${msg}`, data || ''),
+    warn: (msg: string, data?: unknown) => console.warn(`[WARN] ${msg}`, data || ''),
+    error: (msg: string, data?: unknown) => console.error(`[ERROR] ${msg}`, data || ''),
   };
 
-  const server = createMCPServer(config, defaultLogger);
+  const server = create(config, defaultLogger);
 
   return server;
 }

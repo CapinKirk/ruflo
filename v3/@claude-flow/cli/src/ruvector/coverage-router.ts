@@ -483,6 +483,11 @@ export async function coverageGaps(
   };
 }
 
+/** Project root — respects CLAUDE_FLOW_CWD for MCP/global installs */
+function projectCwd(): string {
+  return process.env.CLAUDE_FLOW_CWD || process.cwd();
+}
+
 /**
  * Validate and normalize path to prevent directory traversal
  * Returns null if path is invalid or attempts traversal
@@ -491,14 +496,14 @@ function validateProjectPath(inputPath: string | undefined): string | null {
   const { resolve, normalize, isAbsolute } = require('path');
 
   // Default to cwd if not provided
-  const basePath = inputPath || process.cwd();
+  const basePath = inputPath || projectCwd();
 
   // Normalize and resolve the path
   const normalizedPath = normalize(basePath);
-  const resolvedPath = isAbsolute(normalizedPath) ? normalizedPath : resolve(process.cwd(), normalizedPath);
+  const resolvedPath = isAbsolute(normalizedPath) ? normalizedPath : resolve(projectCwd(), normalizedPath);
 
   // Check for path traversal attempts
-  if (normalizedPath.includes('..') && !resolvedPath.startsWith(process.cwd())) {
+  if (normalizedPath.includes('..') && !resolvedPath.startsWith(projectCwd())) {
     // Only allow .. if it resolves within or above cwd
     // For safety, reject any path with .. that goes outside project
     return null;

@@ -104,15 +104,17 @@ describe('resolveAutoMemoryDir', () => {
 });
 
 describe('findGitRoot', () => {
+  // Use the actual repo root (this file is inside the git repo)
+  const repoRoot = findGitRoot(__dirname)!;
+
   it('should find git root for a directory inside a repo', () => {
-    // We know /workspaces/claude-flow is a git repo
-    const root = findGitRoot('/workspaces/claude-flow/v3/@claude-flow/memory');
-    expect(root).toBe('/workspaces/claude-flow');
+    const root = findGitRoot(__dirname);
+    expect(root).toBe(repoRoot);
   });
 
   it('should return the directory itself if it is the git root', () => {
-    const root = findGitRoot('/workspaces/claude-flow');
-    expect(root).toBe('/workspaces/claude-flow');
+    const root = findGitRoot(repoRoot);
+    expect(root).toBe(repoRoot);
   });
 
   it('should return null for root filesystem', () => {

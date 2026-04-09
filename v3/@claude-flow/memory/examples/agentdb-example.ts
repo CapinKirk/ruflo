@@ -117,10 +117,10 @@ async function hybridExample() {
 
   const hybrid = new HybridBackend({
     sqlite: {
-      dbPath: ':memory:',
+      databasePath: ':memory:',
     },
     agentdb: {
-      dbPath: ':memory:',
+      databasePath: ':memory:',
       vectorDimension: 384,
       hnswM: 16,
     },

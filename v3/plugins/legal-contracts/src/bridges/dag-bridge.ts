@@ -580,4 +580,6 @@ export function createDAGBridge(): IDAGBridge {
   return new DAGBridge();
 }
 
+export { DAGBridge as LegalDAGBridge };
+
 export default DAGBridge;

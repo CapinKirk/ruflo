@@ -117,7 +117,7 @@ export const daaTools: MCPTool[] = [
         type: (input.type as string) || 'autonomous',
         status: 'active',
         cognitivePattern: (input.cognitivePattern as string) || 'adaptive',
-        learningRate: (input.learningRate as number) || 0.01,
+        learningRate: (input.learningRate as number) ?? 0.01,
         memory: (input.enableMemory as boolean) ?? true,
         capabilities: (input.capabilities as string[]) || ['reasoning', 'learning'],
         metrics: {
@@ -183,7 +183,7 @@ export const daaTools: MCPTool[] = [
         return { success: false, error: 'Agent not found' };
       }
 
-      const performanceScore = (input.performanceScore as number) || 0.8;
+      const performanceScore = (input.performanceScore as number) ?? 0.8;
 
       // Update agent metrics
       agent.metrics.adaptations++;

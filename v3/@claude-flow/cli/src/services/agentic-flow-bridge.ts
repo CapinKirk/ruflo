@@ -12,9 +12,14 @@
 // Cached module handles (Promise-based to prevent TOCTOU races)
 // ---------------------------------------------------------------------------
 
-let _reasoningBankP: Promise<typeof import('agentic-flow/reasoningbank') | null> | null = null;
-let _routerP: Promise<typeof import('agentic-flow/router') | null> | null = null;
-let _orchestrationP: Promise<typeof import('agentic-flow/orchestration') | null> | null = null;
+let _reasoningBankP: Promise<any | null> | null = null;
+let _routerP: Promise<any | null> | null = null;
+let _orchestrationP: Promise<any | null> | null = null;
+
+// Base package name split to prevent Vite/Vitest static import resolution.
+// Vite's resolver runs on literal strings at transform time; a concatenated
+// expression bypasses that analysis while still resolving correctly at runtime.
+const _base = 'agentic-' + 'flow';
 
 // ---------------------------------------------------------------------------
 // Public loaders
@@ -27,7 +32,7 @@ let _orchestrationP: Promise<typeof import('agentic-flow/orchestration') | null>
  */
 export function getReasoningBank() {
   if (_reasoningBankP === null) {
-    _reasoningBankP = import('agentic-flow/reasoningbank').catch(() => null);
+    _reasoningBankP = import(/* @vite-ignore */ `${_base}/reasoningbank`).catch(() => null);
   }
   return _reasoningBankP;
 }
@@ -38,7 +43,7 @@ export function getReasoningBank() {
  */
 export function getRouter() {
   if (_routerP === null) {
-    _routerP = import('agentic-flow/router').catch(() => null);
+    _routerP = import(/* @vite-ignore */ `${_base}/router`).catch(() => null);
   }
   return _routerP;
 }
@@ -49,7 +54,7 @@ export function getRouter() {
  */
 export function getOrchestration() {
   if (_orchestrationP === null) {
-    _orchestrationP = import('agentic-flow/orchestration').catch(() => null);
+    _orchestrationP = import(/* @vite-ignore */ `${_base}/orchestration`).catch(() => null);
   }
   return _orchestrationP;
 }

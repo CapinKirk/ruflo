@@ -33,6 +33,7 @@
     "dist",
     "**/*.test.ts",
     "**/*.bench.ts",
+    "**/vitest.config.ts",
     "v3/__tests__/**/*.ts"
   ]
 }

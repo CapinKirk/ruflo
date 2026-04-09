@@ -52,10 +52,13 @@
   },
   "packageManager": "pnpm@8.15.0",
   "dependencies": {
-    "semantic-release": "25.0.2"
+    "semantic-release": "25.0.2",
+    "sharp": "^0.33.5"
   },
   "pnpm": {
-    "neverBuiltDependencies": ["sharp"],
+    "neverBuiltDependencies": [
+      "sharp"
+    ],
     "overrides": {
       "@ruvector/gnn": "0.1.25",
       "@ruvector/gnn-linux-x64-gnu": "0.1.25"
