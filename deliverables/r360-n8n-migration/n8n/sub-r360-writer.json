@@ -33,6 +33,58 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "LastName",                   "value": "={{ $json.formattedLast }}",       "type": "string" },
+            { "name": "FirstName",                  "value": "={{ $json.formattedFirst }}",      "type": "string" },
+            { "name": "Company",                    "value": "={{ $json.formattedCompany }}",    "type": "string" },
+            { "name": "RecordTypeId",               "value": "012Ki000000bpgRIAQ",               "type": "string" },
+            { "name": "Country",                    "value": "={{ $json.formattedCountry }}",    "type": "string" },
+            { "name": "MobilePhone",                "value": "={{ $json.phone }}",               "type": "string" },
+            { "name": "Phone",                      "value": "={{ $json.phone }}",               "type": "string" },
+            { "name": "Email",                      "value": "={{ $json.formattedEmail }}",      "type": "string" },
+            { "name": "LeadSource",                 "value": "={{ $json.utmsource }}",           "type": "string" },
+            { "name": "HasOptedOutOfEmail",         "value": false,                              "type": "boolean" },
+            { "name": "IsConverted",                "value": false,                              "type": "boolean" },
+            { "name": "DoNotCall",                  "value": false,                              "type": "boolean" },
+            { "name": "HasOptedOutOfFax",           "value": false,                              "type": "boolean" },
+            { "name": "Sales_Notes__c",             "value": "=First Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}", "type": "string" },
+            { "name": "Discovery_Notes__c",         "value": "=First Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}", "type": "string" },
+            { "name": "OwnerId2",                   "value": "={{ $json.AssignmentID }}",        "type": "string" },
+            { "name": "Most_Recent_Pardot_Form__c", "value": "=R360 - {{ $json.WPFormName }}",   "type": "string" },
+            { "name": "MQL__c",                     "value": true,                               "type": "boolean" },
+            { "name": "pi__utm_campaign__c",        "value": "={{ $json.utmCampaign }}",         "type": "string" },
+            { "name": "pi__utm_content__c",         "value": "={{ $json.utmContent }}",          "type": "string" },
+            { "name": "pi__utm_medium__c",          "value": "={{ $json.utmMedium }}",           "type": "string" },
+            { "name": "pi__utm_source__c",          "value": "={{ $json.utmSource }}",           "type": "string" },
+            { "name": "pi__utm_term__c",            "value": "={{ $json.utmTerm }}",             "type": "string" },
+            { "name": "utm_campaign__c",            "value": "={{ $json.utmCampaign }}",         "type": "string" },
+            { "name": "utm_medium__c",              "value": "={{ $json.utmMedium }}",           "type": "string" },
+            { "name": "utm_source__c",              "value": "={{ $json.utmSource }}",           "type": "string" },
+            { "name": "utm_term__c",                "value": "={{ $json.utmTerm }}",             "type": "string" },
+            { "name": "Lead_Override_Date__c",      "value": "={{ $now.toISO() }}",              "type": "string" },
+            { "name": "Raw_Marketing_Lead__c",      "value": true,                               "type": "boolean" },
+            { "name": "R360_Record__c",             "value": true,                               "type": "boolean" },
+            { "name": "fbc__c",                     "value": "={{ $json.fbc }}",                 "type": "string" },
+            { "name": "fbp__c",                     "value": "={{ $json.fbp }}",                 "type": "string" },
+            { "name": "gclid__c",                   "value": "={{ $json.gclid }}",               "type": "string" },
+            { "name": "msclkid__c",                 "value": "={{ $json.msclkid }}",             "type": "string" },
+            { "name": "Description",                "value": "={{ $json.note || \"\" }}",        "type": "string" }
+          ]
+        },
+        "options": {
+          "includeOtherFields": true
+        }
+      },
+      "id": "wrtr-00a4-4000-8000-0000000000a4",
+      "name": "Set: A4b Lead payload (38 fields)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [680, 120],
+      "notes": "Builds full Create Lead payload per §7.1. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT). OwnerId2 (NOT OwnerId) = AssignmentID from Assignment Owner code. Most_Recent_Pardot_Form__c bug-fixed. Description=note||'' (failure mode #3). Boolean fields are raw booleans, not strings."
+    },
+    {
+      "parameters": {
         "jsCode": "// Empty-key filter — port of §2.3 universal pattern\n// Run BEFORE every SF Update to drop blank/null fields so n8n SF node doesn't overwrite existing values with ''\nconst payload = { ...$json };\nfor (const k of Object.keys(payload)) {\n  if (payload[k] === '' || payload[k] == null) delete payload[k];\n}\nreturn [{ json: payload }];"
       },
       "id": "wrtr-0003-4000-8000-000000000003",
@@ -55,11 +107,11 @@
       "position": [900, 120],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
-      "notes": "Field map per §7.1 — see build plan. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT — UAT may differ). useAssignmentRules=false; Most_Recent_Pardot_Form__c='R360 - '+WPFormName (BUG-FIXED — was hardcoded)"
+      "notes": "Field map per §7.1 — payload built by preceding Set node. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT — UAT may differ). useAssignmentRules=false; Most_Recent_Pardot_Form__c='R360 - '+WPFormName (BUG-FIXED — was hardcoded)"
     },
     {
       "parameters": {
@@ -74,8 +126,8 @@
       "position": [900, 240],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Field map per §7.2. record_id from Find Lead. Sales_Notes__c prefixed 'Form Filled: <WPFormName>'. Pre-filtered by empty-key node (§2.3)."
@@ -93,8 +145,8 @@
       "position": [900, 360],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Field map per §7.3. dupcheck__dc3DisableDuplicateCheck__c=true; Lead_Owner__c=AssignmentID. NO Case create on AM path."
@@ -112,8 +164,8 @@
       "position": [900, 480],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Field map per §7.4. Followed by Case create (RecordTypeId=Inside Sales R360 SDR Follow-Up)."
@@ -131,8 +183,8 @@
       "position": [1120, 480],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "RecordTypeId=<R360 SDR Follow-Up Case RT>. ContactId from D path. OwnerId=InsideSalesQueue. Origin='Web'."
@@ -150,8 +202,8 @@
       "position": [1340, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Campaign 701Ki000000cMwkIAE (R360 marketing campaign). LeadId or ContactId based on path. Status='Cold / Not Started'. Notes__c='Form Filled: <WPFormName> | <ROI calc>'."
@@ -183,8 +235,8 @@
       "position": [1780, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Set Status__c='written', Decision_Path__c=<path>, Resolved_Lead__c=<id>, Resolved_Contact__c=<id>, n8n_Execution_Id__c=$execution.id"
@@ -193,7 +245,7 @@
   "connections": {
     "When Executed by Another Workflow": { "main": [[{ "node": "Switch: decisionPath (8 sub-paths)", "type": "main", "index": 0 }]] },
     "Switch: decisionPath (8 sub-paths)": { "main": [
-      [{ "node": "SF: A4b Create Lead (38 fields)", "type": "main", "index": 0 }],
+      [{ "node": "Set: A4b Lead payload (38 fields)", "type": "main", "index": 0 }],
       [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
       [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
       [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
@@ -202,6 +254,7 @@
       [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
       []
     ] },
+    "Set: A4b Lead payload (38 fields)": { "main": [[{ "node": "SF: A4b Create Lead (38 fields)", "type": "main", "index": 0 }]] },
     "Code: Empty-key filter (universal)": { "main": [[
       { "node": "SF: B/A4a Update Lead", "type": "main", "index": 0 },
       { "node": "SF: C Update Contact (AM path)", "type": "main", "index": 0 },
@@ -221,7 +274,6 @@
   "meta": {
     "spec": "migration-plans/r360-n8n-build-plan.md §7.1-§7.6 + §10 (CampaignMember) + §12 (per-action error sub-branches)",
     "todo": [
-      "Bind 38-field Set nodes before each SF Update — see build plan §7 for verbatim field maps",
       "Wire CampaignMember error fallback (DUPLICATE_VALUE → search + update)",
       "Add Slack DM + Gmail email at end of each path via sub-notify"
     ]

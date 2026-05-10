@@ -25,8 +25,8 @@
       "position": [460, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "SOQL: SELECT Id, Idempotency_Hash__c, Source__c, Payload__c, Retry_Count__c, External_Submission_Id__c FROM Lead_Inbound_Log__c WHERE Status__c = 'failed' AND Retry_Count__c < 5 AND Received_At__c >= LAST_N_HOURS:24 LIMIT 50"
@@ -60,8 +60,8 @@
       "position": [900, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Retry_Count__c++ on every replay attempt. When = 5, stop retrying and rely on sub-error-handler escalation."

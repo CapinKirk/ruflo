@@ -24,8 +24,8 @@
       "position": [460, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Hash = sha256(form_id + ':' + entry_id) computed in receiver. If row exists with Status__c='written', short-circuit; see IF below."
@@ -117,8 +117,8 @@
       "position": [1780, 200],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Use generated leadQuery (NOT hardcoded WHERE) — see §6.3 dead-code fix. SOQL: SELECT Id, Email, Company, IsConverted FROM Lead WHERE <leadQuery> LIMIT 1"
@@ -136,8 +136,8 @@
       "position": [1780, 360],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "SOQL: SELECT Id, AccountId, Account.Status__c, Email FROM Contact WHERE <contactQuery> LIMIT 1"
@@ -207,8 +207,8 @@
       "position": [2660, 120],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       }
     },
@@ -225,8 +225,8 @@
       "position": [2660, 280],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       }
     },

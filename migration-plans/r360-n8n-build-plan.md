@@ -836,6 +836,8 @@ The `pre-discovery-async-chain` sub-workflow runs the 9-step API chain (§8.5–
 
 ### 8.5 Apollo contact enrichment
 
+> **Status (2026-05-10): DEFERRED from v1.** Per user decision, Pre-Discovery v1 ships without Apollo enrichment. The brief still works with Perplexity-only research. The Apollo node and write-back to `MobilePhone` are kept in the spec for the v2 add-back. To skip in v1: comment out / disable the `HTTP: Apollo enrich` and `SF Update Contact: MobilePhone (post-Apollo)` nodes in `webhook-pre-discovery-r360.json`.
+
 **Endpoint:** `POST https://api.apollo.io/api/v1/people/match` via n8n HTTP Request node.
 
 | Input field | Source |
@@ -1353,6 +1355,8 @@ Required fields: `Idempotency_Hash__c` (External ID Unique, indexed), `External_
 **Idempotency hash:** `sha256(form_id + ":" + entry_id)`. Receiver upserts the log row using `Idempotency_Hash__c` as the external ID. If the row already exists with `Status__c = "written"`, exit immediately as duplicate.
 
 ### 11.2 WPForms Reconciliation cron — `cron/r360-wpforms-reconciliation.json`
+
+> **Status (2026-05-10): DEFERRED from v1.** Per user decision, v1 relies entirely on real-time WPForms-Webhook delivery. The 10-minute MySQL reconciliation cron is built (`cron/r360-wpforms-reconciliation.json`) but stays inactive. WordPress DB credentials are no longer Day-0 blockers. **Trade-off:** if a WPForms webhook drops a payload, we lose that lead silently. The dead-letter replay cron (5-min) still covers transient SF write failures, just not silent webhook misses. Activate this cron in v2 as the safety net.
 
 **Architecture correction (replaces prior REST API approach):** runs every 10 minutes, queries WordPress DB directly via the `wp_wpforms_entries` table.
 
@@ -1934,7 +1938,7 @@ The migration rolls back to "Zapier on, n8n off" if ANY of the following occur d
 |---|---|
 | Gate 2 component tests show > 1 false-positive write (e.g., Path A creates a Lead when it should have updated) | Stop. Fix in n8n. Re-run Gate 2 from scratch. |
 | Phase A 24-hour parity < 95% per source | Disable n8n receivers for that source. Investigate. Zapier still firing → no leads lost. |
-| Reconciliation cron replays > 5 entries in any 24-hour window during dual-write | Stop. Real-time delivery is broken. Disable Phase B until resolved. |
+| Real-time webhook drops detected by SDR/AE flag in `#r360-leads-parallel-run` (since reconciliation cron is deferred — only sales feedback catches webhook drops in v1) | Stop. Investigate WPForms-Webhook addon config. Re-enable Zapier on affected feeder. Disable Phase B until resolved. |
 | `Lead_Inbound_Log__c.Status__c='failed'` rate > 5% | Disable n8n receivers. Zapier remains primary. |
 | Plauti DupCheck blocks > 0 writes that Zapier currently makes | Verify FLS on `dupcheck__dc3DisableDuplicateCheck__c` for integration user. Fix; re-test. |
 | Salesforce daily API limit hit | Implement bulk batching in receivers; re-test load. |

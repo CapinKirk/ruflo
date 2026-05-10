@@ -36,8 +36,8 @@
       "position": [460, 320],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "REPLACE_WITH_GSHEETS_CRED_ID",
-          "name": "{{credential:google_sheets_marketing}}"
+          "id": "TncsI38D3TJN20Fk",
+          "name": "Google Sheets OAuth (kirk)"
         }
       },
       "notes": "FAQ form is non-SF, low priority. Confirm sheet ID + column map with Marketing during Day 1 readiness."

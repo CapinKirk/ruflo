@@ -27,8 +27,8 @@
       "position": [460, 320],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "REPLACE_WITH_ZAPIER_API_CRED_ID",
-          "name": "{{credential:zapier_platform_api}}"
+          "id": "DEFER_ZAPIER_PLATFORM_API",
+          "name": "Zapier Platform API (parallel-run only)"
         }
       },
       "notes": "Loop over 7 R360 zap IDs: 316698017, 316701470, 316797350, 316797554, 332679789, 336544812, 225753704. Returns task history for last hour."
@@ -46,8 +46,8 @@
       "position": [460, 460],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       }
     },
@@ -66,8 +66,8 @@
       "position": [460, 600],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "REPLACE_WITH_N8N_API_CRED_ID",
-          "name": "{{credential:n8n_internal_api}}"
+          "id": "lL26v9Hcbrnd3bVB",
+          "name": "x-n8n-api-key"
         }
       }
     },
@@ -98,8 +98,8 @@
       "position": [1120, 460],
       "credentials": {
         "slackOAuth2Api": {
-          "id": "REPLACE_WITH_SLACK_CRED_ID",
-          "name": "{{credential:slack_r360}}"
+          "id": "skn3Ct9zjw3Vt3Pn",
+          "name": "RevTech Bot"
         }
       }
     }

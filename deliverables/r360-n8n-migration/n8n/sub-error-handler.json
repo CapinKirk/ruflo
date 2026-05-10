@@ -34,8 +34,8 @@
       "position": [680, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Match by Idempotency_Hash__c External Id. Set Status__c='failed', Error_Message__c=<truncated msg>, Retry_Count__c++, n8n_Execution_Id__c=<execution id>"
@@ -77,8 +77,8 @@
       "position": [1120, 240],
       "credentials": {
         "slackOAuth2Api": {
-          "id": "REPLACE_WITH_SLACK_CRED_ID",
-          "name": "{{credential:slack_r360}}"
+          "id": "skn3Ct9zjw3Vt3Pn",
+          "name": "RevTech Bot"
         }
       }
     },
@@ -99,8 +99,8 @@
       "position": [1120, 400],
       "credentials": {
         "slackOAuth2Api": {
-          "id": "REPLACE_WITH_SLACK_CRED_ID",
-          "name": "{{credential:slack_r360}}"
+          "id": "skn3Ct9zjw3Vt3Pn",
+          "name": "RevTech Bot"
         }
       }
     }

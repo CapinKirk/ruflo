@@ -50,8 +50,8 @@
       "position": [680, 440],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "SOQL: SELECT Id, Name, Website, ShippingCountry FROM Account WHERE Id = :accountId. Halt on miss."
@@ -69,8 +69,8 @@
       "position": [900, 440],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       }
     },
@@ -87,11 +87,33 @@
       "position": [1120, 440],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "SOQL: SELECT Id, Email, Slack_ID__c FROM User WHERE Email = :ownerEmail. Critical: Slack_ID__c drives DM recipient. If null, fall back to email per §8.10."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "fields": {
+          "values": [
+            {
+              "name": "perplexity_prompt",
+              "type": "string",
+              "string": "=You are a Record360 Sales Research Brief generator. Produce a structured 14-section research brief for the company below.\n\nCompany: {{ $('SF Find: Account (Name, Website, ShippingCountry)').item.json.Name }}\nWebsite: {{ $('SF Find: Account (Name, Website, ShippingCountry)').item.json.Website }}\nCountry: {{ $('SF Find: Account (Name, Website, ShippingCountry)').item.json.ShippingCountry }}\n\nContact: {{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Name }}\nTitle:   {{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Title }}\nEmail:   {{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Email }}\nPhone:   {{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Phone }}\nMobile:  {{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.MobilePhone }}\n\nSections (use these headings verbatim):\n1. Basic Profile — HQ, founded, ownership, public/private\n2. Scale — employees, revenue range, branch count\n3. Fleet Composition & Risk — equipment categories, age, primary use\n4. Damage / Insurance / Policies — known incident history, insurer, claims posture\n5. Tech Stack — focus on rental ERP/DMS only. Recognize: Wynne, Texada, Point of Rental, Alert, Infor, CDK, Karmak, Fleetio. Do NOT enumerate generic SaaS or party/event ERPs.\n6. Resale & Lifecycle — used-equipment program, auction partners\n7. Person Intel — LinkedIn URL, prior roles, mutual connections (if surfaceable)\n8. Awards & Recognition — company awards, individual awards\n9. High-Value Talking Points — 3 hooks Record360 can use (damage protection, inspection workflows, asset compliance)\n10. Strategic Initiatives — recent press releases, hiring patterns, geographic expansion\n11. Buying Committee — likely Record360 stakeholders: Operations, Risk Management, Compliance, COO/CFO\n12. Digital Maturity — website signals, customer portal sophistication\n13. Customer Base — end customer segments served (construction, logistics, etc.)\n14. Online Sentiment — review aggregate (G2, Capterra, Reddit r/Construction)\n15. Source List — explicit URLs cited in the research\n\nWrite each section in markdown. Cite sources inline as [Source: <URL>]. Do not invent facts."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rcprd-set1-4000-8000-000000000011",
+      "name": "Set: Build Perplexity prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 440],
+      "notes": "Populates perplexity_prompt with verbatim §8.3 template. References actual upstream node names."
     },
     {
       "parameters": {
@@ -108,11 +130,11 @@
       "name": "HTTP: Perplexity sonar-deep-research (60-120s)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 440],
+      "position": [1560, 440],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "REPLACE_WITH_PERPLEXITY_CRED_ID",
-          "name": "{{credential:perplexity_api}}"
+          "id": "S4sdM6guDU50GgIx",
+          "name": "Perplexity API (competitive-intel)"
         }
       },
       "notes": "Per §8.3. Timeout 180s allows for retries. R360-branded 14-section research brief prompt template — bind from upstream Set node populating Account/Contact fields."
@@ -132,11 +154,11 @@
       "name": "HTTP: Apollo enrich (min_confidence=70)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1560, 440],
+      "position": [1780, 440],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "REPLACE_WITH_APOLLO_CRED_ID",
-          "name": "{{credential:apollo_api}}"
+          "id": "DEFER_APOLLO_V2",
+          "name": "Apollo (deferred to v2)"
         }
       },
       "notes": "Per §8.5. On 0 matches: continue without enrichment (do not halt)."
@@ -151,14 +173,36 @@
       "name": "SF Update Contact: MobilePhone (post-Apollo)",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [1780, 440],
+      "position": [2000, 440],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Empty-key filter precedes this — don't blank MobilePhone if Apollo returned null."
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "fields": {
+          "values": [
+            {
+              "name": "r360_chatgpt_prompt",
+              "type": "string",
+              "string": "=SYSTEM CONTEXT: AI SALES ENABLEMENT ASSISTANT (Record360)\n\nYou are an AI sales research and enablement assistant for Record360, a damage-protection and asset-inspection platform sold into equipment rental, fleet, and logistics companies.\n\n## INPUTS\nFrom Perplexity → {{ JSON.stringify($('HTTP: Perplexity sonar-deep-research (60-120s)').item.json) }}\nFrom Apollo (ZoomInfo) → {{ JSON.stringify($('HTTP: Apollo enrich (min_confidence=70)').item.json) }}\n\n## DATA HANDLING RULES\n1.1  Use ALL intel from Perplexity and Apollo. Do not discard signal.\n1.2  When intel is thin, use the web_search_preview tool to enrich (max 5 calls).\n1.3  Fact discipline: if a claim isn't sourced in Perplexity output, in Apollo output, or in your web search, do NOT include it.\n1.4  Bias toward deal-closing intel: damage incidents, insurance posture, asset disputes, audit findings.\n\n## SLACK FORMATTING RULES\n- Use Slack link syntax: <URL|Label>. Do NOT use Markdown [Label](URL).\n- Bold: *single asterisks* (Slack mrkdwn). Do NOT use **double asterisks**.\n- Use emoji on every section header.\n- Telegraphic style — no fluff sentences.\n\n## SECTION LOGIC (3.1–3.9)\n3.1  Always include PROSPECT.\n3.2  Always include FLEET SNAPSHOT.\n3.3  KEY INTEL: 2–6 bullets, only if confidently sourced.\n3.4  AWARDS: include only if Perplexity surfaced ≥1 award.\n3.5  ERP DETECTED: include only if tech stack section identified Wynne / Texada / POR / Alert / Infor / CDK / Karmak / Fleetio. Otherwise omit.\n3.6  DISCOVERY MENU: pick up to 3 angles from R360's 5-category menu (below).\n3.7  NAME DROPS: only verified industry peers (no placeholders).\n3.8  PROOF: Slack-formatted case study link, mapped by industry — Construction → r360.com/case/skanska, Logistics → r360.com/case/penske, etc.\n3.9  Omit any section that has no content rather than emitting \"TBD\" or \"N/A\".\n\n## R360 DISCOVERY CATEGORIES (5)\n- Damage Disputes (\"The Blame Game\")    — driver/customer/lot disputes; lost recoveries\n- Process Compliance (\"Pencil Whipping\") — inspection paperwork integrity; audit findings\n- Recovery & Billing                     — speed of damage→invoice conversion; write-offs\n- Asset Lifecycle (Resale Value)         — depreciation accuracy; auction price impact\n- Liability & Safety                     — driver behavior, accident reconstruction\n\n## OUTPUT TEMPLATE (Slack mrkdwn)\n🚨 R360 PRE-CALL BRIEF: [Account Name]\n\n👤 *PROSPECT:* [Name]\n   • Role: [Title] · Function: [Function inferred]\n   • Location: [City, Country]\n   • LinkedIn: <[URL]|profile>\n   • Background: [1 sentence]\n\n🏢 *FLEET SNAPSHOT*\n   • Scale: [employees / revenue / branches]\n   • Fleet: [composition]\n   • Risk Profile: [age, mix, exposure]\n   • Positioning: [growth/stable/distressed]\n\n🔎 *KEY INTEL*\n   • [bullet 1]\n   • [bullet 2]\n   • [bullet 3]\n\n🏅 *AWARDS & RECOGNITION* (only if surfaced)\n   • Company: [list]\n   • Individual: [list]\n\n💻 *ERP DETECTED:* [name]\n   → Ask: \"We've seen damage photos / dispute logs in [ERP] — can we look at one together?\"\n\n🧠 *DISCOVERY MENU (Top Angles)*\n[For each of up to 3 categories:]\n   ▸ [Category Name] ([slogan])\n     Signal: [evidence from intel]\n     Ask: \"[exact words to use]\"\n\n🗣️ *NAME DROPS:* [verified peer 1], [verified peer 2]\n\n📚 *PROOF:* <[case study URL]|[Customer Name] — [outcome metric]>\n\nReturn the brief in Slack mrkdwn. NO MARKDOWN HEADERS. NO CODE FENCES."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rcprd-set2-4000-8000-000000000012",
+      "name": "Set: Build ChatGPT R360 prompt",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2220, 440],
+      "notes": "Populates r360_chatgpt_prompt with verbatim §8.6 template. JSON.stringify injects Perplexity and Apollo outputs."
     },
     {
       "parameters": {
@@ -175,11 +219,11 @@
       "name": "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2000, 440],
+      "position": [2440, 440],
       "credentials": {
         "openAiApi": {
-          "id": "REPLACE_WITH_OPENAI_CRED_ID",
-          "name": "{{credential:openai_api}}"
+          "id": "05nfNLws0fhB3JHe",
+          "name": "OpenAI API (competitive-intel)"
         }
       },
       "notes": "Per §8.6. 400k tokens, reasoning=high, web_search_preview. Use output_text for SF write, messages[]content[]text for Slack. Timeout 240s."
@@ -192,7 +236,7 @@
       "name": "Code: Markdown→HTML (Slack mrkdwn → HTML)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2220, 440]
+      "position": [2660, 440]
     },
     {
       "parameters": {
@@ -204,11 +248,11 @@
       "name": "SF Update Contact: Brief HTML + timestamp (FIX blank)",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [2440, 440],
+      "position": [2880, 440],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "Writes:\n  Record360_AI_Contact_Brief__c = HTML (rich-text)\n  R360_Last_AI_Contact_Brief__c = $now.toISO()  ← FIX: Zapier left blank, n8n stamps it (§8.9)"
@@ -219,7 +263,7 @@
       "name": "Execute: sub-notify (template=pre_discovery)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [2660, 440]
+      "position": [3100, 440]
     }
   ],
   "connections": {
@@ -230,10 +274,12 @@
     ]] },
     "SF Find: Account (Name, Website, ShippingCountry)": { "main": [[{ "node": "SF Find: Contact (Name, Email, Phone, Mobile, Title)", "type": "main", "index": 0 }]] },
     "SF Find: Contact (Name, Email, Phone, Mobile, Title)": { "main": [[{ "node": "SF Find: User by ownerEmail (Slack_ID__c)", "type": "main", "index": 0 }]] },
-    "SF Find: User by ownerEmail (Slack_ID__c)": { "main": [[{ "node": "HTTP: Perplexity sonar-deep-research (60-120s)", "type": "main", "index": 0 }]] },
+    "SF Find: User by ownerEmail (Slack_ID__c)": { "main": [[{ "node": "Set: Build Perplexity prompt", "type": "main", "index": 0 }]] },
+    "Set: Build Perplexity prompt": { "main": [[{ "node": "HTTP: Perplexity sonar-deep-research (60-120s)", "type": "main", "index": 0 }]] },
     "HTTP: Perplexity sonar-deep-research (60-120s)": { "main": [[{ "node": "HTTP: Apollo enrich (min_confidence=70)", "type": "main", "index": 0 }]] },
     "HTTP: Apollo enrich (min_confidence=70)": { "main": [[{ "node": "SF Update Contact: MobilePhone (post-Apollo)", "type": "main", "index": 0 }]] },
-    "SF Update Contact: MobilePhone (post-Apollo)": { "main": [[{ "node": "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)", "type": "main", "index": 0 }]] },
+    "SF Update Contact: MobilePhone (post-Apollo)": { "main": [[{ "node": "Set: Build ChatGPT R360 prompt", "type": "main", "index": 0 }]] },
+    "Set: Build ChatGPT R360 prompt": { "main": [[{ "node": "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)", "type": "main", "index": 0 }]] },
     "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)": { "main": [[{ "node": "Code: Markdown→HTML (Slack mrkdwn → HTML)", "type": "main", "index": 0 }]] },
     "Code: Markdown→HTML (Slack mrkdwn → HTML)": { "main": [[{ "node": "SF Update Contact: Brief HTML + timestamp (FIX blank)", "type": "main", "index": 0 }]] },
     "SF Update Contact: Brief HTML + timestamp (FIX blank)": { "main": [[{ "node": "Execute: sub-notify (template=pre_discovery)", "type": "main", "index": 0 }]] }
@@ -244,13 +290,11 @@
     "executionTimeout": 600
   },
   "active": false,
-  "versionId": "0.1.0-skeleton",
+  "versionId": "0.2.0",
   "meta": {
     "spec": "migration-plans/r360-n8n-build-plan.md §8 + specs/spec_pre_discovery_ai_notes.md",
     "queue_mode_required": true,
     "todo": [
-      "Build Set node populating perplexity_prompt with verbatim §8.3 template",
-      "Build Set node populating r360_chatgpt_prompt with verbatim §8.6 template",
       "Add Slack DM 3 recipients (managers + AE) per §8.7",
       "Implement retry+backoff for Perplexity timeout per C-17",
       "Wire Inbound_Log creation with Source__c='webhook_pre_discovery'"

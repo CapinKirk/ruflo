@@ -25,8 +25,8 @@
       "position": [460, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       }
     },
@@ -57,8 +57,8 @@
       "position": [900, 320],
       "credentials": {
         "slackOAuth2Api": {
-          "id": "REPLACE_WITH_SLACK_CRED_ID",
-          "name": "{{credential:slack_r360}}"
+          "id": "skn3Ct9zjw3Vt3Pn",
+          "name": "RevTech Bot"
         }
       }
     }

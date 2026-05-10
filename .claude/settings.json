@@ -8,6 +8,11 @@
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" pre-bash'",
             "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" security-gate'",
+            "timeout": 5000
           }
         ]
       },
@@ -17,6 +22,11 @@
           {
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" pre-edit'",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" security-gate'",
             "timeout": 5000
           }
         ]
@@ -30,6 +40,11 @@
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" post-edit'",
             "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" learning-step'",
+            "timeout": 5000
           }
         ]
       },
@@ -39,6 +54,11 @@
           {
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" post-bash'",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" perf-metric'",
             "timeout": 5000
           }
         ]
@@ -51,6 +71,16 @@
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" route'",
             "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" guidance'",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/local-transcripts-hook.mjs\"'",
+            "timeout": 1000
           }
         ]
       }
@@ -72,6 +102,11 @@
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/context-persistence-hook.mjs\" restore'",
             "timeout": 8000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" init'",
+            "timeout": 8000
           }
         ]
       }
@@ -79,6 +114,11 @@
     "SessionEnd": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" shutdown'",
+            "timeout": 8000
+          },
           {
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" session-end'",
@@ -147,6 +187,16 @@
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" status'",
             "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" agent-start'",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" claim-work'",
+            "timeout": 5000
           }
         ]
       }
@@ -156,7 +206,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" post-task'",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" agent-stop'",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" release-claim'",
             "timeout": 5000
           }
         ]
@@ -173,20 +228,15 @@
         ]
       }
     ],
-    "TeammateIdle": [
+    "TeammateIdle": [],
+    "TaskCompleted": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" post-task'",
+            "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/domain-hook.mjs\" task-done'",
             "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "TaskCompleted": [
-      {
-        "hooks": [
+          },
           {
             "type": "command",
             "command": "sh -c 'exec node \"${CLAUDE_PROJECT_DIR:-.}/.claude/helpers/hook-handler.cjs\" post-task'",
@@ -204,8 +254,6 @@
     "allow": [
       "Bash(ruflo *)",
       "Bash(ruflo)",
-      "Bash(npx @claude-flow*)",
-      "Bash(npx claude-flow*)",
       "Bash(node .claude/*)",
       "Bash(npm run:*)",
       "Bash(npm test:*)",
@@ -223,15 +271,32 @@
       "Bash(pwd)",
       "Bash(ls:*)",
       "Bash(npx:*)",
-      "mcp__claude-flow__*"
+      "Bash(sf :*)",
+      "Bash(sf org:*)",
+      "Bash(curl:*)",
+      "Bash(bq :*)",
+      "Bash(bq query:*)",
+      "Bash(gh :*)",
+      "Bash(jq:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(cd:*)",
+      "Bash(echo:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)"
     ],
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
       "Write(./.env*)",
       "Write(*.pem)",
       "Bash(rm -rf /)",
-      "Bash(rm -rf /*)"
+      "Bash(rm -rf /*)",
+      "Read(node_modules/**/.env)",
+      "Read(**/*secret*)",
+      "Read(**/*.key)"
     ]
   },
   "attribution": {
@@ -243,30 +308,11 @@
     "CLAUDE_FLOW_V3_ENABLED": "true",
     "CLAUDE_FLOW_HOOKS_ENABLED": "true"
   },
-  "mcpServers": {
-    "claude-flow": {
-      "command": "node",
-      "args": [
-        "/Users/prestonharris/Claude-Codex/Ruflo/v3/@claude-flow/cli/bin/cli.js",
-        "mcp",
-        "start"
-      ],
-      "env": {
-        "CLAUDE_FLOW_MODE": "v3",
-        "CLAUDE_FLOW_PROVIDER": "claude-code",
-        "CLAUDE_FLOW_CWD": "/Users/prestonharris/Claude-Codex/Ruflo"
-      }
-    }
-  },
   "agents": {
     "source": ".claude/agents"
   },
   "skills": {
     "source": ".claude/commands",
     "enabled": true
-  },
-  "enabledMcpjsonServers": [
-    "claude-flow",
-    "flow-nexus"
-  ]
+  }
 }

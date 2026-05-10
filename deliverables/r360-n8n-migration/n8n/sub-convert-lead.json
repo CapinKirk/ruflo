@@ -27,8 +27,8 @@
       "position": [460, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "n8n Salesforce node does NOT support convertLead — use HTTP. See §2.2.\nBUG FIX from Zap 340057313: use {{LeadAccountId}} (region-routed) NOT hardcoded NA accountId 0014u00002BFXvRAAX.\nResponse: { id, success, contactId, accountId, opportunityId } — feeds downstream Campaign/Slack."

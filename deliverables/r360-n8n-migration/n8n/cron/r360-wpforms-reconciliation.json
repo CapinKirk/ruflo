@@ -24,8 +24,8 @@
       "position": [460, 320],
       "credentials": {
         "mySql": {
-          "id": "REPLACE_WITH_WP_DB_CRED_ID",
-          "name": "{{credential:wp_db_readonly}}"
+          "id": "DEFER_WP_DB_V2",
+          "name": "WordPress DB (deferred to v2)"
         }
       },
       "notes": "Read-only DB credential. 30-min lookback (3× the 10-min interval) handles overlap. Replaces unverified WPForms REST endpoint per §2.1."
@@ -54,8 +54,8 @@
       "position": [900, 320],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "REPLACE_WITH_SF_CRED_ID",
-          "name": "{{credential:salesforce_uat}}"
+          "id": "N5uEq1CnutZGYOnW",
+          "name": "[RH] UAT"
         }
       },
       "notes": "SOQL: SELECT Id, Status__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c = :hash LIMIT 1"
