@@ -1,0 +1,79 @@
+{
+  "name": "R360 Cron: Dead-letter Replay (every 5 min)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/5 * * * *" }] }
+      },
+      "id": "dlrp-0001-4000-8000-000000000001",
+      "name": "Schedule: every 5 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "options": {}
+      },
+      "id": "dlrp-0002-4000-8000-000000000002",
+      "name": "SF Find: failed rows (Retry_Count__c < 5)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [460, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "SOQL: SELECT Id, Idempotency_Hash__c, Source__c, Payload__c, Retry_Count__c, External_Submission_Id__c FROM Lead_Inbound_Log__c WHERE Status__c = 'failed' AND Retry_Count__c < 5 AND Received_At__c >= LAST_N_HOURS:24 LIMIT 50"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/r360/{{ $json.Source__c === 'wpform_29710' ? 'contact-form' : ($json.Source__c === 'wpform_29712' ? 'watch-video' : ($json.Source__c === 'wpform_29714' ? 'get-demo' : ($json.Source__c === 'bot_r360' ? 'bot' : ($json.Source__c === 'webhook_pre_discovery' ? 'pre-discovery' : 'faq')))) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.parse($json.Payload__c) }}",
+        "options": {}
+      },
+      "id": "dlrp-0003-4000-8000-000000000003",
+      "name": "HTTP: Replay payload to receiver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "options": {}
+      },
+      "id": "dlrp-0004-4000-8000-000000000004",
+      "name": "SF Update: increment Retry_Count__c",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Retry_Count__c++ on every replay attempt. When = 5, stop retrying and rely on sub-error-handler escalation."
+    }
+  ],
+  "connections": {
+    "Schedule: every 5 min": { "main": [[{ "node": "SF Find: failed rows (Retry_Count__c < 5)", "type": "main", "index": 0 }]] },
+    "SF Find: failed rows (Retry_Count__c < 5)": { "main": [[{ "node": "HTTP: Replay payload to receiver", "type": "main", "index": 0 }]] },
+    "HTTP: Replay payload to receiver": { "main": [[{ "node": "SF Update: increment Retry_Count__c", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §17.4 C-15" }
+}

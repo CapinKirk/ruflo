@@ -1,0 +1,259 @@
+{
+  "name": "R360 Receiver: Pre-Discovery Webhook (async, queue mode required)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "r360/pre-discovery",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "rcprd-0001-4000-8000-000000000001",
+      "name": "Webhook: /r360/pre-discovery",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate required fields per §8.1 — halt-on-missing\nconst body = $json.body || $json;\nconst required = ['accountId', 'contactId', 'ownerEmail'];\nfor (const k of required) {\n  const v = body[k];\n  if (!v || typeof v !== 'string' || v.trim() === '') {\n    throw new Error(`Pre-Discovery rejected: missing required field \"${k}\"`);\n  }\n}\nreturn [{ json: body }];"
+      },
+      "id": "rcprd-0002-4000-8000-000000000002",
+      "name": "Code: Validate payload (halt on missing)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 320]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true, \"queued\": true }",
+        "options": { "responseCode": 200 }
+      },
+      "id": "rcprd-0003-4000-8000-000000000003",
+      "name": "Respond: 200 OK (async pattern)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 200],
+      "notes": "Critical — Perplexity 60-120s + GPT 30-60s = >30s default webhook timeout. Async pattern (queue mode) required. See §8.4."
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "account",
+        "options": {}
+      },
+      "id": "rcprd-0004-4000-8000-000000000004",
+      "name": "SF Find: Account (Name, Website, ShippingCountry)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [680, 440],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "SOQL: SELECT Id, Name, Website, ShippingCountry FROM Account WHERE Id = :accountId. Halt on miss."
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "contact",
+        "options": {}
+      },
+      "id": "rcprd-0005-4000-8000-000000000005",
+      "name": "SF Find: Contact (Name, Email, Phone, Mobile, Title)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 440],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "user",
+        "options": {}
+      },
+      "id": "rcprd-0006-4000-8000-000000000006",
+      "name": "SF Find: User by ownerEmail (Slack_ID__c)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1120, 440],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "SOQL: SELECT Id, Email, Slack_ID__c FROM User WHERE Email = :ownerEmail. Critical: Slack_ID__c drives DM recipient. If null, fall back to email per §8.10."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"sonar-deep-research\",\n  \"max_tokens\": 128000,\n  \"messages\": [\n    { \"role\": \"system\", \"content\": \"Be precise and concise.\" },\n    { \"role\": \"user\", \"content\": $json.perplexity_prompt }\n  ]\n}",
+        "options": { "timeout": 180000 }
+      },
+      "id": "rcprd-0007-4000-8000-000000000007",
+      "name": "HTTP: Perplexity sonar-deep-research (60-120s)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 440],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_PERPLEXITY_CRED_ID",
+          "name": "{{credential:perplexity_api}}"
+        }
+      },
+      "notes": "Per §8.3. Timeout 180s allows for retries. R360-branded 14-section research brief prompt template — bind from upstream Set node populating Account/Contact fields."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/people/match",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Email }}\",\n  \"first_name\": \"{{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.FirstName }}\",\n  \"last_name\": \"{{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.LastName }}\",\n  \"phone\": \"{{ $('SF Find: Contact (Name, Email, Phone, Mobile, Title)').item.json.Phone }}\",\n  \"organization_name\": \"{{ $('SF Find: Account (Name, Website, ShippingCountry)').item.json.Name }}\",\n  \"min_confidence\": 70\n}",
+        "options": {}
+      },
+      "id": "rcprd-0008-4000-8000-000000000008",
+      "name": "HTTP: Apollo enrich (min_confidence=70)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 440],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_APOLLO_CRED_ID",
+          "name": "{{credential:apollo_api}}"
+        }
+      },
+      "notes": "Per §8.5. On 0 matches: continue without enrichment (do not halt)."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "contact",
+        "options": {}
+      },
+      "id": "rcprd-0009-4000-8000-000000000009",
+      "name": "SF Update Contact: MobilePhone (post-Apollo)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1780, 440],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Empty-key filter precedes this — don't blank MobilePhone if Apollo returned null."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-5.1\",\n  \"max_output_tokens\": 400000,\n  \"reasoning\": { \"effort\": \"high\" },\n  \"tools\": [ { \"type\": \"web_search_preview\" } ],\n  \"input\": [\n    { \"role\": \"user\", \"content\": $json.r360_chatgpt_prompt }\n  ]\n}",
+        "options": { "timeout": 240000 }
+      },
+      "id": "rcprd-000a-4000-8000-00000000000a",
+      "name": "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 440],
+      "credentials": {
+        "openAiApi": {
+          "id": "REPLACE_WITH_OPENAI_CRED_ID",
+          "name": "{{credential:openai_api}}"
+        }
+      },
+      "notes": "Per §8.6. 400k tokens, reasoning=high, web_search_preview. Use output_text for SF write, messages[]content[]text for Slack. Timeout 240s."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Markdown→HTML — convert Slack mrkdwn to HTML for SF rich-text field\n// Per §8.8\nconst md = $json.output_text || $json.choices?.[0]?.message?.content || '';\nconst { marked } = require('marked');\nconst cleaned = md\n  .replace(/<(https?:\\/\\/[^|>]+)\\|([^>]+)>/g, '[$2]($1)')\n  .replace(/\\*([^\\*\\n]+)\\*/g, '**$1**');\nconst html = marked.parse(cleaned);\nreturn [{ json: { ...$json, html, output_text: md } }];"
+      },
+      "id": "rcprd-000b-4000-8000-00000000000b",
+      "name": "Code: Markdown→HTML (Slack mrkdwn → HTML)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2220, 440]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "contact",
+        "options": {}
+      },
+      "id": "rcprd-000c-4000-8000-00000000000c",
+      "name": "SF Update Contact: Brief HTML + timestamp (FIX blank)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [2440, 440],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Writes:\n  Record360_AI_Contact_Brief__c = HTML (rich-text)\n  R360_Last_AI_Contact_Brief__c = $now.toISO()  ← FIX: Zapier left blank, n8n stamps it (§8.9)"
+    },
+    {
+      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_NOTIFY }}", "options": {} },
+      "id": "rcprd-000d-4000-8000-00000000000d",
+      "name": "Execute: sub-notify (template=pre_discovery)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [2660, 440]
+    }
+  ],
+  "connections": {
+    "Webhook: /r360/pre-discovery": { "main": [[{ "node": "Code: Validate payload (halt on missing)", "type": "main", "index": 0 }]] },
+    "Code: Validate payload (halt on missing)": { "main": [[
+      { "node": "Respond: 200 OK (async pattern)", "type": "main", "index": 0 },
+      { "node": "SF Find: Account (Name, Website, ShippingCountry)", "type": "main", "index": 0 }
+    ]] },
+    "SF Find: Account (Name, Website, ShippingCountry)": { "main": [[{ "node": "SF Find: Contact (Name, Email, Phone, Mobile, Title)", "type": "main", "index": 0 }]] },
+    "SF Find: Contact (Name, Email, Phone, Mobile, Title)": { "main": [[{ "node": "SF Find: User by ownerEmail (Slack_ID__c)", "type": "main", "index": 0 }]] },
+    "SF Find: User by ownerEmail (Slack_ID__c)": { "main": [[{ "node": "HTTP: Perplexity sonar-deep-research (60-120s)", "type": "main", "index": 0 }]] },
+    "HTTP: Perplexity sonar-deep-research (60-120s)": { "main": [[{ "node": "HTTP: Apollo enrich (min_confidence=70)", "type": "main", "index": 0 }]] },
+    "HTTP: Apollo enrich (min_confidence=70)": { "main": [[{ "node": "SF Update Contact: MobilePhone (post-Apollo)", "type": "main", "index": 0 }]] },
+    "SF Update Contact: MobilePhone (post-Apollo)": { "main": [[{ "node": "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)", "type": "main", "index": 0 }]] },
+    "HTTP: OpenAI gpt-5.1 (R360 brief, reasoning=high)": { "main": [[{ "node": "Code: Markdown→HTML (Slack mrkdwn → HTML)", "type": "main", "index": 0 }]] },
+    "Code: Markdown→HTML (Slack mrkdwn → HTML)": { "main": [[{ "node": "SF Update Contact: Brief HTML + timestamp (FIX blank)", "type": "main", "index": 0 }]] },
+    "SF Update Contact: Brief HTML + timestamp (FIX blank)": { "main": [[{ "node": "Execute: sub-notify (template=pre_discovery)", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID",
+    "executionTimeout": 600
+  },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": {
+    "spec": "migration-plans/r360-n8n-build-plan.md §8 + specs/spec_pre_discovery_ai_notes.md",
+    "queue_mode_required": true,
+    "todo": [
+      "Build Set node populating perplexity_prompt with verbatim §8.3 template",
+      "Build Set node populating r360_chatgpt_prompt with verbatim §8.6 template",
+      "Add Slack DM 3 recipients (managers + AE) per §8.7",
+      "Implement retry+backoff for Perplexity timeout per C-17",
+      "Wire Inbound_Log creation with Source__c='webhook_pre_discovery'"
+    ]
+  }
+}

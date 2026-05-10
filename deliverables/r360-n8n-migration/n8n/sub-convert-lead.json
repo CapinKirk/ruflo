@@ -1,0 +1,44 @@
+{
+  "name": "R360 Sub: Convert Lead (HTTP — n8n SF node has no convertLead)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "conv-0001-4000-8000-000000000001",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://por.my.salesforce.com/services/data/v62.0/sobjects/LeadConvert/",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"leadId\": \"{{ $json.leadId }}\",\n  \"convertedStatus\": \"Qualified\",\n  \"doNotCreateOpportunity\": false,\n  \"accountId\": \"{{ $json.LeadAccountId }}\"\n}",
+        "options": { "response": { "response": { "responseFormat": "json" } } }
+      },
+      "id": "conv-0002-4000-8000-000000000002",
+      "name": "HTTP: SF LeadConvert REST",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "n8n Salesforce node does NOT support convertLead — use HTTP. See §2.2.\nBUG FIX from Zap 340057313: use {{LeadAccountId}} (region-routed) NOT hardcoded NA accountId 0014u00002BFXvRAAX.\nResponse: { id, success, contactId, accountId, opportunityId } — feeds downstream Campaign/Slack."
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": { "main": [[{ "node": "HTTP: SF LeadConvert REST", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §2.2", "todo": ["Validate UAT por.my.salesforce.com hostname matches por-uat (likely por--uat.sandbox.my.salesforce.com)"] }
+}

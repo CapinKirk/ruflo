@@ -1,0 +1,75 @@
+{
+  "name": "R360 Cron: Daily LeadOps Report (8am Central)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 13 * * *" }] }
+      },
+      "id": "dlys-0001-4000-8000-000000000001",
+      "name": "Schedule: 8am Central daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 320],
+      "notes": "Cron in UTC: 13:00 = 8am CST / 7am CDT. Adjust seasonally OR use TZ-aware cron expression."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Source__c source, Decision_Path__c path, COUNT(Id) count\nFROM Lead_Inbound_Log__c\nWHERE Received_At__c = LAST_N_DAYS:1\nGROUP BY Source__c, Decision_Path__c\nORDER BY Source__c, Decision_Path__c",
+        "options": {}
+      },
+      "id": "dlys-0002-4000-8000-000000000002",
+      "name": "SF SOQL: yesterday's volume by source + path",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [460, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format the §13.4 daily report\nconst rows = $input.all().map(i => i.json);\nconst total = rows.reduce((a, r) => a + Number(r.count), 0);\nconst bySrc = {};\nfor (const r of rows) {\n  if (!bySrc[r.source]) bySrc[r.source] = { total: 0, paths: {} };\n  bySrc[r.source].total += Number(r.count);\n  bySrc[r.source].paths[r.path || 'unknown'] = Number(r.count);\n}\nconst yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);\nlet text = `:bar_chart: *R360 Inbound — ${yesterday}*\\nTotal: *${total}* leads\\n\\n`;\nfor (const [src, data] of Object.entries(bySrc)) {\n  text += `• \\`${src}\\`: ${data.total}`;\n  const pathSummary = Object.entries(data.paths).map(([p, c]) => `${p}=${c}`).join(', ');\n  text += `  _(${pathSummary})_\\n`;\n}\nreturn [{ json: { reportText: text, total, byForm: bySrc } }];"
+      },
+      "id": "dlys-0003-4000-8000-000000000003",
+      "name": "Code: Format daily report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_DAILY }}\",\n  \"text\": $json.reportText,\n  \"unfurl_links\": false,\n  \"unfurl_media\": false\n}"
+      },
+      "id": "dlys-0004-4000-8000-000000000004",
+      "name": "HTTP: Post to #r360-leads-daily",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 320],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_WITH_SLACK_CRED_ID",
+          "name": "{{credential:slack_r360}}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: 8am Central daily": { "main": [[{ "node": "SF SOQL: yesterday's volume by source + path", "type": "main", "index": 0 }]] },
+    "SF SOQL: yesterday's volume by source + path": { "main": [[{ "node": "Code: Format daily report", "type": "main", "index": 0 }]] },
+    "Code: Format daily report": { "main": [[{ "node": "HTTP: Post to #r360-leads-daily", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §13.4 + §17.8" }
+}

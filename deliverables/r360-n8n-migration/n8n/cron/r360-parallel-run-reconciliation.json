@@ -1,0 +1,130 @@
+{
+  "name": "R360 Cron: Parallel-Run Reconciliation (hourly during 14d window)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 * * * *" }] }
+      },
+      "id": "prrc-0001-4000-8000-000000000001",
+      "name": "Schedule: every hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 320],
+      "notes": "Enable ONLY during the 14-day parallel-run window (T+0 to T+14d). Disable on Day 15 when Phase B begins."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://zapier.com/api/v3/zaps/{{ $json.zapId }}/runs?since={{ $now.minus({hours: 1}).toISO() }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "prrc-0002-4000-8000-000000000002",
+      "name": "HTTP: Pull Zapier task history (last hour)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 320],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_ZAPIER_API_CRED_ID",
+          "name": "{{credential:zapier_platform_api}}"
+        }
+      },
+      "notes": "Loop over 7 R360 zap IDs: 316698017, 316701470, 316797350, 316797554, 332679789, 336544812, 225753704. Returns task history for last hour."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT Idempotency_Hash__c, External_Submission_Id__c, Source__c, Status__c, n8n_Execution_Id__c, Received_At__c\nFROM Lead_Inbound_Log__c\nWHERE Received_At__c >= LAST_N_HOURS:1\nORDER BY Received_At__c ASC",
+        "options": {}
+      },
+      "id": "prrc-0003-4000-8000-000000000003",
+      "name": "SF SOQL: Lead_Inbound_Log__c last hour",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [460, 460],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.N8N_BASE_URL }}/api/v1/executions?startedAfter={{ $now.minus({hours: 1}).toISO() }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "prrc-0004-4000-8000-000000000004",
+      "name": "HTTP: Pull n8n execution history",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 600],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_N8N_API_CRED_ID",
+          "name": "{{credential:n8n_internal_api}}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compute set differences:\n// A = Zapier-fired entries (set of source-form + entry_id)\n// B = n8n-received entries (set of External_Submission_Id__c)\n// C = entries with Status__c='written'\n// Diff: A - B  (Zapier received, n8n missed — ALERT-WORTHY)\n//       B - A  (n8n received, Zapier didn't — should be 0 in parallel mode)\n//       A ∩ B - C  (both received, neither wrote — investigate)\n\nconst zapierTasks = $input.first().json.zapierTasks || [];\nconst n8nLogs = $input.first().json.n8nLogs || [];\nconst n8nExecutions = $input.first().json.n8nExecutions || [];\n\nconst zapierKeys = new Set(zapierTasks.map(t => `${t.source_form}:${t.entry_id}`));\nconst n8nKeys = new Set(n8nLogs.map(l => `${l.Source__c}:${l.External_Submission_Id__c}`));\nconst writtenKeys = new Set(n8nLogs.filter(l => l.Status__c === 'written').map(l => `${l.Source__c}:${l.External_Submission_Id__c}`));\n\nconst diffAB = [...zapierKeys].filter(k => !n8nKeys.has(k));   // Zapier fired but n8n didn't receive\nconst diffBA = [...n8nKeys].filter(k => !zapierKeys.has(k));   // n8n received but Zapier didn't (rare)\nconst diffNeitherWrote = [...zapierKeys].filter(k => n8nKeys.has(k) && !writtenKeys.has(k));\n\nconst summary = {\n  hour: new Date().toISOString(),\n  total_zapier: zapierKeys.size,\n  total_n8n: n8nKeys.size,\n  total_written: writtenKeys.size,\n  diff_A_minus_B: diffAB.length,\n  diff_B_minus_A: diffBA.length,\n  diff_neither_wrote: diffNeitherWrote.length,\n  top_5_A_minus_B: diffAB.slice(0, 5),\n  top_5_B_minus_A: diffBA.slice(0, 5),\n  top_5_neither: diffNeitherWrote.slice(0, 5),\n  page_oncall: diffAB.length > 0\n};\nreturn [{ json: summary }];"
+      },
+      "id": "prrc-0005-4000-8000-000000000005",
+      "name": "Code: Compute set differences (A-B, B-A, neither-wrote)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 460]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_PARALLEL_RUN }}\",\n  \"text\": $json.page_oncall ? `:rotating_light: *Parallel-run reconciliation — A-B = ${$json.diff_A_minus_B}* (Zapier received, n8n missed)\\nTop 5: ${JSON.stringify($json.top_5_A_minus_B)}\\nTotal Zapier=${$json.total_zapier}, n8n=${$json.total_n8n}, written=${$json.total_written}` : `:white_check_mark: Hourly recon: ${$json.total_zapier} Zapier / ${$json.total_n8n} n8n / ${$json.total_written} written. All in sync.`,\n  \"unfurl_links\": false\n}"
+      },
+      "id": "prrc-0006-4000-8000-000000000006",
+      "name": "HTTP: Post hourly summary to Slack",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 460],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_WITH_SLACK_CRED_ID",
+          "name": "{{credential:slack_r360}}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule: every hour": { "main": [[
+      { "node": "HTTP: Pull Zapier task history (last hour)", "type": "main", "index": 0 },
+      { "node": "SF SOQL: Lead_Inbound_Log__c last hour", "type": "main", "index": 0 },
+      { "node": "HTTP: Pull n8n execution history", "type": "main", "index": 0 }
+    ]] },
+    "HTTP: Pull Zapier task history (last hour)": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
+    "SF SOQL: Lead_Inbound_Log__c last hour": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
+    "HTTP: Pull n8n execution history": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
+    "Code: Compute set differences (A-B, B-A, neither-wrote)": { "main": [[{ "node": "HTTP: Post hourly summary to Slack", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": {
+    "spec": "deliverables/r360-n8n-migration/runbooks/parallel-run-validation.md §3",
+    "todo": [
+      "Wire merge of 3 parallel inputs (zapier, n8n SF logs, n8n executions) into single Code node — currently each fires the Code node independently, needs Merge node",
+      "Loop over 7 R360 zap IDs in HTTP node OR use Zapier API's /tasks endpoint instead of /zaps/{id}/runs",
+      "Validate Zapier Platform API token has read access to all 7 zaps",
+      "Add @here ping when diff_A_minus_B > 0 — page on-call in #r360-leads-parallel-run"
+    ]
+  }
+}

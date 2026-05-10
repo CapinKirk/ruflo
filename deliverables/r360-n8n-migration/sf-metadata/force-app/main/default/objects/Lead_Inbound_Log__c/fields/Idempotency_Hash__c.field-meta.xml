@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Idempotency_Hash__c</fullName>
+    <caseSensitive>true</caseSensitive>
+    <description>SHA-256 hash of (form_id + ":" + external_submission_id). Used as the External Id for upsert dedup — first n8n receiver to write wins, parallel calls short-circuit. Computed at receiver boundary before any downstream SF call.</description>
+    <externalId>true</externalId>
+    <inlineHelpText>Auto-populated by n8n. Do not edit. Used for idempotent upsert.</inlineHelpText>
+    <label>Idempotency Hash</label>
+    <length>64</length>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

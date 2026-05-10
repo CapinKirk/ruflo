@@ -1,0 +1,229 @@
+{
+  "name": "R360 Sub: Writer (path-specific SF + Campaign + Case writes)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "wrtr-0001-4000-8000-000000000001",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "outputKey": "A4b_create_lead",      "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4b",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "A4a_update_lead",      "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4a",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "B_update_lead",        "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "B",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "C_update_contact_AM",  "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "C",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "D_update_contact_SDR", "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "D",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "A4c_i_update_contact", "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4c-i",    "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "A4c_ii_update_contact","conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4c-ii",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "A4d_terminal",         "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4d",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+          ]
+        }
+      },
+      "id": "wrtr-0002-4000-8000-000000000002",
+      "name": "Switch: decisionPath (8 sub-paths)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [460, 320],
+      "notes": "8 outputs: A4b (create Lead), A4a/B (update Lead), C (update Contact + AM), D (update Contact + Case), A4c-i/A4c-ii (update Contact + Case via requery), A4d (terminal Wait 1min)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Empty-key filter — port of §2.3 universal pattern\n// Run BEFORE every SF Update to drop blank/null fields so n8n SF node doesn't overwrite existing values with ''\nconst payload = { ...$json };\nfor (const k of Object.keys(payload)) {\n  if (payload[k] === '' || payload[k] == null) delete payload[k];\n}\nreturn [{ json: payload }];"
+      },
+      "id": "wrtr-0003-4000-8000-000000000003",
+      "name": "Code: Empty-key filter (universal)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200],
+      "notes": "Critical — see §2.3 + UAT C-9 + T21. Without this, n8n SF Update overwrites Lead/Contact's existing FirstName/LastName/Company with '' on Path B."
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "lead",
+        "options": {}
+      },
+      "id": "wrtr-0004-4000-8000-000000000004",
+      "name": "SF: A4b Create Lead (38 fields)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 120],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Field map per §7.1 — see build plan. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT — UAT may differ). useAssignmentRules=false; Most_Recent_Pardot_Form__c='R360 - '+WPFormName (BUG-FIXED — was hardcoded)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "lead",
+        "options": {}
+      },
+      "id": "wrtr-0005-4000-8000-000000000005",
+      "name": "SF: B/A4a Update Lead",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 240],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Field map per §7.2. record_id from Find Lead. Sales_Notes__c prefixed 'Form Filled: <WPFormName>'. Pre-filtered by empty-key node (§2.3)."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "contact",
+        "options": {}
+      },
+      "id": "wrtr-0006-4000-8000-000000000006",
+      "name": "SF: C Update Contact (AM path)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 360],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Field map per §7.3. dupcheck__dc3DisableDuplicateCheck__c=true; Lead_Owner__c=AssignmentID. NO Case create on AM path."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "contact",
+        "options": {}
+      },
+      "id": "wrtr-0007-4000-8000-000000000007",
+      "name": "SF: D Update Contact (SDR path)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 480],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Field map per §7.4. Followed by Case create (RecordTypeId=Inside Sales R360 SDR Follow-Up)."
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "case",
+        "options": {}
+      },
+      "id": "wrtr-0008-4000-8000-000000000008",
+      "name": "SF: D Create Case (R360 SDR Follow-Up)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1120, 480],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "RecordTypeId=<R360 SDR Follow-Up Case RT>. ContactId from D path. OwnerId=InsideSalesQueue. Origin='Web'."
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "campaignMember",
+        "options": {}
+      },
+      "id": "wrtr-0009-4000-8000-000000000009",
+      "name": "SF: Add to Campaign 701Ki000000cMwkIAE",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1340, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Campaign 701Ki000000cMwkIAE (R360 marketing campaign). LeadId or ContactId based on path. Status='Cold / Not Started'. Notes__c='Form Filled: <WPFormName> | <ROI calc>'."
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "campaignMember",
+        "options": {}
+      },
+      "id": "wrtr-000a-4000-8000-00000000000a",
+      "name": "SF: Find existing CampaignMember (error fallback)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1560, 320],
+      "notes": "On 'add to campaign' DUPLICATE_VALUE error: query existing CampaignMember and update Status + Notes__c. SOQL: WHERE CampaignId='701Ki000000cMwkIAE' AND (LeadId=:id OR ContactId=:id)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "options": {}
+      },
+      "id": "wrtr-000b-4000-8000-00000000000b",
+      "name": "SF: Update Lead_Inbound_Log__c (final state)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1780, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "Set Status__c='written', Decision_Path__c=<path>, Resolved_Lead__c=<id>, Resolved_Contact__c=<id>, n8n_Execution_Id__c=$execution.id"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": { "main": [[{ "node": "Switch: decisionPath (8 sub-paths)", "type": "main", "index": 0 }]] },
+    "Switch: decisionPath (8 sub-paths)": { "main": [
+      [{ "node": "SF: A4b Create Lead (38 fields)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
+      []
+    ] },
+    "Code: Empty-key filter (universal)": { "main": [[
+      { "node": "SF: B/A4a Update Lead", "type": "main", "index": 0 },
+      { "node": "SF: C Update Contact (AM path)", "type": "main", "index": 0 },
+      { "node": "SF: D Update Contact (SDR path)", "type": "main", "index": 0 }
+    ]] },
+    "SF: A4b Create Lead (38 fields)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
+    "SF: B/A4a Update Lead": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
+    "SF: C Update Contact (AM path)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
+    "SF: D Update Contact (SDR path)": { "main": [[{ "node": "SF: D Create Case (R360 SDR Follow-Up)", "type": "main", "index": 0 }]] },
+    "SF: D Create Case (R360 SDR Follow-Up)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
+    "SF: Add to Campaign 701Ki000000cMwkIAE": { "main": [[{ "node": "SF: Update Lead_Inbound_Log__c (final state)", "type": "main", "index": 0 }]] },
+    "SF: Find existing CampaignMember (error fallback)": { "main": [[{ "node": "SF: Update Lead_Inbound_Log__c (final state)", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": {
+    "spec": "migration-plans/r360-n8n-build-plan.md §7.1-§7.6 + §10 (CampaignMember) + §12 (per-action error sub-branches)",
+    "todo": [
+      "Bind 38-field Set nodes before each SF Update — see build plan §7 for verbatim field maps",
+      "Wire CampaignMember error fallback (DUPLICATE_VALUE → search + update)",
+      "Add Slack DM + Gmail email at end of each path via sub-notify"
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source__c</fullName>
+    <description>Which n8n receiver produced this log row. Maps 1:1 to a webhook endpoint and a sub-workflow.</description>
+    <externalId>false</externalId>
+    <label>Source</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>wpform_29710</fullName>
+                <default>false</default>
+                <label>WPForm 29710 (Contact Form)</label>
+            </value>
+            <value>
+                <fullName>wpform_29712</fullName>
+                <default>false</default>
+                <label>WPForm 29712 (Watch Video)</label>
+            </value>
+            <value>
+                <fullName>wpform_29714</fullName>
+                <default>false</default>
+                <label>WPForm 29714 (Get a Demo)</label>
+            </value>
+            <value>
+                <fullName>bot_r360</fullName>
+                <default>false</default>
+                <label>SocialIntents Bot R360 Path</label>
+            </value>
+            <value>
+                <fullName>webhook_pre_discovery</fullName>
+                <default>false</default>
+                <label>Pre-Discovery Webhook</label>
+            </value>
+            <value>
+                <fullName>wpform_33076</fullName>
+                <default>false</default>
+                <label>WPForm 33076 (FAQ)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

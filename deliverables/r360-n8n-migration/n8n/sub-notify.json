@@ -1,0 +1,118 @@
+{
+  "name": "R360 Sub: Notify (Slack DM + Gmail SMTP, 5 templates)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "noty-0001-4000-8000-000000000001",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "user",
+        "options": {}
+      },
+      "id": "noty-0002-4000-8000-000000000002",
+      "name": "SF Find: User.Slack_ID__c by AssignmentID",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [460, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "SOQL: SELECT Id, Name, Email, Slack_ID__c FROM User WHERE Id = :AssignmentID. If Slack_ID__c is null, fall back to email-only notification."
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            { "outputKey": "tmpl_lead_created",   "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "lead_created",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "tmpl_lead_updated",   "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "lead_updated",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "tmpl_contact_AM",     "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "contact_AM",     "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "tmpl_contact_SDR",    "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "contact_SDR",    "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
+            { "outputKey": "tmpl_pre_discovery",  "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "pre_discovery",  "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+          ]
+        }
+      },
+      "id": "noty-0003-4000-8000-000000000003",
+      "name": "Switch: 5 templates",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [680, 320],
+      "notes": "Template body specifics in build plan §10 (CampaignMember) + Pre-Discovery in §8.7."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"{{ $json.recipient_slack_id }}\",\n  \"text\": \"{{ $json.message_text }}\",\n  \"as_user\": false,\n  \"username\": \"RevOps R360 Bot\",\n  \"icon_url\": \"https://i.ibb.co/m5KMWdgH/Rev-Ops-Logo.png\",\n  \"unfurl_links\": false,\n  \"unfurl_media\": false,\n  \"link_names\": true\n}",
+        "options": {}
+      },
+      "id": "noty-0004-4000-8000-000000000004",
+      "name": "HTTP: Slack DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 240],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "REPLACE_WITH_SLACK_CRED_ID",
+          "name": "{{credential:slack_r360}}"
+        }
+      },
+      "notes": "unfurl_links=false to prevent Slack expanding every URL. Use Slack <URL|Label> link syntax (NOT Markdown)."
+    },
+    {
+      "parameters": {
+        "fromEmail": "marketing@pointofrental.com",
+        "toEmail": "={{ $json.NotificationEmail }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.body_html }}",
+        "options": {}
+      },
+      "id": "noty-0005-4000-8000-000000000005",
+      "name": "Gmail SMTP: Send email notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [900, 400],
+      "credentials": {
+        "smtp": {
+          "id": "REPLACE_WITH_SMTP_CRED_ID",
+          "name": "{{credential:gmail_smtp_marketing}}"
+        }
+      },
+      "notes": "From: marketing@pointofrental.com. To: NotificationEmail (comma-list from Assignment Owner). Split on ',' inside Set node before this if Gmail SMTP rejects."
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": { "main": [[{ "node": "SF Find: User.Slack_ID__c by AssignmentID", "type": "main", "index": 0 }]] },
+    "SF Find: User.Slack_ID__c by AssignmentID": { "main": [[{ "node": "Switch: 5 templates", "type": "main", "index": 0 }]] },
+    "Switch: 5 templates": { "main": [
+      [{ "node": "HTTP: Slack DM", "type": "main", "index": 0 }, { "node": "Gmail SMTP: Send email notification", "type": "main", "index": 0 }],
+      [{ "node": "HTTP: Slack DM", "type": "main", "index": 0 }, { "node": "Gmail SMTP: Send email notification", "type": "main", "index": 0 }],
+      [{ "node": "HTTP: Slack DM", "type": "main", "index": 0 }, { "node": "Gmail SMTP: Send email notification", "type": "main", "index": 0 }],
+      [{ "node": "HTTP: Slack DM", "type": "main", "index": 0 }, { "node": "Gmail SMTP: Send email notification", "type": "main", "index": 0 }],
+      [{ "node": "HTTP: Slack DM", "type": "main", "index": 0 }, { "node": "Gmail SMTP: Send email notification", "type": "main", "index": 0 }]
+    ] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": {
+    "spec": "migration-plans/r360-n8n-build-plan.md §7 + §8.7",
+    "todo": [
+      "Author 5 template strings (lead_created, lead_updated, contact_AM, contact_SDR, pre_discovery) in Set nodes upstream of HTTP/SMTP",
+      "Add fixed Slack DM recipients U02HR1T6PBK + U01B0955NEQ for Pre-Discovery template (§8.7)",
+      "Handle missing Slack_ID__c gracefully — branch to email-only path"
+    ]
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "name": "R360 Cron: WPForms DB Reconciliation (every 10 min)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/10 * * * *" }] }
+      },
+      "id": "wprc-0001-4000-8000-000000000001",
+      "name": "Schedule: every 10 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT entry_id, form_id, fields, date_created\nFROM wp_wpforms_entries\nWHERE form_id IN (29710, 29712, 29714, 33076)\n  AND date_created >= NOW() - INTERVAL 30 MINUTE\nORDER BY date_created ASC",
+        "options": {}
+      },
+      "id": "wprc-0002-4000-8000-000000000002",
+      "name": "MySQL: Pull last-30-min entries",
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.4,
+      "position": [460, 320],
+      "credentials": {
+        "mySql": {
+          "id": "REPLACE_WITH_WP_DB_CRED_ID",
+          "name": "{{credential:wp_db_readonly}}"
+        }
+      },
+      "notes": "Read-only DB credential. 30-min lookback (3× the 10-min interval) handles overlap. Replaces unverified WPForms REST endpoint per §2.1."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compute idempotency hash per row + check Lead_Inbound_Log__c\nconst crypto = require('crypto');\nreturn $input.all().map(item => {\n  const row = item.json;\n  const formId = String(row.form_id);\n  const entryId = String(row.entry_id);\n  const hash = crypto.createHash('sha256').update(`${formId}:${entryId}`).digest('hex');\n  return {\n    json: {\n      ...row,\n      Idempotency_Hash__c: hash,\n      source_form: `wpform_${formId}`,\n      raw_fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields\n    }\n  };\n});"
+      },
+      "id": "wprc-0003-4000-8000-000000000003",
+      "name": "Code: Hash + parse fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "options": {}
+      },
+      "id": "wprc-0004-4000-8000-000000000004",
+      "name": "SF Find: existing Lead_Inbound_Log__c (by hash)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "REPLACE_WITH_SF_CRED_ID",
+          "name": "{{credential:salesforce_uat}}"
+        }
+      },
+      "notes": "SOQL: SELECT Id, Status__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c = :hash LIMIT 1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.Id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "empty" }
+            }
+          ]
+        }
+      },
+      "id": "wprc-0005-4000-8000-000000000005",
+      "name": "IF: missing in Inbound_Log → replay",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 320]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/r360/{{ $json.source_form === 'wpform_29710' ? 'contact-form' : ($json.source_form === 'wpform_29712' ? 'watch-video' : ($json.source_form === 'wpform_29714' ? 'get-demo' : 'faq')) }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"entry_id\": \"{{ $json.entry_id }}\", \"form_id\": \"{{ $json.form_id }}\", \"fields\": {{ JSON.stringify($json.raw_fields) }}, \"_replay\": true }",
+        "options": {}
+      },
+      "id": "wprc-0006-4000-8000-000000000006",
+      "name": "HTTP: Replay to receiver",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 240],
+      "notes": "Routes back into the matching n8n receiver. Receiver computes the same hash, sees existing Inbound_Log row (if any), upserts to 'replayed' status. Real-time delivery wins; replay is safety."
+    }
+  ],
+  "connections": {
+    "Schedule: every 10 min": { "main": [[{ "node": "MySQL: Pull last-30-min entries", "type": "main", "index": 0 }]] },
+    "MySQL: Pull last-30-min entries": { "main": [[{ "node": "Code: Hash + parse fields", "type": "main", "index": 0 }]] },
+    "Code: Hash + parse fields": { "main": [[{ "node": "SF Find: existing Lead_Inbound_Log__c (by hash)", "type": "main", "index": 0 }]] },
+    "SF Find: existing Lead_Inbound_Log__c (by hash)": { "main": [[{ "node": "IF: missing in Inbound_Log → replay", "type": "main", "index": 0 }]] },
+    "IF: missing in Inbound_Log → replay": { "main": [[{ "node": "HTTP: Replay to receiver", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §13.2 (Reconciliation pattern) + §2.1" }
+}

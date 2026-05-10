@@ -1,0 +1,37 @@
+{
+  "name": "R360 Sub: Normalize Payload (Text Formatter FN)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "norm-0001-4000-8000-000000000001",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "jsCode": "// R360 Text Formatter FN — port of Zap node 316797556 (verbatim)\n// See r360-n8n-build-plan.md §6.1\n\nconst inputData = $input.first().json;\n\nfunction pick(obj, keys, fallback = '') {\n  for (const k of keys) {\n    if (Object.prototype.hasOwnProperty.call(obj, k)) {\n      const v = obj[k];\n      if (v !== undefined && v !== null && String(v).trim() !== '') return v;\n    }\n  }\n  return fallback;\n}\n\nconst rawFirstName = pick(inputData, ['firstNameInput','FirstName','firstName','First Name'], '');\nconst rawLastName  = pick(inputData, ['lastNameInput','lastName','LastName','last_name','Last Name'], '');\nconst rawCompany   = pick(inputData, ['companyNameInput','companyName','CompanyName','company','Company Name'], '');\nconst rawRegion    = pick(inputData, ['regionInput','region','Region','YourRegion'], '');\nconst rawEmail     = pick(inputData, ['emailInput','Business Email','businessEmail','BusinessEmail','email','Email'], '');\nconst rawSource    = pick(inputData, ['source','utmSource','utm_source','UTM Source','Page UTM Source'], '');\nconst rawPhone     = pick(inputData, ['phone','PhoneNumber','Phone'], '');\nconst rawIndustry  = pick(inputData, ['industry','YourIndustry','Industry'], '');\nconst rawCRO1      = pick(inputData, ['CRO1','cro1'], '');\nconst rawCRO2      = pick(inputData, ['CRO2','cro2'], '');\nconst roiCalc      = inputData.roiCalculator || inputData.ROIcalculator || '';\nconst rawUtmCampaign = pick(inputData, ['utmCampaign','UTM Campaign'], '');\nconst rawUtmTerm     = pick(inputData, ['utmTerm','UTM Term'], '');\nconst rawUtmContent  = pick(inputData, ['utmContent','UTM Content'], '');\nconst rawUtmMedium   = pick(inputData, ['utmMedium','UTM Medium'], '');\n\n// bot-only extras pass-through\nconst note              = pick(inputData, ['note'], '');\nconst requestedTime     = pick(inputData, ['requestedTime'], '');\nconst requestedTimeZone = pick(inputData, ['requestedTimeZone'], '');\nconst MQLdate           = pick(inputData, ['MQLdate'], '');\n\nfunction getLeadSource(source) {\n  const s = String(source).toLowerCase();\n  if (s.includes('adwords') || s.includes('google') || s.includes('bing')) return 'AdWords';\n  if (s.includes('natural') || s.includes('offline')) return 'Marketing: Organic';\n  if (s.includes('email')) return 'Email marketing';\n  return 'Marketing: Organic';\n}\n\nfunction getBillingCountry(region) {\n  switch (region) {\n    case 'North America':\n    case 'South America': return 'United States';\n    case 'Europe':        return 'United Kingdom';\n    case 'Australia & New Zealand': return 'Australia';\n    default: return 'United States';\n  }\n}\n\nfunction stringFormatter(s) {\n  if (!s) return '';\n  return String(s)\n    .replace(/Á|Ä|À|Ã|Â/gi,'A').replace(/É|Ë|È|Ê/gi,'E')\n    .replace(/Í|Ï|Ì|Î/gi,'I').replace(/Ó|Ö|Ò|Õ|Ô/gi,'O')\n    .replace(/Ú|Ü|Ù|Û/gi,'U').replace(/ñ/gi,'n').replace(/ç/gi,'c')\n    .replace(/[^a-zA-Z0-9@.\\-_ \\n]/g,'');\n}\n\nconst emailFormatter = (e) => e ? String(e).replace(/[^a-zA-Z0-9@.\\-_]/g,'') : '';\nconst extractDomain  = (e) => { const x = String(e||''); return x.includes('@') ? x.substring(x.lastIndexOf('@')+1) : ''; };\n\nlet fName = stringFormatter(rawFirstName);\nlet lName = stringFormatter(rawLastName);\nlet cName = stringFormatter(rawCompany);\nlet email = rawEmail ? emailFormatter(rawEmail) : 'NoEmailProvided@invalid.email';\nif (!fName.trim()) fName = 'NoFirstNameProvided';\nif (!lName.trim()) lName = 'NoLastNameProvided';\nif (!cName.trim()) cName = 'NoCompanyNameProvided';\n\nconst emailDomain    = extractDomain(email);\nconst leadSource     = rawSource ? getLeadSource(rawSource) : 'Marketing: Organic';\nconst billingCountry = getBillingCountry(rawRegion);\n\nconst getBaseUrl = (url) => {\n  if (!url) return '';\n  try { const u = new URL(url); return `${u.origin}${u.pathname}`; }\n  catch { return String(url).split(/[?#]/)[0]; }\n};\nconst landingKey = inputData.LandingPage !== undefined ? 'LandingPage'\n                  : inputData.landingPage !== undefined ? 'landingPage'\n                  : inputData['Landing Page'] !== undefined ? 'Landing Page' : null;\nconst cleanedLanding = landingKey ? getBaseUrl(inputData[landingKey]) : '';\n\nreturn [{ json: {\n  formattedFirst: fName,\n  formattedLast: lName,\n  formattedCompany: cName,\n  formattedEmail: email,\n  emailDomain,\n  phone: rawPhone,\n  formattedIndustry: rawIndustry,\n  roiCalculator: roiCalc,\n  utmsource: leadSource,\n  utmCampaign: rawUtmCampaign,\n  utmTerm: rawUtmTerm,\n  utmContent: rawUtmContent,\n  utmMedium: rawUtmMedium,\n  formattedRegion: rawRegion,\n  formattedCountry: billingCountry,\n  CRO1: rawCRO1,\n  CRO2: rawCRO2,\n  note,\n  requestedTime,\n  requestedTimeZone,\n  MQLdate,\n  ...(landingKey ? { [landingKey]: cleanedLanding } : {})\n} }];"
+      },
+      "id": "norm-0002-4000-8000-000000000002",
+      "name": "Code: Text Formatter FN",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 320],
+      "notes": "Verbatim port of Zap node 316797556 — diacritics strip, UTM→LeadSource, region→country mapping, public/corporate domain detection upstream of Create Queries."
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [[{ "node": "Code: Text Formatter FN", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": {
+    "instanceId": "REPLACE_AT_IMPORT",
+    "spec": "migration-plans/r360-n8n-build-plan.md §6.1",
+    "todo": "verify pick() handles bot extras (note/requestedTime/requestedTimeZone/MQLdate) — see §9.2"
+  }
+}

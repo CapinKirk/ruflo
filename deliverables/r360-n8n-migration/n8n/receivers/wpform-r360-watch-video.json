@@ -1,0 +1,84 @@
+{
+  "name": "R360 Receiver: WPForm 29712 (Watch Video) + 15-min Wait",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "r360/watch-video",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "rc29712-0001-4000-8000-000000000001",
+      "name": "Webhook: /r360/watch-video",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "id": "rc29712-0002-4000-8000-000000000002",
+      "name": "Wait: 15 min (configurable)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [460, 320],
+      "notes": "Mirrors Zap 316698017's 15-min delay (Pardot enrichment lag). Marked configurable per §4.2 — toggle off without redeploy if Marketing confirms drop."
+    },
+    {
+      "parameters": {
+        "jsCode": "// WPForm 29712 — email + click IDs ONLY (no name/company/phone)\nconst raw = $json.body || $json;\nconst crypto = require('crypto');\nconst entryId = String(raw.entry_id || raw.entry?.entry_id || raw.id || '');\nconst hash = crypto.createHash('sha256').update(`29712:${entryId}`).digest('hex');\nreturn [{ json: {\n  source: 'wpform_29712',\n  WPFormName: 'WatchVideo',\n  wpformsEntryId: entryId,\n  Idempotency_Hash__c: hash,\n  Received_At__c: new Date().toISOString(),\n  Payload__c: JSON.stringify(raw).substring(0, 32000),\n  BusinessEmail: raw.fields?.['7']  || raw.field7  || '',\n  // no name/company/phone/UTMs — see build plan §4.1 critical observation\n  gclid:   raw.fields?.['10'] || raw.field10 || '',\n  fbc:     raw.fields?.['11'] || raw.field11 || '',\n  fbp:     raw.fields?.['12'] || raw.field12 || '',\n  msclkid: raw.fields?.['13'] || raw.field13 || ''\n} }];"
+      },
+      "id": "rc29712-0003-4000-8000-000000000003",
+      "name": "Code: Map WPForm 29712 fields (email-only)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320]
+    },
+    {
+      "parameters": {
+        "workflowId": "{{ $env.WORKFLOW_ID_R360_RESOLVER }}",
+        "options": {}
+      },
+      "id": "rc29712-0004-4000-8000-000000000004",
+      "name": "Execute: sub-r360-resolver",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [900, 320]
+    },
+    {
+      "parameters": {
+        "workflowId": "{{ $env.WORKFLOW_ID_R360_WRITER }}",
+        "options": {}
+      },
+      "id": "rc29712-0005-4000-8000-000000000005",
+      "name": "Execute: sub-r360-writer",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1120, 320]
+    },
+    {
+      "parameters": {
+        "workflowId": "{{ $env.WORKFLOW_ID_NOTIFY }}",
+        "options": {}
+      },
+      "id": "rc29712-0006-4000-8000-000000000006",
+      "name": "Execute: sub-notify",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [1340, 320]
+    }
+  ],
+  "connections": {
+    "Webhook: /r360/watch-video": { "main": [[{ "node": "Wait: 15 min (configurable)", "type": "main", "index": 0 }]] },
+    "Wait: 15 min (configurable)": { "main": [[{ "node": "Code: Map WPForm 29712 fields (email-only)", "type": "main", "index": 0 }]] },
+    "Code: Map WPForm 29712 fields (email-only)": { "main": [[{ "node": "Execute: sub-r360-resolver", "type": "main", "index": 0 }]] },
+    "Execute: sub-r360-resolver": { "main": [[{ "node": "Execute: sub-r360-writer", "type": "main", "index": 0 }]] },
+    "Execute: sub-r360-writer": { "main": [[{ "node": "Execute: sub-notify", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §3 + §4.1 critical-observation + §4.2", "form_id": "29712", "todo": "Resolver must use email-only matching (no LIKE LastName) when WPFormName ∈ {WatchVideo, GetADemo}" }
+}

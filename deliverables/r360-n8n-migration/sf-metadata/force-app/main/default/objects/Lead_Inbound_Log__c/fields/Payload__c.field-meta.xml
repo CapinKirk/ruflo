@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Payload__c</fullName>
+    <description>Raw JSON of the inbound webhook payload for forensics. Captured before normalization. Truncate to 32,768 chars if oversize (rare for WPForms; possible for bot transcripts).</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Raw inbound JSON payload as received. For audit / replay only.</inlineHelpText>
+    <label>Payload</label>
+    <length>32768</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

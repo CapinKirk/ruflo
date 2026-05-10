@@ -1,0 +1,53 @@
+{
+  "name": "R360 Receiver: WPForm 33076 (FAQ — Google Sheets only, no SF)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "r360/faq",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "rcfaq-0001-4000-8000-000000000001",
+      "name": "Webhook: /r360/faq",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 320]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "REPLACE_WITH_FAQ_SHEET_ID",
+        "sheetName": "FAQ Submissions",
+        "fieldsUi": {
+          "values": [
+            { "fieldId": "Timestamp",  "fieldValue": "={{ $now.toISO() }}" },
+            { "fieldId": "Email",       "fieldValue": "={{ $json.body.fields?.['7'] || $json.body.field7 || '' }}" },
+            { "fieldId": "Question",    "fieldValue": "={{ $json.body.fields?.['8'] || $json.body.field8 || '' }}" },
+            { "fieldId": "Source",      "fieldValue": "wpform_33076" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rcfaq-0002-4000-8000-000000000002",
+      "name": "Google Sheets: Append FAQ row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [460, 320],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_GSHEETS_CRED_ID",
+          "name": "{{credential:google_sheets_marketing}}"
+        }
+      },
+      "notes": "FAQ form is non-SF, low priority. Confirm sheet ID + column map with Marketing during Day 1 readiness."
+    }
+  ],
+  "connections": {
+    "Webhook: /r360/faq": { "main": [[{ "node": "Google Sheets: Append FAQ row", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false,
+  "versionId": "0.1.0-skeleton",
+  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §1 row 7 (Phase 1C, low priority)", "form_id": "33076" }
+}

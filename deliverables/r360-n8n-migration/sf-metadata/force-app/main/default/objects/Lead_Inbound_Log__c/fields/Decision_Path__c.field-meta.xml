@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Decision_Path__c</fullName>
+    <description>Which branch of the R360 resolver fired for this submission. Maps to the §5.2 4-path tree + ReQuery sub-tree (A4a/A4b/A4c-i/A4c-ii/A4d) + skip path X.</description>
+    <externalId>false</externalId>
+    <label>Decision Path</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>true</sorted>
+            <value>
+                <fullName>A4a</fullName>
+                <default>false</default>
+                <label>A4a — Lead found via requery</label>
+            </value>
+            <value>
+                <fullName>A4b</fullName>
+                <default>false</default>
+                <label>A4b — Create Lead</label>
+            </value>
+            <value>
+                <fullName>A4c-i</fullName>
+                <default>false</default>
+                <label>A4c-i — Contact found via requery (Prospect)</label>
+            </value>
+            <value>
+                <fullName>A4c-ii</fullName>
+                <default>false</default>
+                <label>A4c-ii — Contact found via requery (Customer)</label>
+            </value>
+            <value>
+                <fullName>A4d</fullName>
+                <default>false</default>
+                <label>A4d — End for Short Form (terminal)</label>
+            </value>
+            <value>
+                <fullName>B</fullName>
+                <default>false</default>
+                <label>B — Update Lead</label>
+            </value>
+            <value>
+                <fullName>C</fullName>
+                <default>false</default>
+                <label>C — Update Contact (Customer / AM)</label>
+            </value>
+            <value>
+                <fullName>D</fullName>
+                <default>false</default>
+                <label>D — Update Contact (Prospect / SDR + Case)</label>
+            </value>
+            <value>
+                <fullName>X</fullName>
+                <default>false</default>
+                <label>X — Skipped (no-email / contactform-no-record)</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
