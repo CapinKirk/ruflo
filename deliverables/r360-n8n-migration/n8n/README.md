@@ -110,3 +110,28 @@ grep -rE 'sk-|xoxb-|AIza|0050L0|0014u00' .  || echo "No embedded creds — OK"
 - Pre-cutover runbook: `../runbooks/pre-cutover-validation.md` — Day 0 readiness gate
 - Parallel-run runbook: `../runbooks/parallel-run-validation.md` — 14-day prod parallel-run protocol
 - SF metadata: `../sf-metadata/` — Lead_Inbound_Log__c object + 12 fields + perm set
+
+---
+
+## Live state (2026-05-10) — drift from repo to fix later
+
+**Repo files diverged from live n8n.** When importing fresh, apply these patches that exist in the live workflows but NOT in the repo skeleton JSONs:
+
+1. **SF customObject node parameter format** — repo skeletons use the wrong `additionalFields.fields.fieldsValues` structure. The correct n8n format is `customFieldsUi.customFieldsValues`. Verified by sampling existing workflows (Helpdesk Routed to Asana, WI-22446 Comment-DevOps-to-Salesforce).
+2. **SF Update Lead_Inbound_Log__c (final state) and SF: Update Lead_Inbound_Log__c (failed)** — replaced with HTTP PATCH against `https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/{Id|Idempotency_Hash__c/{value}}`. n8n's customObject node doesn't expose upsert-by-external-id cleanly; HTTP REST is more reliable.
+3. **Webhook receiver responseMode** — repo skeletons set `responseMode: "lastNode"`, which returns HTTP 500 if downstream branches end empty. Live workflows use `"onReceived"` for fire-and-forget receipts (Contact Form, Watch Video, Get a Demo, FAQ) and `"responseNode"` for the bot + Pre-Discovery (which need an explicit Respond to Webhook node).
+4. **Pre-Discovery Apollo nodes** — `HTTP: Apollo enrich` and `SF Update Contact: MobilePhone (post-Apollo)` are `disabled: true` in the live workflow per v1 design decision.
+5. **Slack channel IDs hardcoded** — env vars `SLACK_CHANNEL_R360_*` substituted with `C0AHXC6MXH6` (daily), `C02DJ9UVAET` (errors), `C06T48V2A0J` (parallel-run).
+6. **Sub-workflow IDs** — env vars `WORKFLOW_ID_*` substituted with the actual created workflow IDs from `/tmp/r360-n8n-push-manifest.json`.
+
+**To re-sync repo from live:** run `curl -H "X-N8N-API-KEY: $KEY" "$API/workflows/$WF_ID"` for each, save to the corresponding file path, strip the runtime metadata fields (`updatedAt`, `createdAt`, `versionId`, etc.). A formal sync script is a v2 item.
+
+## Smoke-test verification (2026-05-10)
+
+End-to-end verified against `por-uat`:
+- POST to `https://n8nweb.ec-ops.org/webhook/r360/contact-form` returns HTTP 200 in <400ms
+- Lead_Inbound_Log__c row created with all picklist values populated correctly: Source__c=`wpform_29710`, Status__c=`received`
+- Idempotency proven: re-POSTing the same `entry_id` keeps the row count at 1 (upsert by SHA-256(form_id + ":" + entry_id))
+- Distinct entries get distinct hashes and distinct rows
+
+**Known gap:** the resolver's Switch outputs (paths B/C/D and the ReQuery 5-path Switch) go to empty branches in the skeleton, so the writer doesn't actually receive the resolver's decision and Status__c stays at `received` indefinitely. Wiring the resolver-to-writer hand-off requires explicit Set nodes that propagate `decisionPath`, `leadId`, `contactId`, `accountStatus`, etc. to the writer's expected input shape. Tracked as a v1.1 follow-up.
