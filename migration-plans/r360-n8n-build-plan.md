@@ -1356,7 +1356,7 @@ Required fields: `Idempotency_Hash__c` (External ID Unique, indexed), `External_
 
 ### 11.2 WPForms Reconciliation cron — `cron/r360-wpforms-reconciliation.json`
 
-> **Status (2026-05-10): DEFERRED from v1.** Per user decision, v1 relies entirely on real-time WPForms-Webhook delivery. The 10-minute MySQL reconciliation cron is built (`cron/r360-wpforms-reconciliation.json`) but stays inactive. WordPress DB credentials are no longer Day-0 blockers. **Trade-off:** if a WPForms webhook drops a payload, we lose that lead silently. The dead-letter replay cron (5-min) still covers transient SF write failures, just not silent webhook misses. Activate this cron in v2 as the safety net.
+> **Status (2026-05-10, revised): IN SCOPE for v1.** Per Kirk, after considering that real-time WPForms webhooks alone can't prove 100% lead capture, the 10-minute MySQL reconciliation cron is back IN-SCOPE for v1. WordPress DB read-only credentials become a Day-0 blocker again. **Why:** without DB access, the only way to detect a dropped webhook is sales-team feedback — slow and unreliable. With DB access, n8n catches and auto-replays any missed entry within 10 minutes via the existing `cron/r360-wpforms-reconciliation.json` workflow. The cron is already built; just needs the credential bound + activation.
 
 **Architecture correction (replaces prior REST API approach):** runs every 10 minutes, queries WordPress DB directly via the `wp_wpforms_entries` table.
 

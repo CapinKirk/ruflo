@@ -96,6 +96,22 @@ To verify: in WP Admin → WPForms → form → "Field IDs" plugin or via the WP
 
 ---
 
+### D. WordPress MySQL read-only credential
+
+**Why:** real-time webhooks (§A) deliver leads. The DB read-only credential is the *audit* that proves no leads were dropped. n8n queries `wp_wpforms_entries` every 10 minutes, compares against the SF `Lead_Inbound_Log__c` table, and auto-replays any missing entries. Without this, we can't promise 100% lead capture.
+
+**What we need:**
+- DB host (e.g., `wp-r360-prod-db.cluster-xyz.us-east-1.rds.amazonaws.com`)
+- DB name (typically `wp_r360` or similar)
+- A read-only MySQL user with `SELECT` on `wp_wpforms_entries` only — NOT a superuser, NOT write access. Recommend creating a dedicated `n8n_readonly` user.
+- Network access from n8n's IP (`n8nweb.ec-ops.org`'s outbound) to the DB host on port 3306. If the DB is in a private VPC, allowlist that IP.
+
+**Scope:** read-only access to ONE table (`wp_wpforms_entries`). Nothing else.
+
+**Where the credential goes:** RevOps adds it as an n8n credential (type: MySQL) — Marketing only needs to share the connection params, not configure n8n.
+
+---
+
 ## What's deliberately NOT in this scope
 
 | Item | Why not your problem |
@@ -103,7 +119,7 @@ To verify: in WP Admin → WPForms → form → "Field IDs" plugin or via the WP
 | Salesforce metadata deploy | RevOps deploys to por-uat (validated, staged for prod) |
 | n8n workflow imports | RevOps imports + activates the 16 workflows |
 | Credentials in n8n (SF, Slack, Perplexity, OpenAI, Anthropic) | All already in n8n, reusing existing credentials |
-| WP DB MySQL read-only access | **Skipped** — we're relying entirely on real-time webhooks (item A above). No reconciliation cron in v1. |
+| WP DB MySQL read-only access | **NOW IN SCOPE — see §D above.** RevOps still owns the n8n credential setup, but Marketing/web team owns the DB user provisioning. |
 | Apollo enrichment | Skipped from v1 — Pre-Discovery brief still works with Perplexity-only |
 | WHO sends Pre-Discovery webhooks | Salesforce Flow on Opportunity stage change (RevOps-built, separate workstream) |
 
@@ -113,6 +129,7 @@ To verify: in WP Admin → WPForms → form → "Field IDs" plugin or via the WP
 
 | Day | Action | Owner |
 |---|---|---|
+| Day -7 | Marketing/web team provisions DB read-only credential (item D) | Marketing/Web |
 | Day -7 | Marketing reads this doc, confirms WPForms addon is active, asks RevOps any open questions | Marketing |
 | Day -5 | Marketing configures all 4 webhooks (item A) | Marketing |
 | Day -5 | Marketing confirms RevTech Bot in `#sf-wins` (`C06T48V2A0J`) — 30-second check | Marketing |
