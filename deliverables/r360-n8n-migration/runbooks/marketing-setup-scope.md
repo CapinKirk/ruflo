@@ -54,23 +54,19 @@ We're migrating R360 lead capture off Zapier to n8n. RevOps owns the n8n workflo
 
 **Reference docs:** [WPForms Webhooks addon documentation](https://wpforms.com/docs/install-and-use-the-webhooks-addon/)
 
-### B. Provision 3 Slack channels and invite the n8n bot
+### B. Slack channels — REUSING existing channels (no new channels needed)
 
-| Channel | Purpose | Audience | Lifecycle |
-|---|---|---|---|
-| `#r360-leads-daily` | Daily 8am Central — yesterday's lead volume by form + decision path | Sales Ops, Marketing Ops, RevOps, SDR Manager, AM Manager | Permanent |
-| `#r360-leads-errors` | Real-time error alerts when n8n fails to write a lead to Salesforce | RevOps, SF Admin, on-call | Permanent |
-| `#r360-leads-parallel-run` | Hourly Zapier-vs-n8n reconciliation summary during the 14-day cutover window; SDR/AE feedback channel for "did we miss this lead?" | Above + SDR + AE team leads | Temporary — archive after T+30 days post-cutover |
+**Decision (2026-05-10):** Per Kirk, don't create new R360-specific channels. Reuse existing channels that already host similar n8n traffic. RevTech Bot is already invited to all three.
 
-**Setup (per channel):**
+| Use case | Channel | Why this one |
+|---|---|---|
+| Daily R360 lead report (8am Central) | **`C0AHXC6MXH6`** — n8n operational summaries | Already receives ADAT ETL Daily Digest + n8n global error handler posts. R360 daily lead summary fits the same pattern. |
+| n8n → SF write failures | **`C02DJ9UVAET`** — `#sf-error-alerts` | Dedicated SF-error channel. Already receives posts from `Sf-Errors-Alert Notification`, `Referral Form Processor`, TrayIO heartbeat, and `R360 Location Rollup`. |
+| Parallel-run + SDR/AE missed-lead feedback | **`C06T48V2A0J`** — `#sf-wins` | Sales-team-facing channel. SDRs already monitor it for closed-won deal posts and `Weekly Leaderboards`. R360 missed-lead triage threads land where the team is already looking. |
 
-1. Create the channel as **public** (so anyone in the org can self-add later if needed)
-2. Topic: short description of the channel's purpose (lift from "Purpose" column above)
-3. Invite the n8n bot: `@RevTech Bot` (Slack credential ID `skn3Ct9zjw3Vt3Pn` in n8n — already authenticated)
-4. Invite the audience listed above
-5. Pin a single message: "This channel is automated by the R360 n8n migration. RevOps owns operational responses. See `migration-plans/r360-n8n-build-plan.md` in the Ruflo repo for context."
+These channel IDs are baked into the n8n workflows directly — no env-var configuration step needed.
 
-**Bot identity:** "RevTech Bot" is the same Slack app that runs 43+ existing internal automations. No separate app needed. If `RevTech Bot` is missing from your workspace's app catalog, escalate to the Slack workspace admin.
+**Marketing's only Slack action:** confirm RevTech Bot is invited to `C06T48V2A0J` (`#sf-wins`) — it should be already, but worth a 30-second check by Marketing Ops since R360 missed-lead triage will start posting there during the parallel-run window.
 
 ### C. (Optional) Update WPForms field IDs if any have shifted since 2026-04
 
@@ -119,7 +115,7 @@ To verify: in WP Admin → WPForms → form → "Field IDs" plugin or via the WP
 |---|---|---|
 | Day -7 | Marketing reads this doc, confirms WPForms addon is active, asks RevOps any open questions | Marketing |
 | Day -5 | Marketing configures all 4 webhooks (item A) | Marketing |
-| Day -5 | Marketing creates 3 Slack channels + invites bot (item B) | Marketing |
+| Day -5 | Marketing confirms RevTech Bot in `#sf-wins` (`C06T48V2A0J`) — 30-second check | Marketing |
 | Day -3 | Marketing fires 4 test submissions (one per form), confirms 200 OK in WPForms | Marketing |
 | Day -3 | RevOps confirms test entries in n8n + `Lead_Inbound_Log__c` | RevOps |
 | Day -1 | Day 0 readiness gate (RevOps signs off) | RevOps |
