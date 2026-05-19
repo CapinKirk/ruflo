@@ -1,26 +1,44 @@
 {
+  "updatedAt": "2026-05-17T21:38:08.970Z",
+  "createdAt": "2026-05-10T19:09:49.262Z",
+  "id": "0j8Qfmry1SIhjC04",
   "name": "R360 Receiver: WPForm 29714 (Get a Demo) + 15-min Wait",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "r360/get-demo",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {},
+        "responseData": "firstEntryJson"
       },
       "id": "rc29714-0001-4000-8000-000000000001",
       "name": "Webhook: /r360/get-demo",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ],
+      "webhookId": "f7d2823f-9856-4731-bcca-e575c8c68508"
     },
     {
-      "parameters": { "amount": 15, "unit": "minutes" },
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
       "id": "rc29714-0002-4000-8000-000000000002",
       "name": "Wait: 15 min (configurable)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [460, 320]
+      "position": [
+        460,
+        320
+      ],
+      "webhookId": "556999bb-1cef-462d-964f-22d6b4e7e35f"
     },
     {
       "parameters": {
@@ -30,42 +48,427 @@
       "name": "Code: Map WPForm 29714 fields (email-only)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 320]
+      "position": [
+        680,
+        320
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_R360_RESOLVER }}", "options": {} },
+      "parameters": {
+        "workflowId": "B5TE8DaCbbMqZatD",
+        "options": {}
+      },
       "id": "rc29714-0004-4000-8000-000000000004",
       "name": "Execute: sub-r360-resolver",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [900, 320]
+      "position": [
+        900,
+        320
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_R360_WRITER }}", "options": {} },
+      "parameters": {
+        "workflowId": "n12VvtsMqRSUOniR",
+        "options": {}
+      },
       "id": "rc29714-0005-4000-8000-000000000005",
       "name": "Execute: sub-r360-writer",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1120, 320]
+      "position": [
+        1120,
+        320
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_NOTIFY }}", "options": {} },
+      "parameters": {
+        "workflowId": "Hx2Zi7z2rKoqKSSE",
+        "options": {}
+      },
       "id": "rc29714-0006-4000-8000-000000000006",
       "name": "Execute: sub-notify",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1340, 320]
+      "position": [
+        1340,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "sup-check",
+              "leftValue": "={{ $json.decisionPath }}",
+              "rightValue": "X_superseded_by_full_form",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "recv-if-sup-0j8Qfm",
+      "name": "IF: superseded? (skip writer)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        820,
+        300
+      ]
     }
   ],
   "connections": {
-    "Webhook: /r360/get-demo": { "main": [[{ "node": "Wait: 15 min (configurable)", "type": "main", "index": 0 }]] },
-    "Wait: 15 min (configurable)": { "main": [[{ "node": "Code: Map WPForm 29714 fields (email-only)", "type": "main", "index": 0 }]] },
-    "Code: Map WPForm 29714 fields (email-only)": { "main": [[{ "node": "Execute: sub-r360-resolver", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-resolver": { "main": [[{ "node": "Execute: sub-r360-writer", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-writer": { "main": [[{ "node": "Execute: sub-notify", "type": "main", "index": 0 }]] }
+    "Webhook: /r360/get-demo": {
+      "main": [
+        [
+          {
+            "node": "Wait: 15 min (configurable)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait: 15 min (configurable)": {
+      "main": [
+        [
+          {
+            "node": "Code: Map WPForm 29714 fields (email-only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Map WPForm 29714 fields (email-only)": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-resolver": {
+      "main": [
+        [
+          {
+            "node": "IF: superseded? (skip writer)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-writer": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: superseded? (skip writer)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Execute: sub-r360-writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §3 (note fbp/msclkid offset) + §4.2", "form_id": "29714" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+  "activeVersionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+  "versionCounter": 28,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:49.264Z",
+      "createdAt": "2026-05-10T19:09:49.264Z",
+      "role": "workflow:owner",
+      "workflowId": "0j8Qfmry1SIhjC04",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T20:57:38.015Z",
+    "createdAt": "2026-05-17T20:57:38.015Z",
+    "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+    "workflowId": "0j8Qfmry1SIhjC04",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "r360/get-demo",
+          "responseMode": "onReceived",
+          "options": {},
+          "responseData": "firstEntryJson"
+        },
+        "id": "rc29714-0001-4000-8000-000000000001",
+        "name": "Webhook: /r360/get-demo",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          320
+        ],
+        "webhookId": "f7d2823f-9856-4731-bcca-e575c8c68508"
+      },
+      {
+        "parameters": {
+          "amount": 15,
+          "unit": "minutes"
+        },
+        "id": "rc29714-0002-4000-8000-000000000002",
+        "name": "Wait: 15 min (configurable)",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          460,
+          320
+        ],
+        "webhookId": "556999bb-1cef-462d-964f-22d6b4e7e35f"
+      },
+      {
+        "parameters": {
+          "jsCode": "// WPForm 29714 — email + click IDs ONLY (note: fbp/msclkid offset by +1 vs 29712)\nconst raw = $json.body || $json;\nconst crypto = require('crypto');\nconst entryId = String(raw.entry_id || raw.entry?.entry_id || raw.id || '');\nconst hash = crypto.createHash('sha256').update(`29714:${entryId}`).digest('hex');\nreturn [{ json: {\n  source: 'wpform_29714',\n  WPFormName: 'GetADemo',\n  wpformsEntryId: entryId,\n  Idempotency_Hash__c: hash,\n  Received_At__c: new Date().toISOString(),\n  Payload__c: JSON.stringify(raw).substring(0, 32000),\n  BusinessEmail: raw.fields?.['7']  || raw.field7  || '',\n  gclid:   raw.fields?.['10'] || raw.field10 || '',\n  fbc:     raw.fields?.['11'] || raw.field11 || '',\n  fbp:     raw.fields?.['13'] || raw.field13 || '',  // +1 vs 29712\n  msclkid: raw.fields?.['14'] || raw.field14 || ''   // +1 vs 29712\n} }];"
+        },
+        "id": "rc29714-0003-4000-8000-000000000003",
+        "name": "Code: Map WPForm 29714 fields (email-only)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "B5TE8DaCbbMqZatD",
+          "options": {}
+        },
+        "id": "rc29714-0004-4000-8000-000000000004",
+        "name": "Execute: sub-r360-resolver",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          900,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "n12VvtsMqRSUOniR",
+          "options": {}
+        },
+        "id": "rc29714-0005-4000-8000-000000000005",
+        "name": "Execute: sub-r360-writer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1120,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "Hx2Zi7z2rKoqKSSE",
+          "options": {}
+        },
+        "id": "rc29714-0006-4000-8000-000000000006",
+        "name": "Execute: sub-notify",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "sup-check",
+                "leftValue": "={{ $json.decisionPath }}",
+                "rightValue": "X_superseded_by_full_form",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "recv-if-sup-0j8Qfm",
+        "name": "IF: superseded? (skip writer)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          820,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: /r360/get-demo": {
+        "main": [
+          [
+            {
+              "node": "Wait: 15 min (configurable)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait: 15 min (configurable)": {
+        "main": [
+          [
+            {
+              "node": "Code: Map WPForm 29714 fields (email-only)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Map WPForm 29714 fields (email-only)": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-r360-resolver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-resolver": {
+        "main": [
+          [
+            {
+              "node": "IF: superseded? (skip writer)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-writer": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-notify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: superseded? (skip writer)": {
+        "main": [
+          [],
+          [
+            {
+              "node": "Execute: sub-r360-writer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T20:57:38.388Z",
+        "id": 4426,
+        "workflowId": "0j8Qfmry1SIhjC04",
+        "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:28:25.217Z",
+        "id": 4435,
+        "workflowId": "0j8Qfmry1SIhjC04",
+        "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:09.299Z",
+        "id": 4447,
+        "workflowId": "0j8Qfmry1SIhjC04",
+        "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:28:24.181Z",
+        "id": 4434,
+        "workflowId": "0j8Qfmry1SIhjC04",
+        "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:08.330Z",
+        "id": 4446,
+        "workflowId": "0j8Qfmry1SIhjC04",
+        "versionId": "42658709-3c7c-4baf-bea8-2a275d6a6d57",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

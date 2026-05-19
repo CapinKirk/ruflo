@@ -1,15 +1,31 @@
 {
+  "updatedAt": "2026-05-17T17:01:54.023Z",
+  "createdAt": "2026-05-10T19:09:49.846Z",
+  "id": "4PuQj5mLlt7pXHYl",
   "name": "R360 Cron: Daily LeadOps Report (8am Central)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 13 * * *" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 13 * * *"
+            }
+          ]
+        }
       },
       "id": "dlys-0001-4000-8000-000000000001",
       "name": "Schedule: 8am Central daily",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 320],
+      "position": [
+        240,
+        320
+      ],
       "notes": "Cron in UTC: 13:00 = 8am CST / 7am CDT. Adjust seasonally OR use TZ-aware cron expression."
     },
     {
@@ -22,10 +38,13 @@
       "name": "SF SOQL: yesterday's volume by source + path",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       }
@@ -38,7 +57,10 @@
       "name": "Code: Format daily report",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 320]
+      "position": [
+        680,
+        320
+      ]
     },
     {
       "parameters": {
@@ -48,13 +70,16 @@
         "nodeCredentialType": "slackOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_DAILY }}\",\n  \"text\": $json.reportText,\n  \"unfurl_links\": false,\n  \"unfurl_media\": false\n}"
+        "jsonBody": "={\n  \"channel\": \"C0AHXC6MXH6\",\n  \"text\": $json.reportText,\n  \"unfurl_links\": false,\n  \"unfurl_media\": false\n}"
       },
       "id": "dlys-0004-4000-8000-000000000004",
       "name": "HTTP: Post to #r360-leads-daily",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 320],
+      "position": [
+        900,
+        320
+      ],
       "credentials": {
         "slackOAuth2Api": {
           "id": "skn3Ct9zjw3Vt3Pn",
@@ -64,12 +89,210 @@
     }
   ],
   "connections": {
-    "Schedule: 8am Central daily": { "main": [[{ "node": "SF SOQL: yesterday's volume by source + path", "type": "main", "index": 0 }]] },
-    "SF SOQL: yesterday's volume by source + path": { "main": [[{ "node": "Code: Format daily report", "type": "main", "index": 0 }]] },
-    "Code: Format daily report": { "main": [[{ "node": "HTTP: Post to #r360-leads-daily", "type": "main", "index": 0 }]] }
+    "Schedule: 8am Central daily": {
+      "main": [
+        [
+          {
+            "node": "SF SOQL: yesterday's volume by source + path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF SOQL: yesterday's volume by source + path": {
+      "main": [
+        [
+          {
+            "node": "Code: Format daily report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format daily report": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Post to #r360-leads-daily",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §13.4 + §17.8" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": {
+    "node:Schedule: 8am Central daily": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "4cb6e37f-69f5-484a-bbb7-ca1d2d44ada8",
+  "activeVersionId": "4cb6e37f-69f5-484a-bbb7-ca1d2d44ada8",
+  "versionCounter": 12,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:49.848Z",
+      "createdAt": "2026-05-10T19:09:49.848Z",
+      "role": "workflow:owner",
+      "workflowId": "4PuQj5mLlt7pXHYl",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T17:01:54.024Z",
+    "createdAt": "2026-05-17T17:01:54.024Z",
+    "versionId": "4cb6e37f-69f5-484a-bbb7-ca1d2d44ada8",
+    "workflowId": "4PuQj5mLlt7pXHYl",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 13 * * *"
+              }
+            ]
+          }
+        },
+        "id": "dlys-0001-4000-8000-000000000001",
+        "name": "Schedule: 8am Central daily",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          240,
+          320
+        ],
+        "notes": "Cron in UTC: 13:00 = 8am CST / 7am CDT. Adjust seasonally OR use TZ-aware cron expression."
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT Source__c source, Decision_Path__c path, COUNT(Id) count\nFROM Lead_Inbound_Log__c\nWHERE Received_At__c = LAST_N_DAYS:1\nGROUP BY Source__c, Decision_Path__c\nORDER BY Source__c, Decision_Path__c",
+          "options": {}
+        },
+        "id": "dlys-0002-4000-8000-000000000002",
+        "name": "SF SOQL: yesterday's volume by source + path",
+        "type": "n8n-nodes-base.salesforce",
+        "typeVersion": 1,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Format the §13.4 daily report\nconst rows = $input.all().map(i => i.json);\nconst total = rows.reduce((a, r) => a + Number(r.count), 0);\nconst bySrc = {};\nfor (const r of rows) {\n  if (!bySrc[r.source]) bySrc[r.source] = { total: 0, paths: {} };\n  bySrc[r.source].total += Number(r.count);\n  bySrc[r.source].paths[r.path || 'unknown'] = Number(r.count);\n}\nconst yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);\nlet text = `:bar_chart: *R360 Inbound — ${yesterday}*\\nTotal: *${total}* leads\\n\\n`;\nfor (const [src, data] of Object.entries(bySrc)) {\n  text += `• \\`${src}\\`: ${data.total}`;\n  const pathSummary = Object.entries(data.paths).map(([p, c]) => `${p}=${c}`).join(', ');\n  text += `  _(${pathSummary})_\\n`;\n}\nreturn [{ json: { reportText: text, total, byForm: bySrc } }];"
+        },
+        "id": "dlys-0003-4000-8000-000000000003",
+        "name": "Code: Format daily report",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://slack.com/api/chat.postMessage",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "slackOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"channel\": \"C0AHXC6MXH6\",\n  \"text\": $json.reportText,\n  \"unfurl_links\": false,\n  \"unfurl_media\": false\n}"
+        },
+        "id": "dlys-0004-4000-8000-000000000004",
+        "name": "HTTP: Post to #r360-leads-daily",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          320
+        ],
+        "credentials": {
+          "slackOAuth2Api": {
+            "id": "skn3Ct9zjw3Vt3Pn",
+            "name": "RevTech Bot"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Schedule: 8am Central daily": {
+        "main": [
+          [
+            {
+              "node": "SF SOQL: yesterday's volume by source + path",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF SOQL: yesterday's volume by source + path": {
+        "main": [
+          [
+            {
+              "node": "Code: Format daily report",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Format daily report": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Post to #r360-leads-daily",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T17:01:54.348Z",
+        "id": 4334,
+        "workflowId": "4PuQj5mLlt7pXHYl",
+        "versionId": "4cb6e37f-69f5-484a-bbb7-ca1d2d44ada8",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

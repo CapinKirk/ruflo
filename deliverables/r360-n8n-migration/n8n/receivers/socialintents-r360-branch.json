@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-17T21:38:11.656Z",
+  "createdAt": "2026-05-10T19:09:48.098Z",
+  "id": "O885YysqWZBZumn3",
   "name": "R360 Receiver: SocialIntents Bot R360 Path (persona detection)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -12,19 +18,28 @@
       "name": "Webhook: /r360/bot",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ],
+      "webhookId": "341a6b98-e55f-4d40-bd68-58726d555834"
     },
     {
       "parameters": {
         "respondWith": "text",
         "responseBody": "OK",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       },
       "id": "rcbot-0002-4000-8000-000000000002",
       "name": "Respond: 200 OK (immediately)",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [460, 200],
+      "position": [
+        460,
+        200
+      ],
       "notes": "SocialIntents retries on >30s — reply immediately, queue the rest."
     },
     {
@@ -35,17 +50,26 @@
       "name": "Code: Is R360? (3-location persona detection)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 400]
+      "position": [
+        460,
+        400
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.match }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
             }
           ]
         }
@@ -54,33 +78,96 @@
       "name": "IF: match === true (R360 path only)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 400],
+      "position": [
+        680,
+        400
+      ],
       "notes": "POR path (match=false) is OUT of scope for this migration — Zapier still owns it. Exit silently on false."
     },
     {
       "parameters": {
         "values": {
           "string": [
-            { "name": "source", "value": "bot_r360" },
-            { "name": "WPFormName", "value": "BotBookADemo" },
-            { "name": "wpformsEntryId", "value": "={{ $json.raw.id || $json.raw.conversation_id || $json.raw.timestamp }}" },
-            { "name": "BusinessEmail", "value": "={{ $json.raw.user_info.email }}" },
-            { "name": "FirstName", "value": "={{ $json.raw.user_info.first_name || $json.raw.user_info.firstName }}" },
-            { "name": "LastName", "value": "={{ $json.raw.user_info.last_name || $json.raw.user_info.lastName }}" },
-            { "name": "CompanyName", "value": "={{ $json.raw.user_info.company || $json.raw.domain_research.company }}" },
-            { "name": "PhoneNumber", "value": "={{ $json.raw.user_info.phone }}" },
-            { "name": "YourIndustry", "value": "={{ $json.raw.industry }}" },
-            { "name": "YourRegion", "value": "={{ $json.raw.domain_research.region }}" },
-            { "name": "utmSource", "value": "={{ $json.raw.page.utm.utm_source }}" },
-            { "name": "utmMedium", "value": "={{ $json.raw.page.utm.utm_medium }}" },
-            { "name": "utmCampaign", "value": "={{ $json.raw.page.utm.utm_campaign }}" },
-            { "name": "utmTerm", "value": "={{ $json.raw.page.utm.utm_term }}" },
-            { "name": "utmContent", "value": "={{ $json.raw.page.utm.utm_content }}" },
-            { "name": "_tracking_unverified", "value": "Tracking IDs (gclid/fbc/fbp/msclkid) not enumerated in spec_bot_book_a_demo.md Path K payload. If present in live SocialIntents payload under a different path, add: gclid/fbc/fbp/msclkid bindings here. Validate during §9.4 sniffer pre-cutover." },
-            { "name": "note", "value": "={{ $json.raw.summary }}" },
-            { "name": "requestedTime", "value": "={{ $json.raw.meeting.salesforce_datetime }}" },
-            { "name": "requestedTimeZone", "value": "={{ $json.raw.meeting.timeZone }}" },
-            { "name": "MQLdate", "value": "={{ $now.toFormat('yyyy-MM-dd') }}" }
+            {
+              "name": "source",
+              "value": "bot_r360"
+            },
+            {
+              "name": "WPFormName",
+              "value": "BotBookADemo"
+            },
+            {
+              "name": "wpformsEntryId",
+              "value": "={{ $json.raw.id || $json.raw.conversation_id || $json.raw.timestamp }}"
+            },
+            {
+              "name": "BusinessEmail",
+              "value": "={{ $json.raw.user_info.email }}"
+            },
+            {
+              "name": "FirstName",
+              "value": "={{ $json.raw.user_info.first_name || $json.raw.user_info.firstName }}"
+            },
+            {
+              "name": "LastName",
+              "value": "={{ $json.raw.user_info.last_name || $json.raw.user_info.lastName }}"
+            },
+            {
+              "name": "CompanyName",
+              "value": "={{ $json.raw.user_info.company || $json.raw.domain_research.company }}"
+            },
+            {
+              "name": "PhoneNumber",
+              "value": "={{ $json.raw.user_info.phone }}"
+            },
+            {
+              "name": "YourIndustry",
+              "value": "={{ $json.raw.industry }}"
+            },
+            {
+              "name": "YourRegion",
+              "value": "={{ $json.raw.domain_research.region }}"
+            },
+            {
+              "name": "utmSource",
+              "value": "={{ $json.raw.page.utm.utm_source }}"
+            },
+            {
+              "name": "utmMedium",
+              "value": "={{ $json.raw.page.utm.utm_medium }}"
+            },
+            {
+              "name": "utmCampaign",
+              "value": "={{ $json.raw.page.utm.utm_campaign }}"
+            },
+            {
+              "name": "utmTerm",
+              "value": "={{ $json.raw.page.utm.utm_term }}"
+            },
+            {
+              "name": "utmContent",
+              "value": "={{ $json.raw.page.utm.utm_content }}"
+            },
+            {
+              "name": "_tracking_unverified",
+              "value": "Tracking IDs (gclid/fbc/fbp/msclkid) not enumerated in spec_bot_book_a_demo.md Path K payload. If present in live SocialIntents payload under a different path, add: gclid/fbc/fbp/msclkid bindings here. Validate during §9.4 sniffer pre-cutover."
+            },
+            {
+              "name": "note",
+              "value": "={{ $json.raw.summary }}"
+            },
+            {
+              "name": "requestedTime",
+              "value": "={{ $json.raw.meeting.salesforce_datetime }}"
+            },
+            {
+              "name": "requestedTimeZone",
+              "value": "={{ $json.raw.meeting.timeZone }}"
+            },
+            {
+              "name": "MQLdate",
+              "value": "={{ $now.toFormat('yyyy-MM-dd') }}"
+            }
           ]
         },
         "options": {}
@@ -89,7 +176,10 @@
       "name": "Set: Normalize bot to WPForms shape",
       "type": "n8n-nodes-base.set",
       "typeVersion": 2,
-      "position": [900, 400],
+      "position": [
+        900,
+        400
+      ],
       "notes": "Maps SocialIntents payload → WPForms-29710-shaped object so resolver/writer chain runs unchanged. See §9.3. Region read from .region (top-level) — fixes Zap bug at .supplemental.region."
     },
     {
@@ -100,56 +190,537 @@
       "name": "Code: Hash + audit fields",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1120, 400]
+      "position": [
+        1120,
+        400
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_R360_RESOLVER }}", "options": {} },
+      "parameters": {
+        "workflowId": "B5TE8DaCbbMqZatD",
+        "options": {}
+      },
       "id": "rcbot-0007-4000-8000-000000000007",
       "name": "Execute: sub-r360-resolver",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1340, 400]
+      "position": [
+        1340,
+        400
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_R360_WRITER }}", "options": {} },
+      "parameters": {
+        "workflowId": "n12VvtsMqRSUOniR",
+        "options": {}
+      },
       "id": "rcbot-0008-4000-8000-000000000008",
       "name": "Execute: sub-r360-writer",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1560, 400]
+      "position": [
+        1560,
+        400
+      ]
     },
     {
-      "parameters": { "workflowId": "{{ $env.WORKFLOW_ID_NOTIFY }}", "options": {} },
+      "parameters": {
+        "workflowId": "Hx2Zi7z2rKoqKSSE",
+        "options": {}
+      },
       "id": "rcbot-0009-4000-8000-000000000009",
       "name": "Execute: sub-notify",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1780, 400]
+      "position": [
+        1780,
+        400
+      ]
     }
   ],
   "connections": {
-    "Webhook: /r360/bot": { "main": [[
-      { "node": "Respond: 200 OK (immediately)", "type": "main", "index": 0 },
-      { "node": "Code: Is R360? (3-location persona detection)", "type": "main", "index": 0 }
-    ]] },
-    "Code: Is R360? (3-location persona detection)": { "main": [[{ "node": "IF: match === true (R360 path only)", "type": "main", "index": 0 }]] },
-    "IF: match === true (R360 path only)": { "main": [
-      [{ "node": "Set: Normalize bot to WPForms shape", "type": "main", "index": 0 }],
-      []
-    ] },
-    "Set: Normalize bot to WPForms shape": { "main": [[{ "node": "Code: Hash + audit fields", "type": "main", "index": 0 }]] },
-    "Code: Hash + audit fields": { "main": [[{ "node": "Execute: sub-r360-resolver", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-resolver": { "main": [[{ "node": "Execute: sub-r360-writer", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-writer": { "main": [[{ "node": "Execute: sub-notify", "type": "main", "index": 0 }]] }
+    "Webhook: /r360/bot": {
+      "main": [
+        [
+          {
+            "node": "Respond: 200 OK (immediately)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code: Is R360? (3-location persona detection)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Is R360? (3-location persona detection)": {
+      "main": [
+        [
+          {
+            "node": "IF: match === true (R360 path only)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: match === true (R360 path only)": {
+      "main": [
+        [
+          {
+            "node": "Set: Normalize bot to WPForms shape",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Set: Normalize bot to WPForms shape": {
+      "main": [
+        [
+          {
+            "node": "Code: Hash + audit fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Hash + audit fields": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-resolver": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-writer": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": {
-    "spec": "migration-plans/r360-n8n-build-plan.md §9 + spec_bot_book_a_demo.md",
-    "todo": [
-      "Pre-cutover: validate 3-location detection against ≥3 real R360 + 3 real POR conversations (see runbooks/pre-cutover-validation.md §3)",
-      "GPT classification node (currently assumed in $json.GPT) — wire upstream OpenAI call if SocialIntents doesn't pre-classify"
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+  "activeVersionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+  "versionCounter": 12,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:48.100Z",
+      "createdAt": "2026-05-10T19:09:48.100Z",
+      "role": "workflow:owner",
+      "workflowId": "O885YysqWZBZumn3",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-10T19:09:48.102Z",
+    "createdAt": "2026-05-10T19:09:48.102Z",
+    "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+    "workflowId": "O885YysqWZBZumn3",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "r360/bot",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "rcbot-0001-4000-8000-000000000001",
+        "name": "Webhook: /r360/bot",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          320
+        ],
+        "webhookId": "341a6b98-e55f-4d40-bd68-58726d555834"
+      },
+      {
+        "parameters": {
+          "respondWith": "text",
+          "responseBody": "OK",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "rcbot-0002-4000-8000-000000000002",
+        "name": "Respond: 200 OK (immediately)",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          460,
+          200
+        ],
+        "notes": "SocialIntents retries on >30s — reply immediately, queue the rest."
+      },
+      {
+        "parameters": {
+          "jsCode": "// 'Is R360?' persona detection — port of Zap node 339756040, see §9.1\n// Case-sensitive String.includes() at 3 nested locations\nlet data = $json.GPT;\nif (typeof data === 'string') {\n  try { data = JSON.parse(data); }\n  catch (e) { return [{ json: { result: 'False', match: false, error: 'Invalid JSON' } }]; }\n}\nif (!data) data = $json.body || $json;\nlet isRena = false;\n\n// Location 1: top-level user_info nicknames\nconst summaryNickname = data?.user_info?.ids?.agent_nickname || data?.user_info?.agent_nickname;\nif (summaryNickname && (summaryNickname.includes('Rena Record') || summaryNickname.includes('Rosie'))) {\n  isRena = true;\n}\n\n// Location 2: items[*].nickname (loop)\nif (!isRena && Array.isArray(data.items)) {\n  isRena = data.items.some(item =>\n    item.nickname && (item.nickname.includes('Rena') || item.nickname.includes('Rosie'))\n  );\n}\n\n// Location 3: parse output_text — FLAGGED UNRELIABLE, validate live before cutover\nif (!isRena && data.output_text) {\n  try {\n    const nested = JSON.parse(data.output_text);\n    const nickname = nested?.user_info?.ids?.agent_nickname;\n    if (nickname && (nickname.includes('Rena Record') || nickname.includes('Rosie'))) {\n      isRena = true;\n    }\n  } catch (e) {\n    if (data.output_text.includes('Rena') || data.output_text.includes('Rosie')) isRena = true;\n  }\n}\n\nreturn [{ json: { ...$json, result: isRena ? 'True' : 'False', match: isRena, raw: data } }];"
+        },
+        "id": "rcbot-0003-4000-8000-000000000003",
+        "name": "Code: Is R360? (3-location persona detection)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.match }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true"
+                }
+              }
+            ]
+          }
+        },
+        "id": "rcbot-0004-4000-8000-000000000004",
+        "name": "IF: match === true (R360 path only)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          680,
+          400
+        ],
+        "notes": "POR path (match=false) is OUT of scope for this migration — Zapier still owns it. Exit silently on false."
+      },
+      {
+        "parameters": {
+          "values": {
+            "string": [
+              {
+                "name": "source",
+                "value": "bot_r360"
+              },
+              {
+                "name": "WPFormName",
+                "value": "BotBookADemo"
+              },
+              {
+                "name": "wpformsEntryId",
+                "value": "={{ $json.raw.id || $json.raw.conversation_id || $json.raw.timestamp }}"
+              },
+              {
+                "name": "BusinessEmail",
+                "value": "={{ $json.raw.user_info.email }}"
+              },
+              {
+                "name": "FirstName",
+                "value": "={{ $json.raw.user_info.first_name || $json.raw.user_info.firstName }}"
+              },
+              {
+                "name": "LastName",
+                "value": "={{ $json.raw.user_info.last_name || $json.raw.user_info.lastName }}"
+              },
+              {
+                "name": "CompanyName",
+                "value": "={{ $json.raw.user_info.company || $json.raw.domain_research.company }}"
+              },
+              {
+                "name": "PhoneNumber",
+                "value": "={{ $json.raw.user_info.phone }}"
+              },
+              {
+                "name": "YourIndustry",
+                "value": "={{ $json.raw.industry }}"
+              },
+              {
+                "name": "YourRegion",
+                "value": "={{ $json.raw.domain_research.region }}"
+              },
+              {
+                "name": "utmSource",
+                "value": "={{ $json.raw.page.utm.utm_source }}"
+              },
+              {
+                "name": "utmMedium",
+                "value": "={{ $json.raw.page.utm.utm_medium }}"
+              },
+              {
+                "name": "utmCampaign",
+                "value": "={{ $json.raw.page.utm.utm_campaign }}"
+              },
+              {
+                "name": "utmTerm",
+                "value": "={{ $json.raw.page.utm.utm_term }}"
+              },
+              {
+                "name": "utmContent",
+                "value": "={{ $json.raw.page.utm.utm_content }}"
+              },
+              {
+                "name": "_tracking_unverified",
+                "value": "Tracking IDs (gclid/fbc/fbp/msclkid) not enumerated in spec_bot_book_a_demo.md Path K payload. If present in live SocialIntents payload under a different path, add: gclid/fbc/fbp/msclkid bindings here. Validate during §9.4 sniffer pre-cutover."
+              },
+              {
+                "name": "note",
+                "value": "={{ $json.raw.summary }}"
+              },
+              {
+                "name": "requestedTime",
+                "value": "={{ $json.raw.meeting.salesforce_datetime }}"
+              },
+              {
+                "name": "requestedTimeZone",
+                "value": "={{ $json.raw.meeting.timeZone }}"
+              },
+              {
+                "name": "MQLdate",
+                "value": "={{ $now.toFormat('yyyy-MM-dd') }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "rcbot-0005-4000-8000-000000000005",
+        "name": "Set: Normalize bot to WPForms shape",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 2,
+        "position": [
+          900,
+          400
+        ],
+        "notes": "Maps SocialIntents payload → WPForms-29710-shaped object so resolver/writer chain runs unchanged. See §9.3. Region read from .region (top-level) — fixes Zap bug at .supplemental.region."
+      },
+      {
+        "parameters": {
+          "jsCode": "// Compute idempotency hash for bot conversation\nconst crypto = require('crypto');\nconst entryId = String($json.wpformsEntryId || '');\nconst hash = crypto.createHash('sha256').update(`bot_r360:${entryId}`).digest('hex');\nreturn [{ json: { ...$json, Idempotency_Hash__c: hash, Received_At__c: new Date().toISOString(), Payload__c: JSON.stringify($json).substring(0, 32000) } }];"
+        },
+        "id": "rcbot-0006-4000-8000-000000000006",
+        "name": "Code: Hash + audit fields",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "B5TE8DaCbbMqZatD",
+          "options": {}
+        },
+        "id": "rcbot-0007-4000-8000-000000000007",
+        "name": "Execute: sub-r360-resolver",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1340,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "n12VvtsMqRSUOniR",
+          "options": {}
+        },
+        "id": "rcbot-0008-4000-8000-000000000008",
+        "name": "Execute: sub-r360-writer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1560,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "Hx2Zi7z2rKoqKSSE",
+          "options": {}
+        },
+        "id": "rcbot-0009-4000-8000-000000000009",
+        "name": "Execute: sub-notify",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1780,
+          400
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: /r360/bot": {
+        "main": [
+          [
+            {
+              "node": "Respond: 200 OK (immediately)",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Code: Is R360? (3-location persona detection)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Is R360? (3-location persona detection)": {
+        "main": [
+          [
+            {
+              "node": "IF: match === true (R360 path only)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: match === true (R360 path only)": {
+        "main": [
+          [
+            {
+              "node": "Set: Normalize bot to WPForms shape",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Set: Normalize bot to WPForms shape": {
+        "main": [
+          [
+            {
+              "node": "Code: Hash + audit fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Hash + audit fields": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-r360-resolver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-resolver": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-r360-writer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-writer": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-notify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-10T19:33:46.477Z",
+        "id": 3684,
+        "workflowId": "O885YysqWZBZumn3",
+        "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-10T19:41:58.673Z",
+        "id": 3707,
+        "workflowId": "O885YysqWZBZumn3",
+        "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:12.024Z",
+        "id": 4451,
+        "workflowId": "O885YysqWZBZumn3",
+        "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-10T19:41:58.650Z",
+        "id": 3706,
+        "workflowId": "O885YysqWZBZumn3",
+        "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:10.944Z",
+        "id": 4450,
+        "workflowId": "O885YysqWZBZumn3",
+        "versionId": "f75419d7-8ff5-4fe4-bfbb-ab973615e8f6",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
     ]
   }
 }

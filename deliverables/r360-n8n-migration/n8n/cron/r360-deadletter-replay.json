@@ -1,15 +1,31 @@
 {
+  "updatedAt": "2026-05-17T17:02:04.415Z",
+  "createdAt": "2026-05-10T19:09:50.127Z",
+  "id": "PFWjTr339SmU709m",
   "name": "R360 Cron: Dead-letter Replay (every 5 min)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/5 * * * *" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/5 * * * *"
+            }
+          ]
+        }
       },
       "id": "dlrp-0001-4000-8000-000000000001",
       "name": "Schedule: every 5 min",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ]
     },
     {
       "parameters": {
@@ -22,10 +38,13 @@
       "name": "SF Find: failed rows (Retry_Count__c < 5)",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
@@ -44,23 +63,33 @@
       "name": "HTTP: Replay payload to receiver",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [680, 320]
+      "position": [
+        680,
+        320
+      ]
     },
     {
       "parameters": {
-        "operation": "update",
-        "resource": "customObject",
-        "customObject": "Lead_Inbound_Log__c",
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/{{ $json.Id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"Retry_Count__c\": ($json.Retry_Count__c || 0) + 1\n}",
         "options": {}
       },
       "id": "dlrp-0004-4000-8000-000000000004",
       "name": "SF Update: increment Retry_Count__c",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 320],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
@@ -68,12 +97,218 @@
     }
   ],
   "connections": {
-    "Schedule: every 5 min": { "main": [[{ "node": "SF Find: failed rows (Retry_Count__c < 5)", "type": "main", "index": 0 }]] },
-    "SF Find: failed rows (Retry_Count__c < 5)": { "main": [[{ "node": "HTTP: Replay payload to receiver", "type": "main", "index": 0 }]] },
-    "HTTP: Replay payload to receiver": { "main": [[{ "node": "SF Update: increment Retry_Count__c", "type": "main", "index": 0 }]] }
+    "Schedule: every 5 min": {
+      "main": [
+        [
+          {
+            "node": "SF Find: failed rows (Retry_Count__c < 5)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF Find: failed rows (Retry_Count__c < 5)": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Replay payload to receiver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Replay payload to receiver": {
+      "main": [
+        [
+          {
+            "node": "SF Update: increment Retry_Count__c",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §17.4 C-15" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": {
+    "node:Schedule: every 5 min": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "84e4d605-dd4b-4092-95e4-f537333e74be",
+  "activeVersionId": "84e4d605-dd4b-4092-95e4-f537333e74be",
+  "versionCounter": 12,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:50.129Z",
+      "createdAt": "2026-05-10T19:09:50.129Z",
+      "role": "workflow:owner",
+      "workflowId": "PFWjTr339SmU709m",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T17:02:04.416Z",
+    "createdAt": "2026-05-17T17:02:04.416Z",
+    "versionId": "84e4d605-dd4b-4092-95e4-f537333e74be",
+    "workflowId": "PFWjTr339SmU709m",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/5 * * * *"
+              }
+            ]
+          }
+        },
+        "id": "dlrp-0001-4000-8000-000000000001",
+        "name": "Schedule: every 5 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "search",
+          "resource": "customObject",
+          "customObject": "Lead_Inbound_Log__c",
+          "options": {}
+        },
+        "id": "dlrp-0002-4000-8000-000000000002",
+        "name": "SF Find: failed rows (Retry_Count__c < 5)",
+        "type": "n8n-nodes-base.salesforce",
+        "typeVersion": 1,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "SOQL: SELECT Id, Idempotency_Hash__c, Source__c, Payload__c, Retry_Count__c, External_Submission_Id__c FROM Lead_Inbound_Log__c WHERE Status__c = 'failed' AND Retry_Count__c < 5 AND Received_At__c >= LAST_N_HOURS:24 LIMIT 50"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.N8N_BASE_URL }}/webhook/r360/{{ $json.Source__c === 'wpform_29710' ? 'contact-form' : ($json.Source__c === 'wpform_29712' ? 'watch-video' : ($json.Source__c === 'wpform_29714' ? 'get-demo' : ($json.Source__c === 'bot_r360' ? 'bot' : ($json.Source__c === 'webhook_pre_discovery' ? 'pre-discovery' : 'faq')))) }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.parse($json.Payload__c) }}",
+          "options": {}
+        },
+        "id": "dlrp-0003-4000-8000-000000000003",
+        "name": "HTTP: Replay payload to receiver",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          680,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/{{ $json.Id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"Retry_Count__c\": ($json.Retry_Count__c || 0) + 1\n}",
+          "options": {}
+        },
+        "id": "dlrp-0004-4000-8000-000000000004",
+        "name": "SF Update: increment Retry_Count__c",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "Retry_Count__c++ on every replay attempt. When = 5, stop retrying and rely on sub-error-handler escalation."
+      }
+    ],
+    "connections": {
+      "Schedule: every 5 min": {
+        "main": [
+          [
+            {
+              "node": "SF Find: failed rows (Retry_Count__c < 5)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF Find: failed rows (Retry_Count__c < 5)": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Replay payload to receiver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP: Replay payload to receiver": {
+        "main": [
+          [
+            {
+              "node": "SF Update: increment Retry_Count__c",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T17:02:04.714Z",
+        "id": 4344,
+        "workflowId": "PFWjTr339SmU709m",
+        "versionId": "84e4d605-dd4b-4092-95e4-f537333e74be",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

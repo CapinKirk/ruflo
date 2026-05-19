@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Status__c</fullName>
-    <description>Lifecycle state of this inbound submission. received → written | replayed | replayed_duplicate | failed | X_skipped_no_email | X_no_record_skipped_contactform.</description>
+    <description>Lifecycle state of this inbound submission. received → written | replayed | replayed_duplicate | failed | X_skipped_no_email | X_no_record_skipped_contactform | email_only_tracked | superseded_by_full_form | X_no_record_skipped_email_only.</description>
     <externalId>false</externalId>
     <label>Status</label>
     <required>true</required>
@@ -46,6 +46,21 @@
                 <fullName>X_no_record_skipped_contactform</fullName>
                 <default>false</default>
                 <label>X_no_record_skipped_contactform</label>
+            </value>
+            <value>
+                <fullName>email_only_tracked</fullName>
+                <default>false</default>
+                <label>email_only_tracked</label>
+            </value>
+            <value>
+                <fullName>superseded_by_full_form</fullName>
+                <default>false</default>
+                <label>superseded_by_full_form</label>
+            </value>
+            <value>
+                <fullName>X_no_record_skipped_email_only</fullName>
+                <default>false</default>
+                <label>X_no_record_skipped_email_only</label>
             </value>
         </valueSetDefinition>
     </valueSet>

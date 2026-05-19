@@ -42,6 +42,21 @@
                 <default>false</default>
                 <label>WPForm 33076 (FAQ)</label>
             </value>
+            <value>
+                <fullName>wpform_64681</fullName>
+                <default>false</default>
+                <label>POR WPForm 64681 (Contact Us)</label>
+            </value>
+            <value>
+                <fullName>wpform_64783</fullName>
+                <default>false</default>
+                <label>POR WPForm 64783 (Customer Contact)</label>
+            </value>
+            <value>
+                <fullName>bot_por</fullName>
+                <default>false</default>
+                <label>SocialIntents Bot POR Path</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

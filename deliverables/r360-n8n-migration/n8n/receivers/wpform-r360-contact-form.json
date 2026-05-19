@@ -1,72 +1,302 @@
 {
+  "updatedAt": "2026-05-17T21:38:06.319Z",
+  "createdAt": "2026-05-10T19:09:48.743Z",
+  "id": "1gaDLuGmhlevlTRm",
   "name": "R360 Receiver: WPForm 29710 (Contact Form)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "r360/contact-form",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {},
+        "responseData": "firstEntryJson"
       },
       "id": "rc29710-0001-4000-8000-000000000001",
       "name": "Webhook: /r360/contact-form",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 320],
+      "position": [
+        240,
+        320
+      ],
       "webhookId": "REPLACE_AT_IMPORT"
     },
     {
       "parameters": {
-        "jsCode": "// WPForm 29710 field-id mapping → semantic names + idempotency hash\n// See build plan §3 (form 29710 column)\nconst raw = $json.body || $json;\nconst crypto = require('crypto');\nconst entryId = String(raw.entry_id || raw.entry?.entry_id || raw.id || '');\nconst hash = crypto.createHash('sha256').update(`29710:${entryId}`).digest('hex');\nreturn [{ json: {\n  source: 'wpform_29710',\n  WPFormName: 'ContactForm',\n  wpformsEntryId: entryId,\n  Idempotency_Hash__c: hash,\n  Received_At__c: new Date().toISOString(),\n  Payload__c: JSON.stringify(raw).substring(0, 32000),\n  // semantic field map\n  BusinessEmail: raw.fields?.['13'] || raw.field13 || '',\n  FirstName:     raw.fields?.['2']  || raw.field2  || '',\n  LastName:      raw.fields?.['3']  || raw.field3  || '',\n  CompanyName:   raw.fields?.['5']  || raw.field5  || '',\n  PhoneNumber:   raw.fields?.['7']  || raw.field7  || '',\n  YourIndustry:  raw.fields?.['6']  || raw.field6  || '',\n  YourRegion:    raw.fields?.['14'] || raw.field14 || '',\n  utmSource:     raw.fields?.['8']  || raw.field8  || '',\n  utmMedium:     raw.fields?.['9']  || raw.field9  || '',\n  utmCampaign:   raw.fields?.['10'] || raw.field10 || '',\n  utmTerm:       raw.fields?.['11'] || raw.field11 || '',\n  utmContent:    raw.fields?.['12'] || raw.field12 || '',\n  gclid:         raw.fields?.['17'] || raw.field17 || '',\n  fbc:           raw.fields?.['18'] || raw.field18 || '',\n  fbp:           raw.fields?.['19'] || raw.field19 || '',\n  msclkid:       raw.fields?.['20'] || raw.field20 || '',\n  ROIcalculator: raw.fields?.['26'] || raw.field26 || ''\n} }];"
+        "jsCode": "\n// WPForm 29710 — full ContactForm with WPForms meta capture\nconst raw = $json.body || $json;\nconst crypto = require('crypto');\nconst entryId = String(raw.entry_id || raw.entry?.entry_id || raw.id || '');\nconst hash = crypto.createHash('sha256').update(`29710:${entryId}`).digest('hex');\n\n// WPForms Webhooks Addon may put meta at various locations — pick defensively\nfunction pickMeta(obj, keys) {\n  for (const k of keys) {\n    const parts = k.split('.');\n    let v = obj;\n    for (const p of parts) v = v?.[p];\n    if (v !== undefined && v !== null && v !== '') return String(v);\n  }\n  return '';\n}\nconst pageUrl   = pickMeta(raw, ['meta.url','meta.page_url','url','page_url','referer_source','entry.url','entry.page_url']);\nconst referer   = pickMeta(raw, ['meta.referer','meta.referrer','referer','referrer','entry.referer','headers.referer']);\nconst userIp    = pickMeta(raw, ['meta.user_ip','meta.ip','user_ip','ip','entry.user_ip','entry.ip']);\nconst userAgent = pickMeta(raw, ['meta.user_agent','meta.useragent','user_agent','useragent','entry.user_agent']);\n\nreturn [{ json: {\n  source: 'wpform_29710',\n  WPFormName: 'ContactForm',\n  wpformsEntryId: entryId,\n  Idempotency_Hash__c: hash,\n  Received_At__c: new Date().toISOString(),\n  Payload__c: JSON.stringify(raw).substring(0, 32000),\n  BusinessEmail: raw.fields?.['13'] || raw.field13 || '',\n  FirstName:     raw.fields?.['2']  || raw.field2  || '',\n  LastName:      raw.fields?.['3']  || raw.field3  || '',\n  CompanyName:   raw.fields?.['5']  || raw.field5  || '',\n  PhoneNumber:   raw.fields?.['7']  || raw.field7  || '',\n  YourIndustry:  raw.fields?.['6']  || raw.field6  || '',\n  YourRegion:    raw.fields?.['14'] || raw.field14 || '',\n  utmSource:     raw.fields?.['8']  || raw.field8  || '',\n  utmMedium:     raw.fields?.['9']  || raw.field9  || '',\n  utmCampaign:   raw.fields?.['10'] || raw.field10 || '',\n  utmTerm:       raw.fields?.['11'] || raw.field11 || '',\n  utmContent:    raw.fields?.['12'] || raw.field12 || '',\n  gclid:         raw.fields?.['17'] || raw.field17 || '',\n  fbc:           raw.fields?.['18'] || raw.field18 || '',\n  fbp:           raw.fields?.['19'] || raw.field19 || '',\n  msclkid:       raw.fields?.['20'] || raw.field20 || '',\n  ROIcalculator: raw.fields?.['26'] || raw.field26 || '',\n  // WPForms meta-fields (Task 28)\n  pageUrl, referer, userIp, userAgent,\n} }];\n"
       },
       "id": "rc29710-0002-4000-8000-000000000002",
       "name": "Code: Map WPForm 29710 fields",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 320]
+      "position": [
+        460,
+        320
+      ]
     },
     {
       "parameters": {
-        "workflowId": "{{ $env.WORKFLOW_ID_R360_RESOLVER }}",
+        "workflowId": "B5TE8DaCbbMqZatD",
         "options": {}
       },
       "id": "rc29710-0003-4000-8000-000000000003",
       "name": "Execute: sub-r360-resolver",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [680, 320]
+      "position": [
+        680,
+        320
+      ]
     },
     {
       "parameters": {
-        "workflowId": "{{ $env.WORKFLOW_ID_R360_WRITER }}",
+        "workflowId": "n12VvtsMqRSUOniR",
         "options": {}
       },
       "id": "rc29710-0004-4000-8000-000000000004",
       "name": "Execute: sub-r360-writer",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [900, 320]
+      "position": [
+        900,
+        320
+      ]
     },
     {
       "parameters": {
-        "workflowId": "{{ $env.WORKFLOW_ID_NOTIFY }}",
+        "workflowId": "Hx2Zi7z2rKoqKSSE",
         "options": {}
       },
       "id": "rc29710-0005-4000-8000-000000000005",
       "name": "Execute: sub-notify",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1120, 320]
+      "position": [
+        1120,
+        320
+      ]
     }
   ],
   "connections": {
-    "Webhook: /r360/contact-form": { "main": [[{ "node": "Code: Map WPForm 29710 fields", "type": "main", "index": 0 }]] },
-    "Code: Map WPForm 29710 fields": { "main": [[{ "node": "Execute: sub-r360-resolver", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-resolver": { "main": [[{ "node": "Execute: sub-r360-writer", "type": "main", "index": 0 }]] },
-    "Execute: sub-r360-writer": { "main": [[{ "node": "Execute: sub-notify", "type": "main", "index": 0 }]] }
+    "Webhook: /r360/contact-form": {
+      "main": [
+        [
+          {
+            "node": "Code: Map WPForm 29710 fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Map WPForm 29710 fields": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-resolver",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-resolver": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: sub-r360-writer": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §3 + §4.2 + §5.2", "form_id": "29710" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "f49897e6-1d98-47e4-9d6c-1393e80de171",
+  "activeVersionId": "f49897e6-1d98-47e4-9d6c-1393e80de171",
+  "versionCounter": 16,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:48.745Z",
+      "createdAt": "2026-05-10T19:09:48.745Z",
+      "role": "workflow:owner",
+      "workflowId": "1gaDLuGmhlevlTRm",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T21:38:06.321Z",
+    "createdAt": "2026-05-17T21:38:06.321Z",
+    "versionId": "f49897e6-1d98-47e4-9d6c-1393e80de171",
+    "workflowId": "1gaDLuGmhlevlTRm",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "r360/contact-form",
+          "responseMode": "onReceived",
+          "options": {},
+          "responseData": "firstEntryJson"
+        },
+        "id": "rc29710-0001-4000-8000-000000000001",
+        "name": "Webhook: /r360/contact-form",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          320
+        ],
+        "webhookId": "REPLACE_AT_IMPORT"
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// WPForm 29710 — full ContactForm with WPForms meta capture\nconst raw = $json.body || $json;\nconst crypto = require('crypto');\nconst entryId = String(raw.entry_id || raw.entry?.entry_id || raw.id || '');\nconst hash = crypto.createHash('sha256').update(`29710:${entryId}`).digest('hex');\n\n// WPForms Webhooks Addon may put meta at various locations — pick defensively\nfunction pickMeta(obj, keys) {\n  for (const k of keys) {\n    const parts = k.split('.');\n    let v = obj;\n    for (const p of parts) v = v?.[p];\n    if (v !== undefined && v !== null && v !== '') return String(v);\n  }\n  return '';\n}\nconst pageUrl   = pickMeta(raw, ['meta.url','meta.page_url','url','page_url','referer_source','entry.url','entry.page_url']);\nconst referer   = pickMeta(raw, ['meta.referer','meta.referrer','referer','referrer','entry.referer','headers.referer']);\nconst userIp    = pickMeta(raw, ['meta.user_ip','meta.ip','user_ip','ip','entry.user_ip','entry.ip']);\nconst userAgent = pickMeta(raw, ['meta.user_agent','meta.useragent','user_agent','useragent','entry.user_agent']);\n\nreturn [{ json: {\n  source: 'wpform_29710',\n  WPFormName: 'ContactForm',\n  wpformsEntryId: entryId,\n  Idempotency_Hash__c: hash,\n  Received_At__c: new Date().toISOString(),\n  Payload__c: JSON.stringify(raw).substring(0, 32000),\n  BusinessEmail: raw.fields?.['13'] || raw.field13 || '',\n  FirstName:     raw.fields?.['2']  || raw.field2  || '',\n  LastName:      raw.fields?.['3']  || raw.field3  || '',\n  CompanyName:   raw.fields?.['5']  || raw.field5  || '',\n  PhoneNumber:   raw.fields?.['7']  || raw.field7  || '',\n  YourIndustry:  raw.fields?.['6']  || raw.field6  || '',\n  YourRegion:    raw.fields?.['14'] || raw.field14 || '',\n  utmSource:     raw.fields?.['8']  || raw.field8  || '',\n  utmMedium:     raw.fields?.['9']  || raw.field9  || '',\n  utmCampaign:   raw.fields?.['10'] || raw.field10 || '',\n  utmTerm:       raw.fields?.['11'] || raw.field11 || '',\n  utmContent:    raw.fields?.['12'] || raw.field12 || '',\n  gclid:         raw.fields?.['17'] || raw.field17 || '',\n  fbc:           raw.fields?.['18'] || raw.field18 || '',\n  fbp:           raw.fields?.['19'] || raw.field19 || '',\n  msclkid:       raw.fields?.['20'] || raw.field20 || '',\n  ROIcalculator: raw.fields?.['26'] || raw.field26 || '',\n  // WPForms meta-fields (Task 28)\n  pageUrl, referer, userIp, userAgent,\n} }];\n"
+        },
+        "id": "rc29710-0002-4000-8000-000000000002",
+        "name": "Code: Map WPForm 29710 fields",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "B5TE8DaCbbMqZatD",
+          "options": {}
+        },
+        "id": "rc29710-0003-4000-8000-000000000003",
+        "name": "Execute: sub-r360-resolver",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          680,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "n12VvtsMqRSUOniR",
+          "options": {}
+        },
+        "id": "rc29710-0004-4000-8000-000000000004",
+        "name": "Execute: sub-r360-writer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          900,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": "Hx2Zi7z2rKoqKSSE",
+          "options": {}
+        },
+        "id": "rc29710-0005-4000-8000-000000000005",
+        "name": "Execute: sub-notify",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1120,
+          320
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook: /r360/contact-form": {
+        "main": [
+          [
+            {
+              "node": "Code: Map WPForm 29710 fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Map WPForm 29710 fields": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-r360-resolver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-resolver": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-r360-writer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Execute: sub-r360-writer": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-notify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T21:38:06.652Z",
+        "id": 4443,
+        "workflowId": "1gaDLuGmhlevlTRm",
+        "versionId": "f49897e6-1d98-47e4-9d6c-1393e80de171",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

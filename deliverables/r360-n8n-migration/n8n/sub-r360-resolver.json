@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-17T21:41:15.117Z",
+  "createdAt": "2026-05-10T19:09:46.517Z",
+  "id": "B5TE8DaCbbMqZatD",
   "name": "R360 Sub: Resolver (Lead/Contact dedup + 4-path branch + ReQuery)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,7 +13,10 @@
       "name": "When Executed by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ]
     },
     {
       "parameters": {
@@ -15,16 +24,51 @@
         "resource": "customObject",
         "customObject": "Lead_Inbound_Log__c",
         "externalId": "Idempotency_Hash__c",
-        "additionalFields": {}
+        "externalIdValue": "={{ $json.Idempotency_Hash__c }}",
+        "customFieldsUi": {
+          "customFieldsValues": [
+            {
+              "fieldId": "Source__c",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "External_Submission_Id__c",
+              "value": "={{ String($json.wpformsEntryId) }}"
+            },
+            {
+              "fieldId": "Status__c",
+              "value": "received"
+            },
+            {
+              "fieldId": "Received_At__c",
+              "value": "={{ $json.Received_At__c || $now.toISO() }}"
+            },
+            {
+              "fieldId": "Payload__c",
+              "value": "={{ ($json.Payload__c || JSON.stringify($json)).substring(0, 32000) }}"
+            },
+            {
+              "fieldId": "n8n_Execution_Id__c",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "fieldId": "Retry_Count__c",
+              "value": 0
+            }
+          ]
+        }
       },
       "id": "resv-0002-4000-8000-000000000002",
       "name": "SF Upsert: Lead_Inbound_Log__c (idempotency)",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
@@ -32,14 +76,33 @@
     },
     {
       "parameters": {
+        "jsCode": "\n// Merge upsert response with the decision payload (which has come through Decide path)\n// $input.first() is the Upsert response; the original decision data is one node back\nconst upserted = $input.first().json;\nconst decision = $('Code: Decide path & build payload').first().json;\nreturn [{\n  json: {\n    ...decision,\n    Inbound_Log_SF_Id: upserted.id,\n    Inbound_Log_Created: upserted.created,\n    Status__c: upserted.created ? 'received' : (upserted.Status__c || 'received'),\n  }\n}];\n"
+      },
+      "id": "resv-merge",
+      "name": "Code: Merge original + upsert result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        320
+      ]
+    },
+    {
+      "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "already-written",
               "leftValue": "={{ $json.Status__c }}",
               "rightValue": "written",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -49,18 +112,27 @@
       "name": "IF: already written (short-circuit replay_duplicate)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [680, 320]
+      "position": [
+        680,
+        320
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "id": "email-present",
               "leftValue": "={{ $json.BusinessEmail }}",
               "rightValue": "",
-              "operator": { "type": "string", "operation": "notEmpty" }
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
             }
           ],
           "combinator": "and"
@@ -70,19 +142,25 @@
       "name": "IF: email_present (skip if blank)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 320],
+      "position": [
+        900,
+        320
+      ],
       "notes": "If false: log Status='X_skipped_no_email' and exit. Mirrors Zap node 316965885."
     },
     {
       "parameters": {
-        "workflowId": "{{ $env.WORKFLOW_ID_NORMALIZE }}",
+        "workflowId": "CfR8FpmzFukTML9d",
         "options": {}
       },
       "id": "resv-0005-4000-8000-000000000005",
       "name": "Execute: sub-normalize-payload",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [1120, 280]
+      "position": [
+        1120,
+        280
+      ]
     },
     {
       "parameters": {
@@ -92,55 +170,23 @@
       "name": "Code: Create Partial Account Name",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1340, 280]
+      "position": [
+        1340,
+        280
+      ]
     },
     {
       "parameters": {
-        "jsCode": "// Create Queries — port of Zap node 316965886 with SOQL injection escape fix\nconst { formattedFirst: firstName, formattedLast: lastName, formattedEmail: email, emailDomain, formattedCompany: companyName, longestWord } = $json;\nconst wordBefore = $json.wordBefore ?? '';\nconst wordAfter  = $json.wordAfter ?? '';\nconst esc = (s) => String(s ?? '').replace(/'/g, \"\\\\'\");\nconst publicDomains = new Set(['gmail.com','yahoo.com','hotmail.com','aol.com','outlook.com','icloud.com','msn.com','live.com','protonmail.com','zoho.com','yandex.com','mail.com']);\nlet contactQuery, leadQuery;\nif (publicDomains.has(String(emailDomain).toLowerCase())) {\n  contactQuery = `Email = '${esc(email)}' AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email = '${esc(email)}' AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n} else {\n  contactQuery = `Email_Domain__c = '${esc(emailDomain)}' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email LIKE '%${esc(emailDomain)}%' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n}\nreturn [{ json: { ...$json, contactQuery, leadQuery } }];"
+        "jsCode": "\n// Create Queries — port of Zap node 316965886 with SOQL injection escape fix + email-only mode\nconst { formattedFirst: firstName, formattedLast: lastName, formattedEmail: email, emailDomain, formattedCompany: companyName, longestWord } = $json;\nconst wordBefore = $json.wordBefore ?? '';\nconst wordAfter  = $json.wordAfter ?? '';\nconst esc = (s) => String(s ?? '').replace(/'/g, \"\\\\'\");\nconst publicDomains = new Set(['gmail.com','yahoo.com','hotmail.com','aol.com','outlook.com','icloud.com','msn.com','live.com','protonmail.com','zoho.com','yandex.com','mail.com']);\n\nconst wpFormName = $('When Executed by Another Workflow').first().json.WPFormName;\nconst isEmailOnly = wpFormName === 'WatchVideo' || wpFormName === 'GetADemo';\n\nlet contactQuery, leadQuery;\nif (isEmailOnly) {\n  // Email-only forms: strict email-equals match (no name/company fuzzy)\n  contactQuery = `Email = '${esc(email)}'`;\n  leadQuery    = `Email = '${esc(email)}' AND IsConverted = False`;\n} else if (publicDomains.has(String(emailDomain).toLowerCase())) {\n  contactQuery = `Email = '${esc(email)}' AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email = '${esc(email)}' AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n} else {\n  contactQuery = `Email_Domain__c = '${esc(emailDomain)}' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email LIKE '%${esc(emailDomain)}%' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n}\nreturn [{ json: { ...$json, contactQuery, leadQuery, isEmailOnly } }];\n"
       },
       "id": "resv-0007-4000-8000-000000000007",
       "name": "Code: Create Queries (SOQL injection-safe)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1560, 280]
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "lead",
-        "options": { "queryAll": false }
-      },
-      "id": "resv-0008-4000-8000-000000000008",
-      "name": "SF Find: Lead",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1780, 200],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "Use generated leadQuery (NOT hardcoded WHERE) — see §6.3 dead-code fix. SOQL: SELECT Id, Email, Company, IsConverted FROM Lead WHERE <leadQuery> LIMIT 1"
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "contact",
-        "options": { "queryAll": false }
-      },
-      "id": "resv-0009-4000-8000-000000000009",
-      "name": "SF Find: Contact",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1780, 360],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "SOQL: SELECT Id, AccountId, Account.Status__c, Email FROM Contact WHERE <contactQuery> LIMIT 1"
+      "position": [
+        1560,
+        280
+      ]
     },
     {
       "parameters": {
@@ -150,159 +196,870 @@
       "name": "Code: Assignment Owner",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2000, 280]
+      "position": [
+        2000,
+        280
+      ]
     },
     {
       "parameters": {
-        "rules": {
-          "values": [
-            { "outputKey": "A_create_lead", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.leadId }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } },
-              { "leftValue": "={{ $json.contactId }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } }
-            ], "combinator": "and" } },
-            { "outputKey": "B_update_lead", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.leadId }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }
-            ], "combinator": "and" } },
-            { "outputKey": "C_update_contact_AM", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.contactId }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } },
-              { "leftValue": "={{ $json.accountStatus }}", "rightValue": "Customer", "operator": { "type": "string", "operation": "equals" } }
-            ], "combinator": "and" } },
-            { "outputKey": "D_update_contact_SDR", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.contactId }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } },
-              { "leftValue": "={{ $json.accountStatus }}", "rightValue": "Customer", "operator": { "type": "string", "operation": "notEquals" } }
-            ], "combinator": "and" } }
+        "jsCode": "\nconst formInput = $('Execute: sub-normalize-payload').first().json;\nconst original = $('When Executed by Another Workflow').first().json;\nconst assignment = $('Code: Assignment Owner').first().json;\nconst merged = $input.first().json;\n\nconst wpFormName = original.WPFormName || merged.WPFormName;\nconst isContactForm = wpFormName === 'ContactForm' || wpFormName === 'wpform_29710';\nconst isEmailOnly = wpFormName === 'WatchVideo' || wpFormName === 'GetADemo';\nconst leadFound = merged.found_lead_id;\nconst contactFound = merged.found_contact_id;\nconst accountStatus = merged.found_account_status;\n\nconst TWENTY_MIN_MS = 20 * 60 * 1000;\nconst now = Date.now();\nfunction wasRecentlyContactFormUpdated(modIso, formVal) {\n  if (!modIso || !formVal) return false;\n  if (!String(formVal).includes('ContactForm')) return false;\n  return (now - new Date(modIso).getTime()) <= TWENTY_MIN_MS;\n}\nconst leadSuperseded = wasRecentlyContactFormUpdated(merged.found_lead_mod, merged.found_lead_form);\nconst contactSuperseded = wasRecentlyContactFormUpdated(merged.found_contact_mod, merged.found_contact_form);\nconst isSuperseded = isEmailOnly && (leadSuperseded || contactSuperseded);\n\nlet decisionPath, reason;\nif (isSuperseded) { decisionPath = 'X_superseded_by_full_form'; reason = 'email-only, ContactForm within 20min — no SF write'; }\nelse if (isEmailOnly) {\n  if (leadFound) { decisionPath = 'B_lite'; reason = 'email-only, existing Lead'; }\n  else if (contactFound) { decisionPath = (accountStatus === 'Customer') ? 'C_lite' : 'D_lite'; reason = 'email-only, existing Contact'; }\n  else { decisionPath = 'X_no_record_skipped_email_only'; reason = 'email-only, no record'; }\n} else if (leadFound) { decisionPath = 'B'; reason = 'existing Lead'; }\nelse if (contactFound) { decisionPath = (accountStatus === 'Customer') ? 'C' : 'D'; reason = 'existing Contact'; }\nelse if (isContactForm) { decisionPath = 'X_no_record_skipped_contactform'; reason = 'ContactForm + no record'; }\nelse { decisionPath = 'A4b'; reason = 'no record, not ContactForm'; }\n\nreturn [{\n  json: {\n    ...formInput,\n    ...assignment,\n    // Carry through fields needed by SF Upsert downstream\n    Idempotency_Hash__c: original.Idempotency_Hash__c,\n    source: original.source,\n    wpformsEntryId: original.wpformsEntryId,\n    Received_At__c: original.Received_At__c,\n    Payload__c: original.Payload__c,\n    WPFormName: wpFormName,\n    // Task 28: WPForms meta from receiver\n    pageUrl: original.pageUrl, referer: original.referer, userIp: original.userIp, userAgent: original.userAgent,\n    decisionPath, decisionReason: reason,\n    leadId: leadFound || null,\n    contactId: contactFound || null,\n    accountId: merged.found_account_id,\n    accountStatus,\n  }\n}];\n"
+      },
+      "id": "resv-decide",
+      "name": "Code: Decide path & build payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2440,
+        280
+      ],
+      "notes": "MVP — A4b/B/C/D decisioning. ReQuery sub-tree (15s wait + re-find) is a v1.1 follow-up."
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// Full SELECT — include Most_Recent_Pardot_Form__c + LastModifiedDate so Decide-path can detect ContactForm-superseded\nconst j = $json;\nconst leadSelect = \"SELECT Id, FirstName, LastName, Email, Company, Most_Recent_Pardot_Form__c, LastModifiedDate FROM Lead WHERE \" + j.leadQuery + \" LIMIT 1\";\nconst contactSelect = \"SELECT Id, FirstName, LastName, Email, AccountId, Account.Status__c, Most_Recent_Pardot_Form__c, LastModifiedDate FROM Contact WHERE \" + j.contactQuery + \" LIMIT 1\";\nreturn [{ json: { ...j, lead_select: leadSelect, contact_select: contactSelect } }];\n"
+      },
+      "id": "resv-buildsel",
+      "name": "Code: Build SELECT statements",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.lead_select }}"
+            }
           ]
         },
         "options": {}
       },
-      "id": "resv-000b-4000-8000-00000000000b",
-      "name": "Switch: Initial 4-path",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [2220, 280],
-      "notes": "Path A (no Lead AND no Contact) → ReQuery sub-tree. Paths B/C/D pass through to writer."
-    },
-    {
-      "parameters": {
-        "amount": 15,
-        "unit": "seconds"
-      },
-      "id": "resv-000c-4000-8000-00000000000c",
-      "name": "Wait: 15 sec (Path A ReQuery)",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [2440, 200],
-      "notes": "Mirrors Zap node 316797568. Gives SF replication a moment to land any Lead/Contact created in parallel."
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "lead",
-        "options": {}
-      },
-      "id": "resv-000d-4000-8000-00000000000d",
-      "name": "SF ReQuery: Lead",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [2660, 120],
+      "id": "resv-http-lead",
+      "name": "SF HTTP: Find Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        200
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       }
     },
     {
       "parameters": {
-        "operation": "search",
-        "resource": "contact",
-        "options": {}
-      },
-      "id": "resv-000e-4000-8000-00000000000e",
-      "name": "SF ReQuery: Contact",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [2660, 280],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "rules": {
-          "values": [
-            { "outputKey": "A4a_lead_after_requery", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.leadIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }
-            ], "combinator": "and" } },
-            { "outputKey": "A4c-i_contact_prospect", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.contactIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } },
-              { "leftValue": "={{ $json.accountStatusRequery }}", "rightValue": "Customer", "operator": { "type": "string", "operation": "notEquals" } }
-            ], "combinator": "and" } },
-            { "outputKey": "A4c-ii_contact_customer", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.contactIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } },
-              { "leftValue": "={{ $json.accountStatusRequery }}", "rightValue": "Customer", "operator": { "type": "string", "operation": "equals" } }
-            ], "combinator": "and" } },
-            { "outputKey": "A4d_short_form_terminal", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.WPFormName }}", "rightValue": "ContactForm", "operator": { "type": "string", "operation": "notEquals" } },
-              { "leftValue": "={{ $json.leadIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } },
-              { "leftValue": "={{ $json.contactIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } }
-            ], "combinator": "and" } },
-            { "outputKey": "X_no_record_skipped_contactform", "conditions": { "conditions": [
-              { "leftValue": "={{ $json.WPFormName }}", "rightValue": "ContactForm", "operator": { "type": "string", "operation": "equals" } },
-              { "leftValue": "={{ $json.leadIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } },
-              { "leftValue": "={{ $json.contactIdRequery }}", "rightValue": "", "operator": { "type": "string", "operation": "empty" } }
-            ], "combinator": "and" } }
+        "method": "GET",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.contact_select }}"
+            }
           ]
-        }
+        },
+        "options": {}
       },
-      "id": "resv-000f-4000-8000-00000000000f",
-      "name": "Switch: ReQuery 5-path (A4a/A4b/A4c-i/A4c-ii/A4d)",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3,
-      "position": [2880, 200],
-      "notes": "Default output (no match) → A4b: CREATE Lead. See §5.4 — ContactForm + no record = X_no_record_skipped_contactform terminal path."
+      "id": "resv-http-contact",
+      "name": "SF HTTP: Find Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1780,
+        360
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('Code: Build SELECT statements').first().json;\nconst leadResp = $('SF HTTP: Find Lead').first().json || {};\nconst contactResp = $input.first().json || {};\nconst leadRec = (leadResp.records || [])[0] || null;\nconst contactRec = (contactResp.records || [])[0] || null;\nreturn [{\n  json: {\n    ...orig,\n    found_lead: leadRec,\n    found_contact: contactRec,\n    found_lead_id: leadRec?.Id || null,\n    found_contact_id: contactRec?.Id || null,\n    found_account_id: contactRec?.AccountId || null,\n    found_account_status: (contactRec && contactRec.Account) ? contactRec.Account.Status__c : null,\n    found_lead_form: leadRec?.Most_Recent_Pardot_Form__c || null,\n    found_contact_form: contactRec?.Most_Recent_Pardot_Form__c || null,\n    found_lead_mod: leadRec?.LastModifiedDate || null,\n    found_contact_mod: contactRec?.LastModifiedDate || null,\n  }\n}];\n"
+      },
+      "id": "resv-mergeres",
+      "name": "Code: Merge Find results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('Code: Build SELECT statements').first().json;\nconst leadResp = $input.first().json || {};\nreturn [{ json: { ...orig, _lead_resp: leadResp } }];\n"
+      },
+      "id": "resv-preserve",
+      "name": "Code: Preserve orig before Contact query",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-superseded",
+              "leftValue": "={{ $json.decisionPath }}",
+              "rightValue": "X_superseded_by_full_form",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "resv-if-superseded",
+      "name": "IF: superseded? (skip all SF writes)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        380
+      ]
     }
   ],
   "connections": {
-    "When Executed by Another Workflow": { "main": [[{ "node": "SF Upsert: Lead_Inbound_Log__c (idempotency)", "type": "main", "index": 0 }]] },
-    "SF Upsert: Lead_Inbound_Log__c (idempotency)": { "main": [[{ "node": "IF: already written (short-circuit replay_duplicate)", "type": "main", "index": 0 }]] },
-    "IF: already written (short-circuit replay_duplicate)": { "main": [[], [{ "node": "IF: email_present (skip if blank)", "type": "main", "index": 0 }]] },
-    "IF: email_present (skip if blank)": { "main": [[{ "node": "Execute: sub-normalize-payload", "type": "main", "index": 0 }], []] },
-    "Execute: sub-normalize-payload": { "main": [[{ "node": "Code: Create Partial Account Name", "type": "main", "index": 0 }]] },
-    "Code: Create Partial Account Name": { "main": [[{ "node": "Code: Create Queries (SOQL injection-safe)", "type": "main", "index": 0 }]] },
-    "Code: Create Queries (SOQL injection-safe)": { "main": [[
-      { "node": "SF Find: Lead", "type": "main", "index": 0 },
-      { "node": "SF Find: Contact", "type": "main", "index": 0 }
-    ]] },
-    "SF Find: Lead": { "main": [[{ "node": "Code: Assignment Owner", "type": "main", "index": 0 }]] },
-    "SF Find: Contact": { "main": [[{ "node": "Code: Assignment Owner", "type": "main", "index": 0 }]] },
-    "Code: Assignment Owner": { "main": [[{ "node": "Switch: Initial 4-path", "type": "main", "index": 0 }]] },
-    "Switch: Initial 4-path": { "main": [
-      [{ "node": "Wait: 15 sec (Path A ReQuery)", "type": "main", "index": 0 }],
-      [],
-      [],
-      []
-    ] },
-    "Wait: 15 sec (Path A ReQuery)": { "main": [[
-      { "node": "SF ReQuery: Lead", "type": "main", "index": 0 },
-      { "node": "SF ReQuery: Contact", "type": "main", "index": 0 }
-    ]] },
-    "SF ReQuery: Lead": { "main": [[{ "node": "Switch: ReQuery 5-path (A4a/A4b/A4c-i/A4c-ii/A4d)", "type": "main", "index": 0 }]] },
-    "SF ReQuery: Contact": { "main": [[{ "node": "Switch: ReQuery 5-path (A4a/A4b/A4c-i/A4c-ii/A4d)", "type": "main", "index": 0 }]] }
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "IF: email_present (skip if blank)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: email_present (skip if blank)": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-normalize-payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Execute: sub-normalize-payload": {
+      "main": [
+        [
+          {
+            "node": "Code: Create Partial Account Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Create Partial Account Name": {
+      "main": [
+        [
+          {
+            "node": "Code: Create Queries (SOQL injection-safe)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Create Queries (SOQL injection-safe)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build SELECT statements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build SELECT statements": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Find Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Find Lead": {
+      "main": [
+        [
+          {
+            "node": "Code: Preserve orig before Contact query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Preserve orig before Contact query": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Find Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Find Contact": {
+      "main": [
+        [
+          {
+            "node": "Code: Merge Find results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Merge Find results": {
+      "main": [
+        [
+          {
+            "node": "Code: Assignment Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Assignment Owner": {
+      "main": [
+        [
+          {
+            "node": "Code: Decide path & build payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Decide path & build payload": {
+      "main": [
+        [
+          {
+            "node": "IF: superseded? (skip all SF writes)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: superseded? (skip all SF writes)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SF Upsert: Lead_Inbound_Log__c (idempotency)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF Upsert: Lead_Inbound_Log__c (idempotency)": {
+      "main": [
+        [
+          {
+            "node": "Code: Merge original + upsert result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": {
-    "spec": "migration-plans/r360-n8n-build-plan.md §5.2-§5.4 + §6.2-§6.4",
-    "todo": [
-      "Wire SF Find: Lead/Contact to use generated leadQuery/contactQuery (NOT hardcoded WHERE) — fix from §6.3 dead-code note",
-      "Implement Account.Status__c lookup after Find Contact for Customer/Prospect determination",
-      "Add empty-key filter Set node before each downstream SF Update — §2.3",
-      "Wire Switch outputs to Execute Workflow nodes that call sub-r360-writer with decisionPath param"
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "e2c86fe6-b3ce-414e-9098-eb7228d7e2c6",
+  "activeVersionId": "e2c86fe6-b3ce-414e-9098-eb7228d7e2c6",
+  "versionCounter": 68,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:46.519Z",
+      "createdAt": "2026-05-10T19:09:46.519Z",
+      "role": "workflow:owner",
+      "workflowId": "B5TE8DaCbbMqZatD",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T21:41:15.118Z",
+    "createdAt": "2026-05-17T21:41:15.118Z",
+    "versionId": "e2c86fe6-b3ce-414e-9098-eb7228d7e2c6",
+    "workflowId": "B5TE8DaCbbMqZatD",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "resv-0001-4000-8000-000000000001",
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "upsert",
+          "resource": "customObject",
+          "customObject": "Lead_Inbound_Log__c",
+          "externalId": "Idempotency_Hash__c",
+          "externalIdValue": "={{ $json.Idempotency_Hash__c }}",
+          "customFieldsUi": {
+            "customFieldsValues": [
+              {
+                "fieldId": "Source__c",
+                "value": "={{ $json.source }}"
+              },
+              {
+                "fieldId": "External_Submission_Id__c",
+                "value": "={{ String($json.wpformsEntryId) }}"
+              },
+              {
+                "fieldId": "Status__c",
+                "value": "received"
+              },
+              {
+                "fieldId": "Received_At__c",
+                "value": "={{ $json.Received_At__c || $now.toISO() }}"
+              },
+              {
+                "fieldId": "Payload__c",
+                "value": "={{ ($json.Payload__c || JSON.stringify($json)).substring(0, 32000) }}"
+              },
+              {
+                "fieldId": "n8n_Execution_Id__c",
+                "value": "={{ $execution.id }}"
+              },
+              {
+                "fieldId": "Retry_Count__c",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "id": "resv-0002-4000-8000-000000000002",
+        "name": "SF Upsert: Lead_Inbound_Log__c (idempotency)",
+        "type": "n8n-nodes-base.salesforce",
+        "typeVersion": 1,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "Hash = sha256(form_id + ':' + entry_id) computed in receiver. If row exists with Status__c='written', short-circuit; see IF below."
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// Merge upsert response with the decision payload (which has come through Decide path)\n// $input.first() is the Upsert response; the original decision data is one node back\nconst upserted = $input.first().json;\nconst decision = $('Code: Decide path & build payload').first().json;\nreturn [{\n  json: {\n    ...decision,\n    Inbound_Log_SF_Id: upserted.id,\n    Inbound_Log_Created: upserted.created,\n    Status__c: upserted.created ? 'received' : (upserted.Status__c || 'received'),\n  }\n}];\n"
+        },
+        "id": "resv-merge",
+        "name": "Code: Merge original + upsert result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          560,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "already-written",
+                "leftValue": "={{ $json.Status__c }}",
+                "rightValue": "written",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "resv-0003-4000-8000-000000000003",
+        "name": "IF: already written (short-circuit replay_duplicate)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          680,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": false,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "email-present",
+                "leftValue": "={{ $json.BusinessEmail }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          }
+        },
+        "id": "resv-0004-4000-8000-000000000004",
+        "name": "IF: email_present (skip if blank)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          900,
+          320
+        ],
+        "notes": "If false: log Status='X_skipped_no_email' and exit. Mirrors Zap node 316965885."
+      },
+      {
+        "parameters": {
+          "workflowId": "CfR8FpmzFukTML9d",
+          "options": {}
+        },
+        "id": "resv-0005-4000-8000-000000000005",
+        "name": "Execute: sub-normalize-payload",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          1120,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Create Partial Account Name — port of Zap node 316797557\nfunction extractCoreWords(companyName) {\n  const stopWords = new Set(['a','an','the','of','and','in','on','at','for','with','co','corp','inc','llc','ltd','company','services']);\n  if (!companyName || typeof companyName !== 'string') return { longestWord: null, wordBefore: null, wordAfter: null };\n  const words = companyName.trim().split(/\\s+/).filter(w => {\n    const c = w.toLowerCase().replace(/[^a-z0-9]/gi,'');\n    return c && !stopWords.has(c);\n  });\n  if (!words.length) return { longestWord: null, wordBefore: null, wordAfter: null };\n  let idx = 0;\n  for (let i = 1; i < words.length; i++) if (words[i].length > words[idx].length) idx = i;\n  return {\n    longestWord: words[idx],\n    wordBefore: idx > 0 ? words[idx-1] : null,\n    wordAfter: idx < words.length-1 ? words[idx+1] : null\n  };\n}\nconst r = extractCoreWords($json.formattedCompany);\nreturn [{ json: { ...$json, ...r } }];"
+        },
+        "id": "resv-0006-4000-8000-000000000006",
+        "name": "Code: Create Partial Account Name",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// Create Queries — port of Zap node 316965886 with SOQL injection escape fix + email-only mode\nconst { formattedFirst: firstName, formattedLast: lastName, formattedEmail: email, emailDomain, formattedCompany: companyName, longestWord } = $json;\nconst wordBefore = $json.wordBefore ?? '';\nconst wordAfter  = $json.wordAfter ?? '';\nconst esc = (s) => String(s ?? '').replace(/'/g, \"\\\\'\");\nconst publicDomains = new Set(['gmail.com','yahoo.com','hotmail.com','aol.com','outlook.com','icloud.com','msn.com','live.com','protonmail.com','zoho.com','yandex.com','mail.com']);\n\nconst wpFormName = $('When Executed by Another Workflow').first().json.WPFormName;\nconst isEmailOnly = wpFormName === 'WatchVideo' || wpFormName === 'GetADemo';\n\nlet contactQuery, leadQuery;\nif (isEmailOnly) {\n  // Email-only forms: strict email-equals match (no name/company fuzzy)\n  contactQuery = `Email = '${esc(email)}'`;\n  leadQuery    = `Email = '${esc(email)}' AND IsConverted = False`;\n} else if (publicDomains.has(String(emailDomain).toLowerCase())) {\n  contactQuery = `Email = '${esc(email)}' AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email = '${esc(email)}' AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n} else {\n  contactQuery = `Email_Domain__c = '${esc(emailDomain)}' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Account.Name = '${esc(companyName)}' OR (Account.Name LIKE '%${esc(wordBefore)}%' AND Account.Name LIKE '%${esc(longestWord)}%' AND Account.Name LIKE '%${esc(wordAfter)}%'))`;\n  leadQuery    = `Email LIKE '%${esc(emailDomain)}%' AND (Email LIKE '%${esc(firstName)}%' OR Email LIKE '%${esc(lastName)}%') AND (Company = '${esc(companyName)}' OR (Company LIKE '%${esc(wordBefore)}%' AND Company LIKE '%${esc(longestWord)}%' AND Company LIKE '%${esc(wordAfter)}%')) AND IsConverted = False`;\n}\nreturn [{ json: { ...$json, contactQuery, leadQuery, isEmailOnly } }];\n"
+        },
+        "id": "resv-0007-4000-8000-000000000007",
+        "name": "Code: Create Queries (SOQL injection-safe)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1560,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Assignment Owner — port of Zap node 316797562 (verbatim)\nconst inputRegion = $json.formattedRegion;\nlet InsideSalesQueue, BusinessHours, AssignmentID, NotificationEmail, LeadAccountId;\nswitch (inputRegion) {\n  case 'Australia':\n  case 'Australia & New Zealand':\n  case 'Asia':\n    InsideSalesQueue = '00G0L000004WbECUA0';\n    BusinessHours    = '01m0L00000001OZQAY';\n    AssignmentID     = '0050L000008hH5DQAU';\n    LeadAccountId    = '001Ki000009wWMPIA2';\n    NotificationEmail = 'josh.oconnell@pointofrental.com, kayla.oloughlin@pointofrental.com, conor.cummins@pointofrental.com, katie.mcfarland@pointofrental.com, dhaber@record360.com, jenna@record360.com';\n    break;\n  case 'Africa':\n    InsideSalesQueue = '00G4u000004AmQJEA0';\n    BusinessHours    = '01m0L00000001PcQAI';\n    AssignmentID     = '0054u0000094ck7AAA';\n    LeadAccountId    = '0014u00002BFXvRAAX';\n    NotificationEmail = 'bernice.smith@pointofrental.com, katie.mcfarland@pointofrental.com, jenna@record360.com, dhaber@record360.com';\n    break;\n  case 'Europe':\n    InsideSalesQueue = '00G0L000004WbEDUA0';\n    BusinessHours    = '01m0L00000001PcQAI';\n    AssignmentID     = '0050L000008uAHvQAM';\n    LeadAccountId    = '001Ki000009wWM0IAM';\n    NotificationEmail = 'dean.hammond@pointofrental.com, katie.mcfarland@pointofrental.com, john.ryder@record360.com, dhaber@record360.com, jenna@record360.com';\n    break;\n  case 'North America':\n    InsideSalesQueue = '00G0L000004WbEEUA0';\n    BusinessHours    = '01m0h0000005HbeAAE';\n    AssignmentID     = '0054u0000094ck7AAA';\n    LeadAccountId    = '0014u00002BFXvRAAX';\n    NotificationEmail = 'katie.mcfarland@pointofrental.com, dhaber@record360.com, jenna@record360.com, may@record360.com';\n    break;\n  default:\n    InsideSalesQueue = '00G0L000004WbEEUA0';\n    BusinessHours    = '01m0h0000005HbeAAE';\n    AssignmentID     = '0054u0000094ck7AAA';\n    LeadAccountId    = '0014u00002BFXvRAAX';\n    NotificationEmail = 'katie.mcfarland@pointofrental.com, dhaber@record360.com, jenna@record360.com';\n}\nreturn [{ json: { ...$json, InsideSalesQueue, BusinessHours, AssignmentID, NotificationEmail, LeadAccountId } }];"
+        },
+        "id": "resv-000a-4000-8000-00000000000a",
+        "name": "Code: Assignment Owner",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst formInput = $('Execute: sub-normalize-payload').first().json;\nconst original = $('When Executed by Another Workflow').first().json;\nconst assignment = $('Code: Assignment Owner').first().json;\nconst merged = $input.first().json;\n\nconst wpFormName = original.WPFormName || merged.WPFormName;\nconst isContactForm = wpFormName === 'ContactForm' || wpFormName === 'wpform_29710';\nconst isEmailOnly = wpFormName === 'WatchVideo' || wpFormName === 'GetADemo';\nconst leadFound = merged.found_lead_id;\nconst contactFound = merged.found_contact_id;\nconst accountStatus = merged.found_account_status;\n\nconst TWENTY_MIN_MS = 20 * 60 * 1000;\nconst now = Date.now();\nfunction wasRecentlyContactFormUpdated(modIso, formVal) {\n  if (!modIso || !formVal) return false;\n  if (!String(formVal).includes('ContactForm')) return false;\n  return (now - new Date(modIso).getTime()) <= TWENTY_MIN_MS;\n}\nconst leadSuperseded = wasRecentlyContactFormUpdated(merged.found_lead_mod, merged.found_lead_form);\nconst contactSuperseded = wasRecentlyContactFormUpdated(merged.found_contact_mod, merged.found_contact_form);\nconst isSuperseded = isEmailOnly && (leadSuperseded || contactSuperseded);\n\nlet decisionPath, reason;\nif (isSuperseded) { decisionPath = 'X_superseded_by_full_form'; reason = 'email-only, ContactForm within 20min — no SF write'; }\nelse if (isEmailOnly) {\n  if (leadFound) { decisionPath = 'B_lite'; reason = 'email-only, existing Lead'; }\n  else if (contactFound) { decisionPath = (accountStatus === 'Customer') ? 'C_lite' : 'D_lite'; reason = 'email-only, existing Contact'; }\n  else { decisionPath = 'X_no_record_skipped_email_only'; reason = 'email-only, no record'; }\n} else if (leadFound) { decisionPath = 'B'; reason = 'existing Lead'; }\nelse if (contactFound) { decisionPath = (accountStatus === 'Customer') ? 'C' : 'D'; reason = 'existing Contact'; }\nelse if (isContactForm) { decisionPath = 'X_no_record_skipped_contactform'; reason = 'ContactForm + no record'; }\nelse { decisionPath = 'A4b'; reason = 'no record, not ContactForm'; }\n\nreturn [{\n  json: {\n    ...formInput,\n    ...assignment,\n    // Carry through fields needed by SF Upsert downstream\n    Idempotency_Hash__c: original.Idempotency_Hash__c,\n    source: original.source,\n    wpformsEntryId: original.wpformsEntryId,\n    Received_At__c: original.Received_At__c,\n    Payload__c: original.Payload__c,\n    WPFormName: wpFormName,\n    // Task 28: WPForms meta from receiver\n    pageUrl: original.pageUrl, referer: original.referer, userIp: original.userIp, userAgent: original.userAgent,\n    decisionPath, decisionReason: reason,\n    leadId: leadFound || null,\n    contactId: contactFound || null,\n    accountId: merged.found_account_id,\n    accountStatus,\n  }\n}];\n"
+        },
+        "id": "resv-decide",
+        "name": "Code: Decide path & build payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2440,
+          280
+        ],
+        "notes": "MVP — A4b/B/C/D decisioning. ReQuery sub-tree (15s wait + re-find) is a v1.1 follow-up."
+      },
+      {
+        "parameters": {
+          "jsCode": "\n// Full SELECT — include Most_Recent_Pardot_Form__c + LastModifiedDate so Decide-path can detect ContactForm-superseded\nconst j = $json;\nconst leadSelect = \"SELECT Id, FirstName, LastName, Email, Company, Most_Recent_Pardot_Form__c, LastModifiedDate FROM Lead WHERE \" + j.leadQuery + \" LIMIT 1\";\nconst contactSelect = \"SELECT Id, FirstName, LastName, Email, AccountId, Account.Status__c, Most_Recent_Pardot_Form__c, LastModifiedDate FROM Contact WHERE \" + j.contactQuery + \" LIMIT 1\";\nreturn [{ json: { ...j, lead_select: leadSelect, contact_select: contactSelect } }];\n"
+        },
+        "id": "resv-buildsel",
+        "name": "Code: Build SELECT statements",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.lead_select }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "resv-http-lead",
+        "name": "SF HTTP: Find Lead",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1780,
+          200
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.contact_select }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "resv-http-contact",
+        "name": "SF HTTP: Find Contact",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1780,
+          360
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('Code: Build SELECT statements').first().json;\nconst leadResp = $('SF HTTP: Find Lead').first().json || {};\nconst contactResp = $input.first().json || {};\nconst leadRec = (leadResp.records || [])[0] || null;\nconst contactRec = (contactResp.records || [])[0] || null;\nreturn [{\n  json: {\n    ...orig,\n    found_lead: leadRec,\n    found_contact: contactRec,\n    found_lead_id: leadRec?.Id || null,\n    found_contact_id: contactRec?.Id || null,\n    found_account_id: contactRec?.AccountId || null,\n    found_account_status: (contactRec && contactRec.Account) ? contactRec.Account.Status__c : null,\n    found_lead_form: leadRec?.Most_Recent_Pardot_Form__c || null,\n    found_contact_form: contactRec?.Most_Recent_Pardot_Form__c || null,\n    found_lead_mod: leadRec?.LastModifiedDate || null,\n    found_contact_mod: contactRec?.LastModifiedDate || null,\n  }\n}];\n"
+        },
+        "id": "resv-mergeres",
+        "name": "Code: Merge Find results",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2000,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('Code: Build SELECT statements').first().json;\nconst leadResp = $input.first().json || {};\nreturn [{ json: { ...orig, _lead_resp: leadResp } }];\n"
+        },
+        "id": "resv-preserve",
+        "name": "Code: Preserve orig before Contact query",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1880,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "cond-superseded",
+                "leftValue": "={{ $json.decisionPath }}",
+                "rightValue": "X_superseded_by_full_form",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "resv-if-superseded",
+        "name": "IF: superseded? (skip all SF writes)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2100,
+          380
+        ]
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "IF: email_present (skip if blank)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: email_present (skip if blank)": {
+        "main": [
+          [
+            {
+              "node": "Execute: sub-normalize-payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Execute: sub-normalize-payload": {
+        "main": [
+          [
+            {
+              "node": "Code: Create Partial Account Name",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Create Partial Account Name": {
+        "main": [
+          [
+            {
+              "node": "Code: Create Queries (SOQL injection-safe)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Create Queries (SOQL injection-safe)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build SELECT statements",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build SELECT statements": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Find Lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Find Lead": {
+        "main": [
+          [
+            {
+              "node": "Code: Preserve orig before Contact query",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Preserve orig before Contact query": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Find Contact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Find Contact": {
+        "main": [
+          [
+            {
+              "node": "Code: Merge Find results",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Merge Find results": {
+        "main": [
+          [
+            {
+              "node": "Code: Assignment Owner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Assignment Owner": {
+        "main": [
+          [
+            {
+              "node": "Code: Decide path & build payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Decide path & build payload": {
+        "main": [
+          [
+            {
+              "node": "IF: superseded? (skip all SF writes)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: superseded? (skip all SF writes)": {
+        "main": [
+          [],
+          [
+            {
+              "node": "SF Upsert: Lead_Inbound_Log__c (idempotency)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF Upsert: Lead_Inbound_Log__c (idempotency)": {
+        "main": [
+          [
+            {
+              "node": "Code: Merge original + upsert result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T21:41:15.617Z",
+        "id": 4462,
+        "workflowId": "B5TE8DaCbbMqZatD",
+        "versionId": "e2c86fe6-b3ce-414e-9098-eb7228d7e2c6",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
     ]
   }
 }

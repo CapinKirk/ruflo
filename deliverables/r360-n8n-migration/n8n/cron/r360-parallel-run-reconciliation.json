@@ -1,15 +1,31 @@
 {
+  "updatedAt": "2026-05-17T17:01:59.635Z",
+  "createdAt": "2026-05-10T19:09:50.408Z",
+  "id": "JlL2dlRxBCEooKO0",
   "name": "R360 Cron: Parallel-Run Reconciliation (hourly during 14d window)",
+  "description": null,
+  "active": false,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 * * * *" }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
       },
       "id": "prrc-0001-4000-8000-000000000001",
       "name": "Schedule: every hour",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [240, 320],
+      "position": [
+        240,
+        320
+      ],
       "notes": "Enable ONLY during the 14-day parallel-run window (T+0 to T+14d). Disable on Day 15 when Phase B begins."
     },
     {
@@ -24,7 +40,10 @@
       "name": "HTTP: Pull Zapier task history (last hour)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "DEFER_ZAPIER_PLATFORM_API",
@@ -43,10 +62,13 @@
       "name": "SF SOQL: Lead_Inbound_Log__c last hour",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [460, 460],
+      "position": [
+        460,
+        460
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       }
@@ -63,7 +85,10 @@
       "name": "HTTP: Pull n8n execution history",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 600],
+      "position": [
+        460,
+        600
+      ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "lL26v9Hcbrnd3bVB",
@@ -79,7 +104,10 @@
       "name": "Code: Compute set differences (A-B, B-A, neither-wrote)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [900, 460]
+      "position": [
+        900,
+        460
+      ]
     },
     {
       "parameters": {
@@ -89,13 +117,16 @@
         "nodeCredentialType": "slackOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_PARALLEL_RUN }}\",\n  \"text\": $json.page_oncall ? `:rotating_light: *Parallel-run reconciliation — A-B = ${$json.diff_A_minus_B}* (Zapier received, n8n missed)\\nTop 5: ${JSON.stringify($json.top_5_A_minus_B)}\\nTotal Zapier=${$json.total_zapier}, n8n=${$json.total_n8n}, written=${$json.total_written}` : `:white_check_mark: Hourly recon: ${$json.total_zapier} Zapier / ${$json.total_n8n} n8n / ${$json.total_written} written. All in sync.`,\n  \"unfurl_links\": false\n}"
+        "jsonBody": "={\n  \"channel\": \"C06T48V2A0J\",\n  \"text\": $json.page_oncall ? `:rotating_light: *Parallel-run reconciliation — A-B = ${$json.diff_A_minus_B}* (Zapier received, n8n missed)\\nTop 5: ${JSON.stringify($json.top_5_A_minus_B)}\\nTotal Zapier=${$json.total_zapier}, n8n=${$json.total_n8n}, written=${$json.total_written}` : `:white_check_mark: Hourly recon: ${$json.total_zapier} Zapier / ${$json.total_n8n} n8n / ${$json.total_written} written. All in sync.`,\n  \"unfurl_links\": false\n}"
       },
       "id": "prrc-0006-4000-8000-000000000006",
       "name": "HTTP: Post hourly summary to Slack",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 460],
+      "position": [
+        1120,
+        460
+      ],
       "credentials": {
         "slackOAuth2Api": {
           "id": "skn3Ct9zjw3Vt3Pn",
@@ -105,26 +136,102 @@
     }
   ],
   "connections": {
-    "Schedule: every hour": { "main": [[
-      { "node": "HTTP: Pull Zapier task history (last hour)", "type": "main", "index": 0 },
-      { "node": "SF SOQL: Lead_Inbound_Log__c last hour", "type": "main", "index": 0 },
-      { "node": "HTTP: Pull n8n execution history", "type": "main", "index": 0 }
-    ]] },
-    "HTTP: Pull Zapier task history (last hour)": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
-    "SF SOQL: Lead_Inbound_Log__c last hour": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
-    "HTTP: Pull n8n execution history": { "main": [[{ "node": "Code: Compute set differences (A-B, B-A, neither-wrote)", "type": "main", "index": 0 }]] },
-    "Code: Compute set differences (A-B, B-A, neither-wrote)": { "main": [[{ "node": "HTTP: Post hourly summary to Slack", "type": "main", "index": 0 }]] }
+    "Schedule: every hour": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Pull Zapier task history (last hour)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "SF SOQL: Lead_Inbound_Log__c last hour",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP: Pull n8n execution history",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Pull Zapier task history (last hour)": {
+      "main": [
+        [
+          {
+            "node": "Code: Compute set differences (A-B, B-A, neither-wrote)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF SOQL: Lead_Inbound_Log__c last hour": {
+      "main": [
+        [
+          {
+            "node": "Code: Compute set differences (A-B, B-A, neither-wrote)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Pull n8n execution history": {
+      "main": [
+        [
+          {
+            "node": "Code: Compute set differences (A-B, B-A, neither-wrote)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Compute set differences (A-B, B-A, neither-wrote)": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Post hourly summary to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": {
-    "spec": "deliverables/r360-n8n-migration/runbooks/parallel-run-validation.md §3",
-    "todo": [
-      "Wire merge of 3 parallel inputs (zapier, n8n SF logs, n8n executions) into single Code node — currently each fires the Code node independently, needs Merge node",
-      "Loop over 7 R360 zap IDs in HTTP node OR use Zapier API's /tasks endpoint instead of /zaps/{id}/runs",
-      "Validate Zapier Platform API token has read access to all 7 zaps",
-      "Add @here ping when diff_A_minus_B > 0 — page on-call in #r360-leads-parallel-run"
-    ]
-  }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "a26bb825-055a-403d-81a5-fb052087e79d",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:50.410Z",
+      "createdAt": "2026-05-10T19:09:50.410Z",
+      "role": "workflow:owner",
+      "workflowId": "JlL2dlRxBCEooKO0",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
 }

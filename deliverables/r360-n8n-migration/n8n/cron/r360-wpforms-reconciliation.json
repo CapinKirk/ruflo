@@ -1,110 +1,558 @@
 {
-  "name": "R360 Cron: WPForms DB Reconciliation (every 10 min)",
+  "updatedAt": "2026-05-17T17:03:50.432Z",
+  "createdAt": "2026-05-10T19:09:50.743Z",
+  "id": "T1XKVSPaLzAuUh0l",
+  "name": "R360 Cron: WPForms DB Reconciliation (every 10 min, via SSH)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "cronExpression", "expression": "*/10 * * * *" }] }
-      },
-      "id": "wprc-0001-4000-8000-000000000001",
-      "name": "Schedule: every 10 min",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [240, 320]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT entry_id, form_id, fields, date_created\nFROM wp_wpforms_entries\nWHERE form_id IN (29710, 29712, 29714, 33076)\n  AND date_created >= NOW() - INTERVAL 30 MINUTE\nORDER BY date_created ASC",
-        "options": {}
-      },
-      "id": "wprc-0002-4000-8000-000000000002",
-      "name": "MySQL: Pull last-30-min entries",
-      "type": "n8n-nodes-base.mySql",
-      "typeVersion": 2.4,
-      "position": [460, 320],
-      "credentials": {
-        "mySql": {
-          "id": "DEFER_WP_DB_V2",
-          "name": "WordPress DB (deferred to v2)"
-        }
-      },
-      "notes": "Read-only DB credential. 30-min lookback (3× the 10-min interval) handles overlap. Replaces unverified WPForms REST endpoint per §2.1."
-    },
-    {
-      "parameters": {
-        "jsCode": "// Compute idempotency hash per row + check Lead_Inbound_Log__c\nconst crypto = require('crypto');\nreturn $input.all().map(item => {\n  const row = item.json;\n  const formId = String(row.form_id);\n  const entryId = String(row.entry_id);\n  const hash = crypto.createHash('sha256').update(`${formId}:${entryId}`).digest('hex');\n  return {\n    json: {\n      ...row,\n      Idempotency_Hash__c: hash,\n      source_form: `wpform_${formId}`,\n      raw_fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields\n    }\n  };\n});"
-      },
-      "id": "wprc-0003-4000-8000-000000000003",
-      "name": "Code: Hash + parse fields",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [680, 320]
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "customObject",
-        "customObject": "Lead_Inbound_Log__c",
-        "options": {}
-      },
-      "id": "wprc-0004-4000-8000-000000000004",
-      "name": "SF Find: existing Lead_Inbound_Log__c (by hash)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 320],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "SOQL: SELECT Id, Status__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c = :hash LIMIT 1"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": { "caseSensitive": false, "typeValidation": "loose" },
-          "conditions": [
+        "rule": {
+          "interval": [
             {
-              "leftValue": "={{ $json.Id }}",
-              "rightValue": "",
-              "operator": { "type": "string", "operation": "empty" }
+              "field": "cronExpression",
+              "expression": "*/10 * * * *"
             }
           ]
         }
       },
-      "id": "wprc-0005-4000-8000-000000000005",
-      "name": "IF: missing in Inbound_Log → replay",
+      "id": "rec-1",
+      "name": "Schedule: every 10 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "command",
+        "command": "MYSQL_PWD=ZO8i4xKtqmyoe7OLwmGG mysql -h 127.0.0.1 -P 3306 -u record360 wp_record360 --batch --skip-column-names <<< $(echo U0VMRUNUIGVudHJ5X2lkLCBmb3JtX2lkLCBEQVRFX0ZPUk1BVChkYXRlLCAnJVktJW0tJWRUJUg6JWk6JXNaJyksIFJFUExBQ0UoUkVQTEFDRShmaWVsZHMsIENIQVIoOSksICcgJyksIENIQVIoMTApLCAnICcpIEZST00gd3Bfd3Bmb3Jtc19lbnRyaWVzIFdIRVJFIGZvcm1faWQgSU4gKDI5NzEwLDI5NzEyLDI5NzE0KSBBTkQgZGF0ZSA+PSBOT1coKSAtIElOVEVSVkFMIDMwIE1JTlVURSBPUkRFUiBCWSBkYXRlIEFTQw== | base64 -d)",
+        "cwd": "/tmp",
+        "options": {},
+        "authentication": "privateKey"
+      },
+      "id": "rec-2",
+      "name": "SSH: Pull last-30min WPForms entries",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        460,
+        320
+      ],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "upHoqgOVbETJsqE5",
+          "name": "R360 WPE SSH (sshPrivateKey, ed25519)"
+        }
+      },
+      "notes": "Runs MySQL query via SSH command (bypasses n8n's MySQL+SSH-tunnel bug). Returns TSV stdout: entry_id\\tform_id\\tdate\\tfields_json"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst crypto = require('crypto');\nconst stdout = $input.first().json.stdout || '';\nif (!stdout.trim()) return [];\nconst lines = stdout.split('\\n').filter(l => l.trim());\nreturn lines.map(line => {\n  const parts = line.split('\\t');\n  const entry_id = parts[0], form_id = parts[1], date = parts[2], fields_raw = parts[3];\n  const hash = crypto.createHash('sha256').update(form_id + ':' + entry_id).digest('hex');\n  let fields = {};\n  try { fields = JSON.parse(fields_raw || '{}'); } catch (e) {}\n  return {\n    json: {\n      entry_id: String(entry_id),\n      form_id: String(form_id),\n      date,\n      fields,\n      Idempotency_Hash__c: hash,\n      source_form: 'wpform_' + form_id,\n    }\n  };\n});\n"
+      },
+      "id": "rec-3",
+      "name": "Code: Parse TSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        320
+      ],
+      "notes": "Parses TSV stdout, computes idempotency hash per row, emits one item per WPForms entry"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all();\nif (!items.length) {\n  return [{ json: { soql: '', has_items: false, hashes: [] } }];\n}\nconst hashes = items.map(i => i.json.Idempotency_Hash__c);\nconst inList = hashes.map(h => \"'\" + h + \"'\").join(',');\nconst soql = \"SELECT Idempotency_Hash__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c IN (\" + inList + \")\";\nreturn [{ json: { soql, has_items: true, hashes, count: hashes.length } }];\n"
+      },
+      "id": "rec-build-soql",
+      "name": "Code: Build SOQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.soql }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "rec-4-http",
+      "name": "SF HTTP: query existing hashes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        320
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      },
+      "notes": "Direct SF REST query — replaces the customObject search node which doesn't support IN clauses cleanly"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst wpItems = $('Code: Parse TSV').all();\nconst sfRecords = $input.first().json.records || [];\nconst sfHashes = new Set(sfRecords.map(r => r.Idempotency_Hash__c));\nconst missing = wpItems.filter(i => !sfHashes.has(i.json.Idempotency_Hash__c));\nreturn missing.map(i => ({ json: i.json }));\n"
+      },
+      "id": "rec-5",
+      "name": "Code: Diff (missing from SF)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "has-missing",
+              "leftValue": "={{ $items().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        }
+      },
+      "id": "rec-6",
+      "name": "IF: missing > 0",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1120, 320]
+      "position": [
+        1340,
+        320
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.N8N_BASE_URL }}/webhook/r360/{{ $json.source_form === 'wpform_29710' ? 'contact-form' : ($json.source_form === 'wpform_29712' ? 'watch-video' : ($json.source_form === 'wpform_29714' ? 'get-demo' : 'faq')) }}",
+        "url": "=https://n8nweb.ec-ops.org/webhook/r360/{{ $json.source_form === 'wpform_29710' ? 'contact-form' : ($json.source_form === 'wpform_29712' ? 'watch-video' : 'get-demo') }}",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ \"entry_id\": \"{{ $json.entry_id }}\", \"form_id\": \"{{ $json.form_id }}\", \"fields\": {{ JSON.stringify($json.raw_fields) }}, \"_replay\": true }",
+        "jsonBody": "={\n  \"entry_id\": \"{{ $json.entry_id }}\",\n  \"form_id\": \"{{ $json.form_id }}\",\n  \"fields\": {{ JSON.stringify($json.fields) }},\n  \"_replay\": true,\n  \"_replay_source\": \"ssh_db_reconciliation\"\n}",
         "options": {}
       },
-      "id": "wprc-0006-4000-8000-000000000006",
-      "name": "HTTP: Replay to receiver",
+      "id": "rec-7",
+      "name": "HTTP: Replay missing to receiver",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1340, 240],
-      "notes": "Routes back into the matching n8n receiver. Receiver computes the same hash, sees existing Inbound_Log row (if any), upserts to 'replayed' status. Real-time delivery wins; replay is safety."
+      "position": [
+        1560,
+        240
+      ],
+      "notes": "Receiver computes the same hash, sees existing Inbound_Log row (real-time delivery wins) OR creates a new one with Status='replayed'"
     }
   ],
   "connections": {
-    "Schedule: every 10 min": { "main": [[{ "node": "MySQL: Pull last-30-min entries", "type": "main", "index": 0 }]] },
-    "MySQL: Pull last-30-min entries": { "main": [[{ "node": "Code: Hash + parse fields", "type": "main", "index": 0 }]] },
-    "Code: Hash + parse fields": { "main": [[{ "node": "SF Find: existing Lead_Inbound_Log__c (by hash)", "type": "main", "index": 0 }]] },
-    "SF Find: existing Lead_Inbound_Log__c (by hash)": { "main": [[{ "node": "IF: missing in Inbound_Log → replay", "type": "main", "index": 0 }]] },
-    "IF: missing in Inbound_Log → replay": { "main": [[{ "node": "HTTP: Replay to receiver", "type": "main", "index": 0 }], []] }
+    "Schedule: every 10 min": {
+      "main": [
+        [
+          {
+            "node": "SSH: Pull last-30min WPForms entries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SSH: Pull last-30min WPForms entries": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse TSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse TSV": {
+      "main": [
+        [
+          {
+            "node": "Code: Build SOQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: query existing hashes": {
+      "main": [
+        [
+          {
+            "node": "Code: Diff (missing from SF)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Diff (missing from SF)": {
+      "main": [
+        [
+          {
+            "node": "IF: missing > 0",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: missing > 0": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Replay missing to receiver",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Code: Build SOQL": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: query existing hashes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §13.2 (Reconciliation pattern) + §2.1" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": {
+    "node:Schedule: every 10 min": {
+      "recurrenceRules": []
+    }
+  },
+  "meta": null,
+  "pinData": null,
+  "versionId": "f26af0a8-7e8d-4196-8a4b-4aa717edf35b",
+  "activeVersionId": "f26af0a8-7e8d-4196-8a4b-4aa717edf35b",
+  "versionCounter": 46,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:50.745Z",
+      "createdAt": "2026-05-10T19:09:50.745Z",
+      "role": "workflow:owner",
+      "workflowId": "T1XKVSPaLzAuUh0l",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T17:03:50.432Z",
+    "createdAt": "2026-05-17T17:03:50.432Z",
+    "versionId": "f26af0a8-7e8d-4196-8a4b-4aa717edf35b",
+    "workflowId": "T1XKVSPaLzAuUh0l",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "*/10 * * * *"
+              }
+            ]
+          }
+        },
+        "id": "rec-1",
+        "name": "Schedule: every 10 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "command",
+          "command": "MYSQL_PWD=ZO8i4xKtqmyoe7OLwmGG mysql -h 127.0.0.1 -P 3306 -u record360 wp_record360 --batch --skip-column-names <<< $(echo U0VMRUNUIGVudHJ5X2lkLCBmb3JtX2lkLCBEQVRFX0ZPUk1BVChkYXRlLCAnJVktJW0tJWRUJUg6JWk6JXNaJyksIFJFUExBQ0UoUkVQTEFDRShmaWVsZHMsIENIQVIoOSksICcgJyksIENIQVIoMTApLCAnICcpIEZST00gd3Bfd3Bmb3Jtc19lbnRyaWVzIFdIRVJFIGZvcm1faWQgSU4gKDI5NzEwLDI5NzEyLDI5NzE0KSBBTkQgZGF0ZSA+PSBOT1coKSAtIElOVEVSVkFMIDMwIE1JTlVURSBPUkRFUiBCWSBkYXRlIEFTQw== | base64 -d)",
+          "cwd": "/tmp",
+          "options": {},
+          "authentication": "privateKey"
+        },
+        "id": "rec-2",
+        "name": "SSH: Pull last-30min WPForms entries",
+        "type": "n8n-nodes-base.ssh",
+        "typeVersion": 1,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "sshPrivateKey": {
+            "id": "upHoqgOVbETJsqE5",
+            "name": "R360 WPE SSH (sshPrivateKey, ed25519)"
+          }
+        },
+        "notes": "Runs MySQL query via SSH command (bypasses n8n's MySQL+SSH-tunnel bug). Returns TSV stdout: entry_id\\tform_id\\tdate\\tfields_json"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst crypto = require('crypto');\nconst stdout = $input.first().json.stdout || '';\nif (!stdout.trim()) return [];\nconst lines = stdout.split('\\n').filter(l => l.trim());\nreturn lines.map(line => {\n  const parts = line.split('\\t');\n  const entry_id = parts[0], form_id = parts[1], date = parts[2], fields_raw = parts[3];\n  const hash = crypto.createHash('sha256').update(form_id + ':' + entry_id).digest('hex');\n  let fields = {};\n  try { fields = JSON.parse(fields_raw || '{}'); } catch (e) {}\n  return {\n    json: {\n      entry_id: String(entry_id),\n      form_id: String(form_id),\n      date,\n      fields,\n      Idempotency_Hash__c: hash,\n      source_form: 'wpform_' + form_id,\n    }\n  };\n});\n"
+        },
+        "id": "rec-3",
+        "name": "Code: Parse TSV",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          680,
+          320
+        ],
+        "notes": "Parses TSV stdout, computes idempotency hash per row, emits one item per WPForms entry"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst items = $input.all();\nif (!items.length) {\n  return [{ json: { soql: '', has_items: false, hashes: [] } }];\n}\nconst hashes = items.map(i => i.json.Idempotency_Hash__c);\nconst inList = hashes.map(h => \"'\" + h + \"'\").join(',');\nconst soql = \"SELECT Idempotency_Hash__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c IN (\" + inList + \")\";\nreturn [{ json: { soql, has_items: true, hashes, count: hashes.length } }];\n"
+        },
+        "id": "rec-build-soql",
+        "name": "Code: Build SOQL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "q",
+                "value": "={{ $json.soql }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "rec-4-http",
+        "name": "SF HTTP: query existing hashes",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1000,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "Direct SF REST query — replaces the customObject search node which doesn't support IN clauses cleanly"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst wpItems = $('Code: Parse TSV').all();\nconst sfRecords = $input.first().json.records || [];\nconst sfHashes = new Set(sfRecords.map(r => r.Idempotency_Hash__c));\nconst missing = wpItems.filter(i => !sfHashes.has(i.json.Idempotency_Hash__c));\nreturn missing.map(i => ({ json: i.json }));\n"
+        },
+        "id": "rec-5",
+        "name": "Code: Diff (missing from SF)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": false,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "id": "has-missing",
+                "leftValue": "={{ $items().length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ]
+          }
+        },
+        "id": "rec-6",
+        "name": "IF: missing > 0",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1340,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://n8nweb.ec-ops.org/webhook/r360/{{ $json.source_form === 'wpform_29710' ? 'contact-form' : ($json.source_form === 'wpform_29712' ? 'watch-video' : 'get-demo') }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"entry_id\": \"{{ $json.entry_id }}\",\n  \"form_id\": \"{{ $json.form_id }}\",\n  \"fields\": {{ JSON.stringify($json.fields) }},\n  \"_replay\": true,\n  \"_replay_source\": \"ssh_db_reconciliation\"\n}",
+          "options": {}
+        },
+        "id": "rec-7",
+        "name": "HTTP: Replay missing to receiver",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1560,
+          240
+        ],
+        "notes": "Receiver computes the same hash, sees existing Inbound_Log row (real-time delivery wins) OR creates a new one with Status='replayed'"
+      }
+    ],
+    "connections": {
+      "Schedule: every 10 min": {
+        "main": [
+          [
+            {
+              "node": "SSH: Pull last-30min WPForms entries",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SSH: Pull last-30min WPForms entries": {
+        "main": [
+          [
+            {
+              "node": "Code: Parse TSV",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Parse TSV": {
+        "main": [
+          [
+            {
+              "node": "Code: Build SOQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: query existing hashes": {
+        "main": [
+          [
+            {
+              "node": "Code: Diff (missing from SF)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Diff (missing from SF)": {
+        "main": [
+          [
+            {
+              "node": "IF: missing > 0",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: missing > 0": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Replay missing to receiver",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Code: Build SOQL": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: query existing hashes",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T17:03:50.770Z",
+        "id": 4350,
+        "workflowId": "T1XKVSPaLzAuUh0l",
+        "versionId": "f26af0a8-7e8d-4196-8a4b-4aa717edf35b",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

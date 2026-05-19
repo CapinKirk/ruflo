@@ -224,14 +224,14 @@ SocialIntents R360 branch ─► /webhook/r360/bot   ─┘            │
 | 12 | **ReQuery sub-tree (Path A)** | If neither Lead nor Contact found, wait 15s and re-find. See §5.3. | 316797568+ |
 | 13a | **Path A4a** — Lead found via requery → update Lead | Similar to Path B | 316797638 |
 | 13b | **Path A4b** — Still no record → CREATE Lead (the "real" Path A) | New SF Lead + Campaign Member | 316797589 + 334669861 |
-| 13c-i | **Path A4c-i** — Contact found via requery, NOT customer → update Contact + Case (uses node 316797607 — the `/f` prefix bug) | Similar to Path D | 316797607 |
+| 13c-i | **Path A4c-i** — Contact found via requery, NOT customer → update Contact + Case (uses node 316797607 — the `/f` prefix bug) | Similar to Path C (creates Case) | 316797607 |
 | 13c-ii | **Path A4c-ii** — Contact found via requery, IS customer | Similar to Path C | 316797625 + 316797628 |
 | 13d | **Path A4d** — "End For Short Form" terminal 1-min wait, no further action | Watch Video / Get a Demo no-name fallback | 319542862, 319542863 |
 | 14a | **Path B** — Update Lead (initial Lead found, no Contact) | Update SF Lead + Campaign Member | 316797571 + 316797574 |
-| 14b | **Path C** — Update Contact, AM (Contact + Customer) | Update Contact, route to AM, no Case | 316797669 + AM Slack |
-| 14c | **Path D** — Update Contact, SDR (Contact, not Customer) | Update Contact + Create Case | 316797656 + 316797659 |
+| 14b | **Path C** — Update Contact, AM (Contact + Customer) | Update Contact + Create Case, route to AM | 316797656 + 316797659 |
+| 14c | **Path D** — Update Contact, SDR (Contact, not Customer) | Update Contact, no Case | 316797669 |
 | 15 | **SF Update: `Lead_Inbound_Log__c`** | Set Status, Decision_Path, Resolved_*, n8n_Execution_Id | NEW |
-| 16 | **Slack DM** | Notify assigned AE/SDR via `User.Slack_ID__c` lookup | 316797672 etc. |
+| 16 | **Slack DM** | Notify assigned AE/SDR via `User.Slack_ID__c` lookup | NET-NEW (no per-path Slack DMs exist in Zap 316797554 — see DRIFT-8) |
 | 17 | **Gmail (SMTP)** | Send notification email per region (NotificationEmail from step 8). Templates in §7.7. | 316797672 etc. |
 
 ### 5.3 ReQuery 15-second sub-tree under Path A
@@ -244,7 +244,7 @@ After the initial Find Lead + Find Contact return empty, the central processor r
 - Branch into 5 sub-paths:
   - **A4a** Lead found after requery → update Lead (similar to Path B, see §7.2)
   - **A4b** Still no record → CREATE Lead (the original Path A — node 316797589, see §7.1)
-  - **A4c-i** Contact found after requery, NOT customer → update Contact + Case (similar to Path D, but uses node 316797607 — the one with the `/f` prefix bug on `fbp__c`)
+  - **A4c-i** Contact found after requery, NOT customer → update Contact + Case (similar to Path C, but uses node 316797607 — the one with the `/f` prefix bug on `fbp__c`)
   - **A4c-ii** Contact found after requery, IS customer → update Contact + Case (similar to Path C)
   - **A4d** "End For Short Form" — terminal 1-min wait, no further action (node 319542863, 319542862)
 
@@ -517,6 +517,8 @@ return { InsideSalesQueue, BusinessHours, AssignmentID, NotificationEmail, LeadA
 
 ## 7. Salesforce Field Maps (verbatim from Zap, with corrections)
 
+> **Verified against Zapier export 2026-05-17** — field maps in §7.3–§7.4 were audited against Zap 316797554 node-by-node. See full audit findings in `/tmp/zap-316797554-fieldmap-verification.md`. DRIFT-1 and DRIFT-2 were critical errors (node IDs transposed, Case creation on wrong path) corrected in this revision.
+
 > Two universal n8n adjustments apply to every SF Update node below:
 > 1. **Empty-key filter Set node** before each SF Update — drops keys where `value === "" || value == null`. Without this, n8n overwrites SF values with empty string. (See §2.3 + UAT C-9.)
 > 2. **Path-specific corrections** are called out inline.
@@ -604,76 +606,177 @@ After Update: `add_lead_to_campaign` + update CampaignMember.
 
 ### 7.3 Path C — Update Contact, AM (Contact + Account.Status="Customer")
 
-SF object: `Contact`. Source: Zap node 316797669. Routes to Account Manager (not SDR).
+SF object: `Contact`. Source: Zap node **316797656** (filter: 316797655 "AM: Yes Contact + Yes Customer"). Routes to Account Manager. **Followed by Case creation (node 316797659) — see §7.6.**
+
+> DRIFT-1 corrected: node is 316797656, not 316797669. DRIFT-2 corrected: Case IS created on this path.
+
+**Fields set by node 316797656 (verified against Zap export):**
 
 ```
 record_id:                  {{contactId}}
 LastName:                   {{formattedLast}}
 FirstName:                  {{formattedFirst}}
-MQL__c:                     true
 Phone:                      {{phone}}
-OwnerId:                    {{AssignmentID}}
+MobilePhone:                {{phone}}
+OwnerId:                    {{AssignmentID}}              // Account Manager assignment
 Status__c:                  "Cold / Not Started"
-Most_Recent_Pardot_Form__c: "R360 - " + WPFormName       // ← BUG-FIXED
-Sales_Notes__c:             (long-form note)
+Most_Recent_Pardot_Form__c: ""                           // Intentionally empty in Zap (NOT set to form name)
+Date_Of_Most_Recent_Pardot_Form__c: ""                  // Intentionally empty
+Queue_Region__c:            ""                           // Intentionally empty
+Campaign__c:                ""                           // Intentionally empty
+Assigned_SDR__c:            ""                           // Intentionally empty
+Sales_Notes__c:             "First Name: {{formattedFirst}}\n..."  // No "Form Filled:" prefix on initial query path
+Inside_Lead_Sales_Notes__c: (same template as Sales_Notes__c)
+pi__notes__c:               (same template as Sales_Notes__c)
+Notes__c:                   (same template as Sales_Notes__c)
 Email:                      {{formattedEmail}}
-Inside_Lead_Sales_Notes__c: (long-form note)
-pi__utm_*__c:               <UTM>
-Lead_Owner__c:              {{AssignmentID}}              // ← AM-specific
-dupcheck__dc3DisableDuplicateCheck__c: true               // ← AM-specific: bypass DupCheck
-Description:                {{note || "First Name: ...\nPhone Number: " + formattedPhone + "..."}}   // ← BUG-FIXED (was raw {{field7}})
-pi__notes__c:               (long-form note)
+pi__utm_source__c:          {{316797554__utmSource}}     // RAW WEBHOOK (Zap inconsistency — see DRIFT-7)
+pi__utm_medium__c:          {{utmMedium}}
+pi__utm_content__c:         {{utmContent}}
+pi__utm_campaign__c:        {{utmCampaign}}
+pi__utm_term__c:            {{utmTerm}}
 LeadSource:                 {{utmsource}}
 CRO1__c:                    {{CRO1}}
 CRO2__c:                    {{CRO2}}
+pi__url__c:                 ""                           // Empty in Zap — ← BUG-FIX: populate with {{cleanedLanding}} in n8n (DRIFT-5: field exists but empty)
 HasOptedOutOfEmail:         false
 R360_Record__c:             true
-UTM_Source_Most_Recent__c:  {{utmSource}}
+UTM_Source_Most_Recent__c:  {{316797554__utmSource}}    // RAW WEBHOOK (same Zap inconsistency)
 UTM_Term_Most_Recent__c:    {{utmTerm}}
 UTM_Medium_Most_Recent__c:  {{utmMedium}}
 UTM_Campaign_Most_Recent__c:{{utmCampaign}}
-UTM_Term__c:                {{utmTerm}}                   // ← BUG-FIXED (was raw {{field27}})
-pi__utm_term__c:            {{utmTerm}}
-pi__utm_content__c:         {{utmContent}}
-MobilePhone:                {{phone}}
+UTM_Term__c:                {{utmTerm}}                  // ← BUG-FIXED (was raw {{field27}} in Zap)
+utm_term__c:                {{utmTerm}}
 Lead_Override_Date__c:      <today>
 Raw_Marketing_Lead__c:      true
-Notes__c:                   (long-form note)
 fbp__c, fbc__c, gclid__c, msclkid__c: <tracking>
-utm_term__c:                {{utmTerm}}
-pi__url__c:                 {{cleanedLanding}}            // ← NEW (failure mode #5 fix — was captured but never written)
 ```
 
-After Update: `add_contact_to_campaign` + update CampaignMember.
+**Fields NOT set on Path C (confirmed absent from node 316797656):**
+- `MQL__c` — absent on AM path (present on SDR path D)
+- `Lead_Owner__c` — absent on AM path (present on SDR path D)
+- `dupcheck__dc3DisableDuplicateCheck__c` — absent on AM path
+- `Description` — absent on AM path (present on SDR path D with raw field7 bug)
+- `SAL__c`, `Demo_Scheduled__c`, `Interest_Level__c`, `Meeting_Type_CP__c` — all absent
+
+**n8n build corrections for Path C:**
+- `pi__url__c`: change `""` → `{{cleanedLanding}}` (failure mode #5 fix)
+- `UTM_Term__c`: keep `{{utmTerm}}` (already corrected from raw `field27`)
+- `utm_source__c` / `pi__utm_source__c`: use `{{utmSource}}` from formatter output (DRIFT-7 fix — Zap uses raw webhook, n8n should use normalized value)
+- `Most_Recent_Pardot_Form__c`: the Zap sets this to `""` (empty). No hardcoded bug here. Leave as empty OR populate with `"R360 - " + WPFormName` if desired (net-new improvement, not a bug fix for this path).
+- `Description`: absent in Zap. If adding (for bot transcript pipe, failure mode #11), this is NET-NEW for the AM path.
+
+After Update: Create Case (node 316797659, §7.6) → `add_contact_to_campaign` (node 316797660, sets `Sales_Case_Associated__c`) → update CampaignMember.
 
 ### 7.4 Path D — Update Contact, SDR (Contact, not Customer)
 
-SF object: `Contact`. Source: Zap node 316797656. Same as Path C but:
-- No `Lead_Owner__c`
-- No `dupcheck__dc3DisableDuplicateCheck__c` flag
-- Followed by Create Case (node 316797659) for SDR follow-up.
+SF object: `Contact`. Source: Zap node **316797669** (filter: 316797668 "SDR: Yes Contact, No Customer"). Routes to SDR queue. **No Case creation on this path.**
+
+> DRIFT-1 corrected: node is 316797669, not 316797656. DRIFT-2 corrected: Case is NOT created on this path.
+
+**Fields set by node 316797669 (verified against Zap export):**
+
+```
+record_id:                  {{contactId}}
+LastName:                   {{formattedLast}}
+FirstName:                  {{formattedFirst}}
+MQL__c:                     true                         // SDR path sets MQL (absent on AM path)
+Phone:                      {{phone}}
+MobilePhone:                {{phone}}
+OwnerId:                    {{AssignmentID}}
+Status__c:                  "Cold / Not Started"
+Most_Recent_Pardot_Form__c: "R360 - Contact Form"        // Hardcoded in Zap — ← BUG-FIX: change to "R360 - " + WPFormName (DRIFT-4)
+Date_Of_Most_Recent_Pardot_Form__c: ""
+Queue_Region__c:            ""
+Campaign__c:                ""
+Assigned_SDR__c:            ""
+Sales_Notes__c:             "First Name: {{formattedFirst}}\n..."  // No "Form Filled:" prefix
+Inside_Lead_Sales_Notes__c: (same template as Sales_Notes__c)
+pi__notes__c:               "First Name: ...\nPhone Number: {{phone}}\n..."  // Uses formatted phone
+Notes__c:                   (same template as Sales_Notes__c)
+Email:                      {{formattedEmail}}
+pi__utm_campaign__c:        {{utmCampaign}}
+pi__utm_source__c:          {{316797554__utmSource}}    // RAW WEBHOOK — ← BUG-FIX: use {{utmSource}} (DRIFT-7)
+pi__utm_medium__c:          {{utmMedium}}
+pi__utm_content__c:         {{utmContent}}
+pi__utm_term__c:            {{utmTerm}}
+Lead_Owner__c:              {{AssignmentID}}             // SDR-specific (absent on AM path)
+dupcheck__dc3DisableDuplicateCheck__c: true              // SDR-specific: bypass DupCheck
+Description:                "First Name: ...\nPhone Number: {{316797554__field7}}\nRegion: ..."
+                            // ← BUG-FIX: replace {{field7}} with {{formattedPhone}} (DRIFT-3: field exists but has raw phone bug)
+LeadSource:                 {{utmsource}}
+CRO1__c:                    {{CRO1}}
+CRO2__c:                    {{CRO2}}
+pi__url__c:                 ""                           // Empty in Zap — ← BUG-FIX: populate with {{cleanedLanding}}
+HasOptedOutOfEmail:         false
+R360_Record__c:             true
+UTM_Source_Most_Recent__c:  {{316797554__utmSource}}    // RAW WEBHOOK — ← BUG-FIX: use {{utmSource}}
+UTM_Term_Most_Recent__c:    {{utmTerm}}
+UTM_Medium_Most_Recent__c:  {{utmMedium}}
+UTM_Campaign_Most_Recent__c:{{utmCampaign}}
+UTM_Term__c:                {{316797554__field27}}       // RAW WEBHOOK — ← BUG-FIX: use {{utmTerm}}
+utm_term__c:                {{utmTerm}}
+pi__utm_term__c:            {{utmTerm}}
+Lead_Override_Date__c:      <today>
+Raw_Marketing_Lead__c:      true
+fbp__c, fbc__c, gclid__c, msclkid__c: <tracking>
+```
+
+**Fields NOT set on Path D (confirmed absent from node 316797669):**
+- `SAL__c`, `MQD__c`, `SAD__c`, `Contact_Request__c` — all absent
+- `Marketing_Status__c`, `Demo_Completed__c`, `Assigned_SDR__c` (write), `Most_Recent_Pardot_Form__c='AI BOT'` — absent
+
+**n8n build corrections for Path D:**
+- `Description`: change `{{field7}}` → `{{formattedPhone}}` (DRIFT-3 fix — field exists in Zap but has raw phone bug)
+- `Most_Recent_Pardot_Form__c`: change hardcoded `"R360 - Contact Form"` → `"R360 - " + WPFormName` (DRIFT-4 fix — same hardcoded bug applies here)
+- `UTM_Term__c`: change `{{field27}}` → `{{utmTerm}}`
+- `utm_source__c` / `pi__utm_source__c`: use `{{utmSource}}` from formatter (DRIFT-7 fix)
+- `pi__url__c`: change `""` → `{{cleanedLanding}}`
+- **No Case node** after this Contact update. Path D subtree: update_contact → Gmail → add_contact_to_campaign (node 316797673).
+
+After Update: Gmail notification → `add_contact_to_campaign` (node 316797673, sets `Status='Cold / Not Started'`) → update CampaignMember. **No Case creation.**
 
 ### 7.5 Path A4c-i — Update Contact (ReQuery, NOT customer) — fbp `/f` prefix bug
 
 SF object: `Contact`. Source: Zap node 316797607. **CRITICAL BUG FIX:** the original spec hardcodes `string::fbp__c: "/f{{316797554__fbp}}"` — the `/f` prefix corrupts the value for Contacts on this path. Fix: drop the `/f` prefix.
 
-Otherwise field map is similar to Path D. Followed by Create Case (node 316797659).
+Otherwise field map is similar to Path C (AM path, node 316797656) — this is the NOT-customer requery branch, which creates a Case. Also has the Description raw `field7` bug (same as Path D, node 316797669) — fix: replace `{{field7}}` with `{{formattedPhone}}`. Followed by Create Case (node 316797628, same field map as 316797659).
 
-### 7.6 Case create field map (used by Path D and Path A4c-ii)
+### 7.6 Case create field map (used by Path C and Path A4c-i/A4c-ii)
 
-Source: Zap node 316797659 (Path D) and 316797628 (Path A4c-ii). Same RT for both — only OwnerId differs (AM owner for A4c-ii Customer Case, SDR queue for D Prospect Case).
+> DRIFT-2 corrected: Case is on Path C (AM/Customer), NOT Path D (SDR/Prospect).
+
+Source: Zap node 316797659 (Path C — AM initial query) and 316797628 (Path A4c-ii — AM requery). Path A4c-i also creates a Case (uses same field map, different ContactId source). Path D does NOT create a Case.
+
+OwnerId is a single hardcoded queue `00GKi0000016PF2MAM` for both Path C and A4c-i/A4c-ii — all Customer Cases go to the same queue regardless of path.
 
 ```
-RecordTypeId:    0124u000000l5qwAAA          // Inside Sales Case RT (shared between A4c-ii and D)
-OwnerId:         {{AssignmentID}} (D) or {{AccountOwnerId}} (A4c-ii)
-ContactId:       {{contactId}}
-AccountId:       {{accountId}}
-Subject:         "R360 Form Fill - {{WPFormName}}"
-Description:     (long-form note, includes `note` body)
+RecordTypeId:    0124u000000l5qwAAA          // Inside Sales Case RT
+OwnerId:         00GKi0000016PF2MAM          // Hardcoded queue (Path C verified — same queue for all Customer Cases)
+OwnerId2:        ""                          // Intentionally empty
+ContactId:       {{contactId}}               // {{318022712__id}} on initial query; {{316797567__id}} on requery paths
+AccountId:       (NOT PRESENT in Zap — absent from node 316797659)
+Subject:         "R360 - Contact Form"       // Hardcoded in Zap (not dynamic WPFormName)
+SuppliedName:    {{formattedFirst}} {{formattedLast}}
+SuppliedEmail:   {{formattedEmail}}
+SuppliedPhone:   {{phone}}
+SuppliedCompany: {{formattedCompany}}
+Description:     "First Name: ...\nRegion: ..."  // Long-form note (does NOT use raw field7 here)
 Origin:          "Web"
 Status:          "New"
 Priority:        "Medium"
+Type:            "R360 Sales"
+Campaign__c:     701Ki000000cMwkIAE          // Hardcoded R360 Website Campaign
+UTM_Campaign__c: {{316797554__field22}}      // RAW WEBHOOK — ← n8n: use {{utmCampaign}}
+UTM_Medium__c:   {{316797554__field21}}      // RAW WEBHOOK — ← n8n: use {{utmMedium}}
+UTM_Source__c:   {{316797554__field20}}      // RAW WEBHOOK — ← n8n: use {{utmSource}}
+BusinessHoursId: 01mE0000000HjdIIAS          // Hardcoded
+allowDuplicates: false
 ```
+
+> Note: `AccountId` is absent from the Zap's Case create (node 316797659). Build plan previously implied it was set. Do NOT add AccountId unless confirmed with SF Admin — Case may look up Account via ContactId automatically.
+
+After Create Case: `add_contact_to_campaign` (node 316797660) sets `Sales_Case_Associated__c: {{316797659__id}}` to link the CampaignMember to this Case.
 
 ### 7.7 Email Notification Templates (Gmail SMTP)
 
@@ -683,7 +786,7 @@ Priority:        "Medium"
 |---|---|
 | `R360 Lead Created` | A4b (new Lead) |
 | `R360 Lead Updated` | B (existing Lead update) |
-| `Contact Form Page - R360 Lead Updated` | A4c-i / D (Contact update, SDR routing) |
+| `Contact Form Page - R360 Contact Updated` | A4c-i (requery contact) and D (SDR contact update) |
 | `R360 Lead Converted to Contact` | A4a (Lead found via requery, converted to Contact) |
 | `R360 Contact AM Notice` | C (Customer routing, AM notification) |
 
@@ -703,6 +806,8 @@ Routed to:    {{AssignmentID_user_name}} ({{NotificationEmail.first}})
 ```
 
 Recipients: the `NotificationEmail` string from the Assignment Owner Code node (region-specific, comma-separated).
+
+> **DRIFT-8 (net-new feature note):** The source Zap 316797554 has **no per-path Slack DM notifications**. All 8 Slack nodes in the Zap are error handlers posting to channel `C06TTMZB3RA` ("Lead Create Fail" bot) only on failure branches. Success-path regional notifications go exclusively via Gmail SMTP to the `NotificationEmail` list above. The per-path Slack DM to `User.Slack_ID__c` (step 16 in §5.2 table) is **NET-NEW behavior** being added in the n8n migration — it does not exist in the Zap and must be built from scratch, including the `User.Slack_ID__c` SOQL lookup. UAT test cases C-5, C-6, C-19 cover this new behavior.
 
 ### 7.8 Convert Lead via HTTP node — `sub-convert-lead.json`
 
@@ -1323,10 +1428,10 @@ n8n reads these IDs from environment variables (`SF_R360_LEAD_RT`, `SF_R360_LEAD
 | Update Lead (Path A4a) | 316797638 | add_lead_to_campaign 316797641 | Same |
 | Update Contact (Path A4c-i — has /f bug) | 316797607 | add_contact_to_campaign 316797614 | Same |
 | Update Contact (Path A4c-ii) | 316797625 | Create Case 316797628 | Same |
-| Update Contact (Path C) | 316797669 | add_contact_to_campaign 316797673 | Same |
-| Update Contact (Path D) | 316797656 | Create Case 316797659 | Same |
+| Update Contact (Path C — AM) | 316797656 | Create Case 316797659 | Same |
+| Update Contact (Path D — SDR) | 316797669 | Gmail → add_contact_to_campaign 316797673 | Same |
 | Create Case (Path A4c-ii) | 316797628 | add_contact_to_campaign 316797629 | Same |
-| Create Case (Path D) | 316797659 | add_contact_to_campaign 316797660 | Same |
+| Create Case (Path C — AM) | 316797659 | add_contact_to_campaign 316797660 | Same |
 | Convert Lead to Contact (HTTP node — §7.8) | 340057313 | Send Lead Converted Email | Same |
 | Add Lead to Campaign (×3) | 334669861, 316797641, 316797574 | Find/Update CampaignMember | Same |
 | Add Contact to Campaign (×4) | 316797614, 316797629, 316797660, 316797673 | Find/Update CampaignMember | Same |
@@ -1452,10 +1557,10 @@ Every receiver workflow has an `Error Trigger` workflow attached. On any failure
 
 ### Pre-existing bugs (carry over from prior plan)
 
-1. **Hardcoded `Most_Recent_Pardot_Form__c = "R360 - Contact Form"`** in nodes 316797589 (Path A4b), 316797571 (Path B), 316797638 (Path A4a), 316797669 (Path C). Should template as `"R360 - " + WPFormName` so Watch Video / Get a Demo / bot are correctly attributed.
+1. **Hardcoded `Most_Recent_Pardot_Form__c = "R360 - Contact Form"`** in nodes 316797589 (Path A4b), 316797571 (Path B), 316797638 (Path A4a), 316797669 (Path D — SDR), and 316797607 (Path A4c-i). Note: Path C (AM, node 316797656) sets this field to `""` (empty), not a hardcoded form name. Should template as `"R360 - " + WPFormName` on affected nodes so Watch Video / Get a Demo / bot are correctly attributed.
 2. **Contact Form router sends blank `Timestamp` and `ZapID`** — n8n receivers should set both based on the actual payload.
-3. **Path C `Description` field uses `{{field7}}` (raw form field) for Phone**, not the normalized `phone`. Fix: use `formattedPhone`.
-4. **`UTM_Term__c` in Path C uses raw `{{field27}}`** — copy-paste leftover. Fix: use normalized `utmTerm`.
+3. **Path D (SDR, node 316797669) and Path A4c-i (node 316797607) `Description` field uses `{{field7}}` (raw form field) for Phone**, not the normalized `phone`. Fix: use `formattedPhone`. Note: Path C (AM, node 316797656) does NOT have a Description field at all — the bug is on the SDR paths only.
+4. **`UTM_Term__c` in Path C (node 316797656) and Path D (node 316797669) uses raw `{{field27}}`** — copy-paste leftover. Fix: use normalized `utmTerm`.
 5. **`pi__url__c` (cleaned landing page)** is captured by the formatter (`cleanedLanding`) but never written to any SF field. Fix: add to all 4 paths' field maps.
 6. **SOQL injection vulnerability** in the `Create Queries` Code node — `'` in submitter input breaks the query. Fix: escape in §6.3.
 7. **Two SF auth credentials** in the central processor today. Fix: standardize on one integration user.
@@ -1465,14 +1570,45 @@ Every receiver workflow has an `Error Trigger` workflow attached. On any failure
 
 9. **`/f` prefix on `fbp__c` in Path A4c-i** (node 316797607): hardcoded `string::fbp__c: "/f{{316797554__fbp}}"`. Corrupts the value for Contacts on this path. Fix: drop the `/f` prefix.
 10. **Dead-code SOQL queries** in `Create Queries` node — the generated `leadQuery` and `contactQuery` outputs are NOT consumed by the Find Lead / Find Contact nodes (which use their own hardcoded WHERE clauses). The Code node's output is functionally unused. Fix: wire the generated queries into the Find nodes (more robust dedup).
-11. **`field14` (Contact Form message body) is captured but only written to CampaignMember.Notes__c**, never to Lead.Description / Contact.Description__c. If the SDR doesn't read CampaignMember Notes, the submitter's message is functionally lost. Fix: also write to `Lead.Description` / `Contact.Description__c` (now applied in §7.1, §7.2, §7.3).
-12. **`UTM_Term__c` in Path C uses raw `{{field27}}`** — *(already noted as bug #4 above; reinforced by gap-analysis agent.)*
+11. **`field14` (Contact Form message body) is captured but only written to CampaignMember.Notes__c**, never to Lead.Description / Contact.Description__c. If the SDR doesn't read CampaignMember Notes, the submitter's message is functionally lost. Fix: write to `Lead.Description` (now applied in §7.1, §7.2) and `Contact.Description__c` (§7.4 for SDR path — replaces raw field7 bug). For Path C (AM), Description is absent from the Zap and would be a net-new addition.
+12. **`UTM_Term__c` in Path C (node 316797656) and Path D (node 316797669) uses raw `{{field27}}`** — *(already noted as bug #4 above; reinforced by gap-analysis agent. Fix applies to both paths.)*
 
 ### Architecture corrections (from feasibility report)
 
 A1. **WPForms REST API endpoint not confirmed** → switch to WordPress DB polling for reconciliation. (See §13.2.)
 A2. **n8n SF node has NO native `convertLead`** → use HTTP Request node sub-workflow. (See §7.8.)
 A3. **n8n SF Update node overwrites blanks with empty string** → insert empty-key filter Set node before each update. (See §2.3, applied throughout §7.)
+
+### §15.A — Plauti DupCheck Fallback Pattern (deployed 2026-05-18/19)
+
+**Problem.** The resolver's SOQL dedup logic matches on normalized email against Lead and Contact. For non-public-domain emails, Plauti DupCheck (an Apex trigger installed on `Lead`) can catch a duplicate that the resolver's fuzzy match missed — typically because the existing Lead record has a slightly different name normalization or was created via a different channel. When Plauti fires, SF returns HTTP 400 with body `"Please use one of the existing records, if possible"`. Without recovery, the submission silently fails: `Lead_Inbound_Log__c.Status__c` stays `received`, no Lead is created or updated, no Slack/Gmail notification fires.
+
+**Deployed pattern — both R360 writer (`n12VvtsMqRSUOniR`) and POR writer (`8bgnoj7dfYg4uqBv`):**
+
+1. `SF HTTP: Create Lead` is configured with `onError: continueErrorOutput` (n8n's two-port error handling — port 0 = success, port 1 = error). This replaces the previous single-output wiring that would halt the execution on any Create failure.
+
+2. **Success port (0):** continues to the existing chain — `Code: Build CampaignMember body` → supersede chain → `Code: Build final-update payload` → `SF HTTP: Update Lead_Inbound_Log__c`.
+
+3. **Error port (1):** routes to a four-node fallback chain:
+   - `Code: Detect Plauti dup + build SOQL` — inspects the error body. If the message matches the Plauti fingerprint, constructs `SELECT Id FROM Lead WHERE Email = '<exact>' AND IsConverted = false ORDER BY LastModifiedDate DESC LIMIT 1`. If the error is something else entirely (auth, FLS, schema) the code node still emits a record so the chain can reach final-update and log the failure honestly.
+   - `SF HTTP: Query Lead by exact email (Plauti-recovery)` — executes the SOQL. `onError: continueRegularOutput` so a zero-row result doesn't halt the chain.
+   - `Code: Build Lead update body (Plauti-recovery)` — constructs a Path-B-style update body (same field set as a normal "Lead found" update). Sets `_sf_record_id = foundLeadId`, `leadId = foundLeadId`, `_plauti_recovered = true`. Returns an empty object if the SOQL came back empty (edge case: Plauti said dup but our query found nothing — logs cleanly).
+   - `SF HTTP: Update Lead (Plauti-recovery → Path B)` — executes the PATCH. `onError: continueRegularOutput`.
+   - Chain merges back into `Code: Build CampaignMember body` (shared with the success path).
+
+4. `Code: Build final-update payload` reads the recovered Lead ID via:
+   ```js
+   $('Code: Build Lead update body (Plauti-recovery)').first()?.json?.leadId
+   ```
+   When that value is present, it re-labels `Decision_Path__c` from `A4b` to `B` and populates `Resolved_Lead__c` with the found Lead ID. The `Lead_Inbound_Log__c` row therefore reflects what actually happened (update, not create) rather than the originally intended path.
+
+**Mirrors Zap node 253294318** ("Update Lead after Create fail") — the original Zap had the identical recovery pattern; this is a faithful n8n port.
+
+**When it fires in practice:**
+- **POR:** estimated 5–15 % of resubmissions where the resolver's SOQL misses but Plauti catches. POR forms have higher resubmission rates (Contact Us form is reused by existing customers).
+- **R360:** rarely in practice. R360 Contact Form routes no-record cases to `X_no_record_skipped_contactform` per §5.4, which never reaches Create Lead. The fallback code is defensive coverage for any future R360 form that exercises Path A4b at scale.
+
+**Why `onError: continueErrorOutput` rather than a retry loop:** Retrying a Plauti-blocked Create would fail identically every time. The correct recovery is to find the existing record and update it — which is what this chain does.
 
 ---
 
@@ -1690,23 +1826,30 @@ FROM Lead WHERE Email = 'uat-newlead@example.com'
 **Pre-test:** `SELECT FirstName, LastName, Company FROM Lead WHERE Email = 'uat-lead-open@example.com'` (capture values).
 **Post-test:** re-query — FirstName/LastName/Company values UNCHANGED.
 
-#### C-10 — `sub-r360-writer` — Path C sets `dupcheck__` flag and `Lead_Owner__c`
+#### C-10 — `sub-r360-writer` — Path D (SDR) sets `dupcheck__` flag and `Lead_Owner__c`
+> DRIFT-2 corrected: `dupcheck__dc3DisableDuplicateCheck__c` and `Lead_Owner__c` are on Path D (SDR), NOT Path C (AM). Verifying against the prospect fixture, not the customer fixture.
+
 **SF assertion:**
 ```sql
-SELECT Id, dupcheck__dc3DisableDuplicateCheck__c, Lead_Owner__c, OwnerId
-FROM Contact WHERE Email = 'uat-customer@example.com'
--- Expected: dupcheck__dc3DisableDuplicateCheck__c=true, Lead_Owner__c=Katie.UAT.Id
+SELECT Id, dupcheck__dc3DisableDuplicateCheck__c, Lead_Owner__c, OwnerId, MQL__c
+FROM Contact WHERE Email = 'uat-prospect@example.com'
+-- Expected: dupcheck__dc3DisableDuplicateCheck__c=true, Lead_Owner__c=<SDR assignment ID>,
+--   MQL__c=true (also SDR-only field)
 ```
 
-#### C-11 — `sub-r360-writer` — Path D creates Case
+#### C-11 — `sub-r360-writer` — Path C (AM/Customer) creates Case
+> DRIFT-2 corrected: Case is created on Path C (AM/Customer), NOT Path D. Verifying against the customer fixture.
+
 **SF assertion:**
 ```sql
-SELECT Id, RecordTypeId, OwnerId, ContactId, Subject, Origin, Status, Priority
+SELECT Id, RecordTypeId, OwnerId, ContactId, Subject, Origin, Status, Priority,
+       Type, Campaign__c, BusinessHoursId
 FROM Case
-WHERE ContactId IN (SELECT Id FROM Contact WHERE Email='uat-prospect@example.com')
+WHERE ContactId IN (SELECT Id FROM Contact WHERE Email='uat-customer@example.com')
   AND CreatedDate = TODAY
 -- Expected: 1 row, RecordTypeId=<Inside_Sales UAT RT>, Origin='Web',
---   Status='New', Subject LIKE 'R360 Form Fill%'
+--   Status='New', Subject='R360 - Contact Form', Type='R360 Sales',
+--   Campaign__c='<R360_UAT_Campaign_Id>'
 ```
 
 #### C-12 — `sub-r360-writer` — CampaignMember Status and Notes update
@@ -1763,8 +1906,8 @@ After component tests pass on Day 5, run the full integration matrix on Day 6.
 |---|---|---|---|---|
 | T1 | Brand new email/company, valid Contact Form fill | 29710 | A4b | New Lead created, RecordTypeId=R360, OwnerId=region-mapped AE, Campaign added |
 | T2 | Email matches existing R360 Lead (IsConverted=false) | 29710 | B | Lead updated, no new Lead, Campaign updated |
-| T3 | Email matches existing Contact, Account.Status="Customer" | 29710 | C | Contact updated with `dupcheck__` flag set, Lead_Owner__c set, no Case |
-| T4 | Email matches Contact, Account.Status="Prospect" | 29710 | D | Contact updated, Case created with R360 SDR Follow-Up RT |
+| T3 | Email matches existing Contact, Account.Status="Customer" | 29710 | C | Contact updated (OwnerId=AM), Case created (node 316797659), CampaignMember Sales_Case_Associated__c set. No dupcheck or Lead_Owner__c (AM path). |
+| T4 | Email matches Contact, Account.Status="Prospect" | 29710 | D | Contact updated with `dupcheck__dc3DisableDuplicateCheck__c=true`, `Lead_Owner__c` and `MQL__c` set. No Case created. |
 | T5 | Email empty | 29710 | X_skipped_no_email | No SF write, Inbound_Log status="X_skipped_no_email" |
 | T6 | Watch Video form (no name/company) | 29712 | A4b or B | Lead created/updated using ONLY email match (no LIKE LastName) |
 | T7 | Get a Demo form (no name/company) | 29714 | A4b or B | Same as T6 |
@@ -2075,3 +2218,167 @@ migration-plans/
 ---
 
 **End of R360 build plan.** Estimated effort: **7 days of focused engineering + 72-hour dual-write soak + 14-day post-cutover monitoring** before declaring success. The plan + the 1,118-line deep spec + 5 supporting spec docs (~5,500 lines total) constitute the single source of truth the build team executes against.
+
+---
+
+## 21. POR Shadow Framework (UAT shadow live; prod partial as of 2026-05-19)
+
+This section documents the parallel POR (point-of-rental.com) shadow implementation that was built alongside the R360 migration. POR forms route through a separate receiver/resolver/writer chain, isolated from R360 at every node. The Plauti-fallback pattern (§15.A) is deployed in both writers.
+
+### 21.1 — POR Forms in Scope (v1.0)
+
+| Form ID | WPForm Name | Volume (lifetime) | Receiver endpoint | n8n Workflow ID |
+|---|---|---|---|---|
+| 64681 | POR Contact Us (dual EU/non-EU routing via Region field 17) | 5,150 entries | `/por/contact-us-64681` | `vikLO2gC6jqSJLQA` |
+| 64783 | POR Customer Contact | 33 entries | `/por/customer-contact-64783` | `10hC9N1FM4IeQwOc` |
+| n/a | SocialIntents Bot (personas: Penny Pointer / Penny) | n/a | `/por/bot` | `SLXJapuzXLUTk5Cw` |
+
+**Sunsetted — NOT wired in n8n:** forms 51987 and 53115. Naturally ignored; Marketing confirmed no action needed.
+
+**Out-of-scope pending Marketing inventory:** forms 52153, 61711, 52760, 43036, 103125, 48887, and several smaller forms. Marketing input required before these are added to scope.
+
+### 21.2 — POR Field Map (form 64681)
+
+POR's field-ID assignments differ from R360. R360 uses field IDs 2/3/5/13 for first/last/company/email; POR uses a different layout:
+
+| Field ID | Semantic | Notes |
+|---|---|---|
+| 1 | First Name | |
+| 5 | Last Name | |
+| 2 | Company Name | |
+| 3 | Email | |
+| 25 | Phone | |
+| 17 | Region | Drives EU vs non-EU branch — value tested with `formattedRegion.toLowerCase().includes('europe')` |
+| 26 | URL (landing page) | Maps to `pi__url__c` |
+| 20–22, 27–28, 45–46 | UTM fields + keyword + gadid | Normalized to `utm_*` / `pi__utm_*` |
+| 39–40 | CRO1, CRO2 | |
+| 41–44 | gclid, fbc, fbp, msclkid | EU path only — non-EU forms omit these fields entirely |
+| 18 | Current Customer checkbox | form 64783 only |
+| 16 | Preferred Contact | form 64783 only |
+
+**Defensive field shape handling:** the receiver field-map reads both the nested WPForms object shape (`fields.17.value`) and the flat shape (`fields.17`) so that both WPForms webhook formats are accepted without a normalization failure.
+
+### 21.3 — POR Resolver
+
+**Workflow:** `qxZp8GqN8i0b4fuz` (name: "POR Sub: Resolver"). Cloned from the R360 resolver (`sub-r360-resolver`) with two POR-specific overrides.
+
+#### Assignment Owner — 4-region mapping
+
+| Region | Queue ID | AE ID | Notification Email(s) | Business Hours ID | Lead Account ID |
+|---|---|---|---|---|---|
+| Australia / Asia | `00G0L000004WbECUA0` | `0050L000008hH5DQAU` (Josh O'Connell) | `josh.oconnell@pointofrental.com`, `kayla.oloughlin@pointofrental.com` | `01m0L00000001OZQAY` | `001Ki000009wWMPIA2` |
+| Africa | `00G4u000004AmQJEA0` | `0050L000008uAHvQAM` (Dean Hammond) | `dean.hammond@pointofrental.com` | `01m0L00000001PcQAI` | `001Ki000009wWM0IAM` |
+| Europe | `00G0L000004WbEDUA0` | `0054u000008m3w6AAA` (Marcus Sutton) | `marcus.sutton@pointofrental.com`, `uksdr@pointofrental.com` | `01m0L00000001PcQAI` | `001Ki000009wWM0IAM` |
+| North America / South America / default | `00G0L000004WbEEUA0` | `0054u000008m009AAA` (Hunter Ellison / Katie McFarland NA) | `katie.mcfarland@pointofrental.com`, `hunter.ellison@pointofrental.com` | `01m0h0000005HbeAAE` | `001Ki000009wWMPIA2` |
+
+#### Decide-path logic
+
+```
+isPORForm = WPFormName IN ['POR_ContactUs', 'POR_CustomerContact', 'POR_Bot']
+isEU      = formattedRegion.toLowerCase().includes('europe')
+```
+
+Decision paths emitted:
+
+| Path code | Condition | Action |
+|---|---|---|
+| `X_already_matched` | Both Lead AND Contact found | Skip — no write needed |
+| `B` | Lead found (not converted) | Update existing Lead |
+| `C` | Contact found under a Customer Account | Update Contact (AM ownership preserved) + create Case |
+| `D` | Contact found under a non-Customer Account | Update Contact (SDR reassign) + add CampaignMember |
+| `A4b` | No record found | Create new Lead |
+
+**Notable difference from R360:** POR does NOT have an `X_no_record_skipped_contactform` rule. The R360 Contact Form skips creation when no record exists (per §5.4); POR Contact Us always falls through to A4b and creates a Lead.
+
+**Click ID passthrough (FU-1, deployed 2026-05-19):** The resolver's Decide-path output now propagates `gclid`, `fbc`, `fbp`, and `msclkid` from the original webhook input through to the writer payload. Required for EU lead bodies — non-EU paths don't write these fields.
+
+### 21.4 — POR Writer
+
+**Workflow:** `8bgnoj7dfYg4uqBv` (name: "POR Sub: Writer"). Cloned from R360 writer with POR-specific field values throughout.
+
+#### POR-specific hardcoded IDs
+
+| ID type | POR value | R360 equivalent |
+|---|---|---|
+| Campaign ID | `7010L00000034Y7QAI` | `701Ki000000cMwkIAE` |
+| Lead RecordType (EU only) | `0120L00000098ftQAA` | (R360 does not set RecordType on Lead) |
+| Case RecordType | `0124u000000l5qwAAA` | `0124u000000l5qwAAA` (same — shared org RT) |
+| Case BusinessHoursId | `01mE0000000HjdIIAS` | differs |
+
+#### Path A4b — Create Lead (no record found)
+
+Lead body includes: `LastName`, `FirstName`, `Company`, `Email`, `Phone`, `Country`, `LeadSource='Web'`, `Status='Cold / Not Started'`, `OwnerId` (AssignmentID), `MQL__c=true`, `POR_Record__c=true`, `HasOptedOutOfEmail=false`, `Personal_Auto_Email_Opt_Out__c=false`, `Most_Recent_Pardot_Form__c='Book A Demo Form'`, `Date_Of_Most_Recent_Pardot_Form__c` (today), `Queue_Region__c`, `Assigned_SDR__c`, `Reassign_Lead_Using_Assignment_Rules__c=true`, `dupcheck__dc3DisableDuplicateCheck__c=true`, `CRO1__c`, `CRO2__c`, `pi__url__c`, `utm_*`, `pi__utm_*`, `Sales_Notes__c`, `pi__notes__c`, `Discovery_Notes__c`, `Description`.
+
+EU additions: `RecordTypeId='0120L00000098ftQAA'` + `gclid__c`, `fbc__c`, `fbp__c`, `msclkid__c`.
+
+Plauti-fallback (§15.A) applies here — if Create Lead returns the Plauti dup error, the fallback chain fires, finds the existing Lead by exact email, and updates it as a Path B.
+
+#### Path B — Update existing Lead
+
+Body: `Email`, `Phone`, `Status='Cold / Not Started'`, `LeadSource='Web'`, `MQL__c=true`, `POR_Record__c=true`, `Assigned_SDR__c`, `OwnerId`, `Most_Recent_Pardot_Form__c='Book A Demo'`, `Date_Of_Most_Recent_Pardot_Form__c` (today), `Queue_Region__c`, `CRO1__c`, `CRO2__c`, `pi__url__c`, `utm_*`, `pi__utm_*`, `Sales_Notes__c`, `pi__notes__c`, `HasOptedOutOfEmail=false`, `Personal_Auto_Email_Opt_Out__c=false`.
+
+EU additions: `RecordTypeId` + click IDs (`gclid__c`, `fbc__c`, `fbp__c`, `msclkid__c`).
+
+#### Path C — Update Contact (Customer / AM)
+
+Body: `LastName`, `FirstName`, `Phone`, `Status__c='Cold / Not Started'`, `LeadSource='Web'`, `POR_Record__c=true`, `dupcheck__dc3DisableDuplicateCheck__c=true`, `Most_Recent_Pardot_Form__c='Book a Demo'` (lowercase 'a' — differs from Path B/D), `Queue_Region__c`, `CRO1__c`, `CRO2__c`, `pi__url__c`, `pi__utm_*`, `Sales_Notes__c`, `Inside_Lead_Sales_Notes__c`, `pi__notes__c`, `Description`, `HasOptedOutOfEmail=false`.
+
+**AM path does NOT set `MQL__c`, `Assigned_SDR__c`, or `OwnerId`** — existing AM ownership is preserved.
+
+Then: Case create. `Subject = '{region} - Book a Demo - Sales Form Fill'`, `Origin='Web'`, `Status='New'`, `Priority='Medium'`, `SuppliedName/Email/Phone/Company`, `OwnerId` (EU hardcoded to `00G0L000004WbEDUA0`; non-EU dynamic `InsideSalesQueue`), `Campaign__c='7010L00000034Y7QAI'`, `UTM_*`.
+
+Case create uses `onError: continueRegularOutput` (deployed 2026-05-19). Reason: the UAT org's RTFL Case After Trigger blocks Case creates for unverified email domains. Production has verified domain so this only surfaces in UAT shadow testing.
+
+#### Path D — Update Contact (SDR / Prospect)
+
+Body: `LastName`, `FirstName`, `Phone`, `Email`, `Status__c='Cold / Not Started'`, `LeadSource='Web'`, `MQL__c=true` (SDR path DOES set MQL, unlike AM), `POR_Record__c=true`, `dupcheck__dc3DisableDuplicateCheck__c=true`, `OwnerId` (reassign to SDR queue), `Assigned_SDR__c`, `Lead_Owner__c`, `Most_Recent_Pardot_Form__c='Book A Demo Form'`, `Date_Of_Most_Recent_Pardot_Form__c`, `Queue_Region__c`, `CRO1__c`, `CRO2__c`, `pi__url__c`, `pi__utm_*`, `Sales_Notes__c`, `Inside_Lead_Sales_Notes__c`, `pi__notes__c`, `Description`, `HasOptedOutOfEmail=false`.
+
+No Case created on the SDR path. CampaignMember add only.
+
+#### Plauti-fallback chain (FU-2 + Item 2, deployed 2026-05-18/19)
+
+See §15.A for the full pattern spec. In the POR writer specifically: when Path A4b's Create Lead fails with a Plauti dup error, the fallback chain queries by exact email, builds a Path-B-style update body, patches the existing Lead, and merges back into the CampaignMember step. `Code: Build final-update payload` reads `leadId` from `$('Code: Build Lead update body (Plauti-recovery)').first()?.json?.leadId` and re-labels `Decision_Path__c` from `A4b` to `B`.
+
+### 21.5 — POR DB Reconciliation Cron
+
+**Workflow:** `tza5WF0jMA8VLia0`. Runs every 10 minutes.
+
+1. SSH to POR WPE install — credential ID `2FG7uSHOHb43CNMt`, host `por@por.ssh.wpengine.net`.
+2. Execute via SSH:
+   ```sql
+   MYSQL_PWD=J1eW2ZVvbt1hZ9zN mysql -h 127.0.0.1 -P 3306 -u por wp_por \
+     -e "SELECT ... FROM wp_wpforms_entries
+         WHERE form_id IN (64681, 64783)
+         AND date >= NOW() - INTERVAL 30 MINUTE"
+   ```
+3. Parse TSV output → compute `Idempotency_Hash__c` per entry (same hashing logic as R360 cron).
+4. SOQL: `SELECT Idempotency_Hash__c FROM Lead_Inbound_Log__c WHERE Idempotency_Hash__c IN (...)` → diff missing hashes.
+5. Replay each missing entry to the appropriate per-form receiver: `/por/contact-us-64681` or `/por/customer-contact-64783`.
+
+This is a direct mirror of the R360 reconciliation cron (`T1XKVSPaLzAuUh0l`) targeting the `wp_por` database on the POR WPE install instead of the R360 install.
+
+### 21.6 — POR Salesforce Picklist Values
+
+`Lead_Inbound_Log__c.Source__c` picklist values added — deployed to both UAT and PROD:
+
+| API value | Label |
+|---|---|
+| `wpform_64681` | POR Contact Us |
+| `wpform_64783` | POR Customer Contact |
+| `bot_por` | SocialIntents Bot POR Path |
+
+`R360_n8n_Integration` permission set assigned to POR Integration user (`0050L00000822fcQAA`) in PROD to grant FLS on all `Lead_Inbound_Log__c` fields.
+
+### 21.7 — Known POR Design Compromises
+
+**1. Subscription proxy for C/D path distinction.** POR Path C vs D routing uses `Account.Status__c = 'Customer'` to determine AM vs SDR ownership — mirroring the R360 resolver logic that was already in place. The original POR Zap used an SBQQ query (`SBQQ__Subscription__c WHERE StartDate <= TODAY AND EndDate >= TODAY`) plus an `EU Line_Total__c > 1` filter. Neither is implemented in v1.0. Estimated 5–10 % potential misroute for accounts whose `Status__c` field is stale relative to active subscription state. Flagged for v1.1 remediation.
+
+**2. Auto-acknowledgment email not ported.** The original Zap sends an acknowledgment from `no-reply@pointofrental.com` with subject "Acknowledgment & Next Steps" after every submission. v1.0 relies on WPForms native confirmation email or AE manual follow-up. Tabled — requires Marketing approval on new template content.
+
+**3. ReQuery sub-tree not ported.** The original Zap includes a 15-second wait + secondary find logic for the no-record-found case. The Plauti-fallback pattern (§15.A) covers the main edge case that the ReQuery was designed to handle (record created milliseconds before the submission, visible to a second lookup but not the first). Functional parity is estimated at ~95 %; the remaining 5 % (true timing races) will surface as A4b Leads that could have been updates — low severity.
+
+**4. POR sub-notify templates pending.** The POR writer emits `template = 'lead_created_por' | 'lead_updated_por' | 'contact_AM_por' | 'contact_SDR_por'` in its output but the shared `sub-notify` workflow does not yet have Switch rules for these values. POR Lead and Contact writes currently succeed silently — no Slack DM or Gmail notification is sent. Tabled scope item; does not affect Lead/Contact/Case data integrity.
+
+---
+
+**End of POR Shadow Framework section.** POR v1.0 scope: forms 64681, 64783, and the SocialIntents Bot POR path. Forms 51987 and 53115 sunsetted. 10+ additional forms pending Marketing inventory for v1.1 scoping.

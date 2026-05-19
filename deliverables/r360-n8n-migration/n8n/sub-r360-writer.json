@@ -1,5 +1,11 @@
 {
-  "name": "R360 Sub: Writer (path-specific SF + Campaign + Case writes)",
+  "updatedAt": "2026-05-17T22:10:05.865Z",
+  "createdAt": "2026-05-10T19:09:46.825Z",
+  "id": "n12VvtsMqRSUOniR",
+  "name": "R360 Sub: Writer (A4b/B/C/D + Campaign)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,20 +13,239 @@
       "name": "When Executed by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ]
     },
     {
       "parameters": {
         "rules": {
           "values": [
-            { "outputKey": "A4b_create_lead",      "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4b",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "A4a_update_lead",      "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4a",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "B_update_lead",        "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "B",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "C_update_contact_AM",  "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "C",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "D_update_contact_SDR", "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "D",        "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "A4c_i_update_contact", "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4c-i",    "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "A4c_ii_update_contact","conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4c-ii",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "A4d_terminal",         "conditions": { "conditions": [{ "leftValue": "={{ $json.decisionPath }}", "rightValue": "A4d",      "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+            {
+              "outputKey": "A4b_create_lead",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "A4b",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "A4a_update_lead",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "A4a",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "B_update_lead",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "B",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "C_update_contact_AM",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "C",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "D_update_contact_SDR",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "D",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "A4c_i_update_contact",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "A4c-i",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "A4c_ii_update_contact",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "A4c-ii",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "A4d_terminal",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "A4d",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "X_skip",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "X_no_record_skipped_contactform",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "B_lite_update_lead",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "B_lite",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "C_lite_update_contact",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "C_lite",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "D_lite_update_contact",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "D_lite",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "X_email_only_no_record",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "X_no_record_skipped_email_only",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "X_superseded",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decisionPath }}",
+                    "rightValue": "X_superseded_by_full_form",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
           ]
         }
       },
@@ -28,254 +253,2014 @@
       "name": "Switch: decisionPath (8 sub-paths)",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "notes": "8 outputs: A4b (create Lead), A4a/B (update Lead), C (update Contact + AM), D (update Contact + Case), A4c-i/A4c-ii (update Contact + Case via requery), A4d (terminal Wait 1min)"
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            { "name": "LastName",                   "value": "={{ $json.formattedLast }}",       "type": "string" },
-            { "name": "FirstName",                  "value": "={{ $json.formattedFirst }}",      "type": "string" },
-            { "name": "Company",                    "value": "={{ $json.formattedCompany }}",    "type": "string" },
-            { "name": "RecordTypeId",               "value": "012Ki000000bpgRIAQ",               "type": "string" },
-            { "name": "Country",                    "value": "={{ $json.formattedCountry }}",    "type": "string" },
-            { "name": "MobilePhone",                "value": "={{ $json.phone }}",               "type": "string" },
-            { "name": "Phone",                      "value": "={{ $json.phone }}",               "type": "string" },
-            { "name": "Email",                      "value": "={{ $json.formattedEmail }}",      "type": "string" },
-            { "name": "LeadSource",                 "value": "={{ $json.utmsource }}",           "type": "string" },
-            { "name": "HasOptedOutOfEmail",         "value": false,                              "type": "boolean" },
-            { "name": "IsConverted",                "value": false,                              "type": "boolean" },
-            { "name": "DoNotCall",                  "value": false,                              "type": "boolean" },
-            { "name": "HasOptedOutOfFax",           "value": false,                              "type": "boolean" },
-            { "name": "Sales_Notes__c",             "value": "=First Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}", "type": "string" },
-            { "name": "Discovery_Notes__c",         "value": "=First Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}", "type": "string" },
-            { "name": "OwnerId2",                   "value": "={{ $json.AssignmentID }}",        "type": "string" },
-            { "name": "Most_Recent_Pardot_Form__c", "value": "=R360 - {{ $json.WPFormName }}",   "type": "string" },
-            { "name": "MQL__c",                     "value": true,                               "type": "boolean" },
-            { "name": "pi__utm_campaign__c",        "value": "={{ $json.utmCampaign }}",         "type": "string" },
-            { "name": "pi__utm_content__c",         "value": "={{ $json.utmContent }}",          "type": "string" },
-            { "name": "pi__utm_medium__c",          "value": "={{ $json.utmMedium }}",           "type": "string" },
-            { "name": "pi__utm_source__c",          "value": "={{ $json.utmSource }}",           "type": "string" },
-            { "name": "pi__utm_term__c",            "value": "={{ $json.utmTerm }}",             "type": "string" },
-            { "name": "utm_campaign__c",            "value": "={{ $json.utmCampaign }}",         "type": "string" },
-            { "name": "utm_medium__c",              "value": "={{ $json.utmMedium }}",           "type": "string" },
-            { "name": "utm_source__c",              "value": "={{ $json.utmSource }}",           "type": "string" },
-            { "name": "utm_term__c",                "value": "={{ $json.utmTerm }}",             "type": "string" },
-            { "name": "Lead_Override_Date__c",      "value": "={{ $now.toISO() }}",              "type": "string" },
-            { "name": "Raw_Marketing_Lead__c",      "value": true,                               "type": "boolean" },
-            { "name": "R360_Record__c",             "value": true,                               "type": "boolean" },
-            { "name": "fbc__c",                     "value": "={{ $json.fbc }}",                 "type": "string" },
-            { "name": "fbp__c",                     "value": "={{ $json.fbp }}",                 "type": "string" },
-            { "name": "gclid__c",                   "value": "={{ $json.gclid }}",               "type": "string" },
-            { "name": "msclkid__c",                 "value": "={{ $json.msclkid }}",             "type": "string" },
-            { "name": "Description",                "value": "={{ $json.note || \"\" }}",        "type": "string" }
-          ]
-        },
-        "options": {
-          "includeOtherFields": true
-        }
+        "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || 'ContactForm';\nconst today = new Date().toISOString().split('T')[0];\nconst leadPayload = {\n  LastName: j.formattedLast, FirstName: j.formattedFirst,\n  Company: j.formattedCompany, Email: j.formattedEmail,\n  Phone: j.phone, MobilePhone: j.phone,\n  Country: j.formattedCountry,\n  RecordTypeId: '012Ki000000bpgRIAQ',\n  LeadSource: j.utmsource, Industry: j.formattedIndustry,\n  HasOptedOutOfEmail: false, IsConverted: false, DoNotCall: false, HasOptedOutOfFax: false,\n  MQL__c: true, Raw_Marketing_Lead__c: true, R360_Record__c: true,\n  OwnerId: j.AssignmentID,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  Lead_Override_Date__c: today,\n  Sales_Notes__c: 'First Name: ' + j.formattedFirst + '\\nLast Name: ' + j.formattedLast + '\\nCompany Name: ' + j.formattedCompany + '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + j.phone + '\\nIndustry: ' + j.formattedIndustry + '\\nRegion: ' + j.formattedRegion + '\\nROI Calculator: ' + (j.roiCalculator || ''),\n  Discovery_Notes__c: 'First Name: ' + j.formattedFirst + '\\nLast Name: ' + j.formattedLast + '\\nCompany Name: ' + j.formattedCompany + '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + j.phone + '\\nIndustry: ' + j.formattedIndustry + '\\nRegion: ' + j.formattedRegion + '\\nROI Calculator: ' + (j.roiCalculator || ''),\n  pi__utm_campaign__c: j.utmCampaign, pi__utm_content__c: j.utmContent,\n  pi__utm_medium__c: j.utmMedium, pi__utm_source__c: j.utmsource, pi__utm_term__c: j.utmTerm,\n  utm_campaign__c: j.utmCampaign, utm_medium__c: j.utmMedium,\n  utm_source__c: j.utmsource, utm_term__c: j.utmTerm,\n  fbc__c: j.fbc, fbp__c: j.fbp, gclid__c: j.gclid, msclkid__c: j.msclkid,\n  Description: j.note || '',\n  // Task 28: WPForms meta-fields\n  pi__url__c: j.pageUrl, LandingPage__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\n  pi__first_touch_url__c: j.pageUrl, conversion_url__c: j.pageUrl,\n};\nconst cleaned = {};\nfor (const k of Object.keys(leadPayload)) {\n  const v = leadPayload[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_lead_body: cleaned } }];\n"
       },
-      "id": "wrtr-00a4-4000-8000-0000000000a4",
-      "name": "Set: A4b Lead payload (38 fields)",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3,
-      "position": [680, 120],
-      "notes": "Builds full Create Lead payload per §7.1. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT). OwnerId2 (NOT OwnerId) = AssignmentID from Assignment Owner code. Most_Recent_Pardot_Form__c bug-fixed. Description=note||'' (failure mode #3). Boolean fields are raw booleans, not strings."
-    },
-    {
-      "parameters": {
-        "jsCode": "// Empty-key filter — port of §2.3 universal pattern\n// Run BEFORE every SF Update to drop blank/null fields so n8n SF node doesn't overwrite existing values with ''\nconst payload = { ...$json };\nfor (const k of Object.keys(payload)) {\n  if (payload[k] === '' || payload[k] == null) delete payload[k];\n}\nreturn [{ json: payload }];"
-      },
-      "id": "wrtr-0003-4000-8000-000000000003",
-      "name": "Code: Empty-key filter (universal)",
+      "id": "wrtr-c-Code:BuildA4bLeadbod",
+      "name": "Code: Build A4b Lead body",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [680, 200],
-      "notes": "Critical — see §2.3 + UAT C-9 + T21. Without this, n8n SF Update overwrites Lead/Contact's existing FirstName/LastName/Company with '' on Path B."
+      "position": [
+        700,
+        100
+      ]
     },
     {
       "parameters": {
-        "operation": "create",
-        "resource": "lead",
+        "method": "POST",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
         "options": {}
       },
-      "id": "wrtr-0004-4000-8000-000000000004",
-      "name": "SF: A4b Create Lead (38 fields)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 120],
+      "id": "wrtr-SFHTTP:CreateLead(38fields)",
+      "name": "SF HTTP: Create Lead (38 fields)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        100
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || '';\nconst today = new Date().toISOString().split('T')[0];\nconst notes = 'Form Filled: ' + wpFormName + '\\nFirst Name: ' + (j.formattedFirst || '') +\n              '\\nLast Name: ' + (j.formattedLast || '') + '\\nCompany Name: ' + (j.formattedCompany || '') +\n              '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + (j.phone || '') +\n              '\\nIndustry: ' + (j.formattedIndustry || '') + '\\nRegion: ' + (j.formattedRegion || '');\nconst lead = {\n  Country: j.formattedCountry, MobilePhone: j.phone,\n  Email: j.formattedEmail,\n  R360_Record__c: true, MQL__c: true,\n  Lead_Override_Date__c: today,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  OwnerId: j.AssignmentID,\n  pi__utm_campaign__c: j.utmCampaign, pi__utm_content__c: j.utmContent,\n  pi__utm_medium__c: j.utmMedium, pi__utm_source__c: j.utmsource, pi__utm_term__c: j.utmTerm,\n  utm_campaign__c: j.utmCampaign, utm_medium__c: j.utmMedium,\n  utm_source__c: j.utmsource, utm_term__c: j.utmTerm,\n  fbc__c: j.fbc, fbp__c: j.fbp, gclid__c: j.gclid, msclkid__c: j.msclkid,\n  Sales_Notes__c: notes, pi__notes__c: notes, Discovery_Notes__c: notes,\n  Description: j.note || '',\n  LeadSource: j.utmsource, Raw_Marketing_Lead__c: true,\n  Industry: j.formattedIndustry,\n  // Task 28: WPForms meta\n  pi__url__c: j.pageUrl, LandingPage__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\n};\nconst cleaned = {};\nfor (const k of Object.keys(lead)) {\n  const v = lead[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.leadId } }];\n"
+      },
+      "id": "wrtr-c-Code:BuildBLeadupdat",
+      "name": "Code: Build B Lead update body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead/{{ $json._sf_record_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-SFHTTP:UpdateLead(PathB)",
+      "name": "SF HTTP: Update Lead (Path B)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        220
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || '';\nconst contact = {\n  Status__c: 'Cold / Not Started',\n  OwnerId: j.AssignmentID,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  // Task 28: WPForms meta\n};\n  pi__url__c: j.pageUrl, Conversion_Page_URL__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\nconst cleaned = {};\nfor (const k of Object.keys(contact)) {\n  const v = contact[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.contactId } }];\n"
+      },
+      "id": "wrtr-c-Code:BuildCContactup",
+      "name": "Code: Build C Contact update body (AM)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        340
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-SFHTTP:UpdateContact(PathC)",
+      "name": "SF HTTP: Update Contact (Path C)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        340
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst j = $input.first().json;\nconst description = 'First Name: ' + (j.formattedFirst || '') +\n                    '\\nLast Name: ' + (j.formattedLast || '') +\n                    '\\nCompany Name: ' + (j.formattedCompany || '') +\n                    '\\nEmail: ' + j.formattedEmail +\n                    '\\nPhone Number: ' + (j.phone || '') +\n                    '\\nIndustry: ' + (j.formattedIndustry || '') +\n                    '\\nRegion: ' + (j.formattedRegion || '');\nconst contact = {\n  MQL__c: true,\n  dupcheck__dc3DisableDuplicateCheck__c: true,\n  Lead_Owner__c: j.AssignmentID,\n  Description: description,\n  // Task 28: WPForms meta\n};\n  pi__url__c: j.pageUrl, Conversion_Page_URL__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\nconst cleaned = {};\nfor (const k of Object.keys(contact)) {\n  const v = contact[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.contactId } }];\n"
+      },
+      "id": "wrtr-c-Code:BuildDContactup",
+      "name": "Code: Build D Contact update body (SDR)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-SFHTTP:UpdateContact(PathD)",
+      "name": "SF HTTP: Update Contact (Path D)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        900,
+        460
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst subject = 'R360 AM/Customer Form Submission — ' + (orig.formattedCompany || orig.formattedEmail);\nconst cs = {\n  RecordTypeId: '0124u000000l5qwAAA',\n  ContactId: orig.contactId,\n  AccountId: orig.accountId,\n  Subject: subject,\n  Origin: 'Web',\n  Status: 'New',\n  Priority: 'Medium',\n  Type: 'Account Manager/CSM Request',\n  OwnerId: '00GKi0000016PF2MAM',\n  Description: 'R360 form submission from existing Contact (Customer Account). Form: ' + (orig.WPFormName || '') +\n               '\\n\\nSummary: ' + (orig.summary || orig.note || ''),\n};\nconst cleaned = {};\nfor (const k of Object.keys(cs)) {\n  const v = cs[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...orig, _sf_case_body: cleaned } }];\n"
+      },
+      "id": "wrtr-c-Code:BuildDCasebody",
+      "name": "Code: Build C Case body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Case",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_case_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-SFHTTP:CreateCase(PathD)",
+      "name": "SF HTTP: Create Case (Path C)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        460
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst decisionPath = orig.decisionPath;\nlet leadId = null, contactId = null;\nif (decisionPath === 'A4b') {\n  leadId = $('SF HTTP: Create Lead (38 fields)').first()?.json?.id || null;\n} else if (decisionPath === 'B') {\n  leadId = orig.leadId;\n} else if (decisionPath === 'C' || decisionPath === 'D') {\n  contactId = orig.contactId;\n}\nconst cm = {\n  CampaignId: '701Ki000000cMwkIAE',\n  Status: 'Cold / Not Started',\n  Notes__c: 'Form Filled: ' + (orig.WPFormName || '') + ' | ROI: ' + (orig.roiCalculator || ''),\n};\nif (leadId) cm.LeadId = leadId;\nif (contactId) cm.ContactId = contactId;\nreturn [{ json: { ...orig, _cm_body: cm, _resolved_lead_id: leadId, _resolved_contact_id: contactId } }];\n"
+      },
+      "id": "wrtr-c-Code:BuildCampaignMe",
+      "name": "Code: Build CampaignMember body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/CampaignMember",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._cm_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-SFHTTP:CampaignMemberadd",
+      "name": "SF HTTP: CampaignMember add",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        280
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
-      "notes": "Field map per §7.1 — payload built by preceding Set node. RecordTypeId=012Ki000000bpgRIAQ (R360 Lead RT — UAT may differ). useAssignmentRules=false; Most_Recent_Pardot_Form__c='R360 - '+WPFormName (BUG-FIXED — was hardcoded)"
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "operation": "update",
-        "resource": "lead",
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst origHash = orig.Idempotency_Hash__c;\nconst decisionPath = orig.decisionPath;\n\nlet resolvedLead = null, resolvedContact = null;\nif (decisionPath === 'A4b') {\n  resolvedLead = $('SF HTTP: Create Lead (38 fields)').first()?.json?.id || null;\n} else if (decisionPath === 'B' || decisionPath === 'B_lite') {\n  resolvedLead = orig.leadId;\n} else if (decisionPath === 'C' || decisionPath === 'D' || decisionPath === 'C_lite' || decisionPath === 'D_lite') {\n  resolvedContact = orig.contactId;\n}\n\nconst liteToShort = { 'B_lite': 'B', 'C_lite': 'C', 'D_lite': 'D' };\nlet decisionPathPicklist;\nif (decisionPath in liteToShort) decisionPathPicklist = liteToShort[decisionPath];\nelse if (decisionPath.startsWith('X_')) decisionPathPicklist = 'X';\nelse decisionPathPicklist = decisionPath;\n\nlet status;\nif (decisionPath === 'X_superseded_by_full_form') status = 'superseded_by_full_form';\nelse if (decisionPath === 'X_no_record_skipped_email_only') status = 'X_no_record_skipped_email_only';\nelse if (decisionPath === 'X_no_record_skipped_contactform') status = 'X_no_record_skipped_contactform';\nelse if (decisionPath in liteToShort) status = 'email_only_tracked';\nelse status = 'written';\n\n// Task 25: determine sub-notify template (null = no notify, e.g. for email-only or X paths)\nconst templateMap = { 'A4b': 'lead_created', 'B': 'lead_updated', 'C': 'contact_AM', 'D': 'contact_SDR' };\nconst template = templateMap[decisionPath] || null;\n\nconst payload = {\n  Status__c: status,\n  Decision_Path__c: decisionPathPicklist,\n  n8n_Execution_Id__c: $execution.id,\n};\nif (resolvedLead) payload.Resolved_Lead__c = resolvedLead;\nif (resolvedContact) payload.Resolved_Contact__c = resolvedContact;\n\nreturn [{\n  json: {\n    ...orig,  // carry through formattedFirst, formattedLast, etc. for sub-notify templates\n    leadId: resolvedLead || orig.leadId,\n    contactId: resolvedContact || orig.contactId,\n    Idempotency_Hash__c: origHash,\n    final_payload: payload,\n    template,\n    NotificationEmail: orig.NotificationEmail,\n  }\n}];\n"
+      },
+      "id": "wrtr-c-Code:Buildfinal-upda",
+      "name": "Code: Build final-update payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1900,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/Idempotency_Hash__c/{{ encodeURIComponent($json.Idempotency_Hash__c) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.final_payload) }}",
         "options": {}
       },
-      "id": "wrtr-0005-4000-8000-000000000005",
-      "name": "SF: B/A4a Update Lead",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 240],
+      "id": "wrtr-final-patch",
+      "name": "SF HTTP: Final Inbound_Log update",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2100,
+        280
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst wpFormName = orig.WPFormName || '';\nconst body = {\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n};\nreturn [{ json: { ...orig, _sf_body: body, _sf_record_id: orig.leadId } }];\n"
+      },
+      "id": "wrtr-code-b-lite",
+      "name": "Code: Build B_lite body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead/{{ $json._sf_record_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-http-b-lite",
+      "name": "SF HTTP: Update Lead (B_lite)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        760
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst wpFormName = orig.WPFormName || '';\nconst body = {\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n};\nreturn [{ json: { ...orig, _sf_body: body, _sf_record_id: orig.contactId } }];\n"
+      },
+      "id": "wrtr-code-cd-lite",
+      "name": "Code: Build CD_lite body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-http-cd-lite",
+      "name": "SF HTTP: Update Contact (C/D_lite)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        860
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst dp = orig.decisionPath;\n// Only for full-form paths B/C/D (which mark prior email_only_tracked rows)\nconst isFullForm = (dp === 'B' || dp === 'C' || dp === 'D');\nconst leadId = orig.leadId;\nconst contactId = orig.contactId;\nif (!isFullForm || (!leadId && !contactId)) {\n  return [{ json: { ...orig, _skip_supersede: true } }];\n}\nconst clauses = [];\nif (leadId) clauses.push(`Resolved_Lead__c = '${leadId}'`);\nif (contactId) clauses.push(`Resolved_Contact__c = '${contactId}'`);\nconst soql = `SELECT Id FROM Lead_Inbound_Log__c WHERE Status__c = 'email_only_tracked' AND (${clauses.join(' OR ')}) AND CreatedDate >= LAST_N_DAYS:7 LIMIT 50`;\nreturn [{ json: { ...orig, _supersede_soql: soql, _skip_supersede: false } }];\n"
+      },
+      "id": "wrtr-code-supersede-soql",
+      "name": "Code: Build supersede SOQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query?q={{ encodeURIComponent($json._supersede_soql) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "options": {}
+      },
+      "id": "wrtr-http-supersede-query",
+      "name": "SF HTTP: Query prior email_only rows",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1700,
+        320
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
-      "notes": "Field map per §7.2. record_id from Find Lead. Sales_Notes__c prefixed 'Form Filled: <WPFormName>'. Pre-filtered by empty-key node (§2.3)."
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "operation": "update",
-        "resource": "contact",
+        "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nif ($input.first().json._skip_supersede) {\n  return [{ json: { ...orig, _supersede_count: 0 } }];\n}\nconst queryRes = $input.first().json;\nconst records = queryRes.records || [];\nif (records.length === 0) return [{ json: { ...orig, _supersede_count: 0 } }];\nconst composite = {\n  compositeRequest: records.map((r, i) => ({\n    method: 'PATCH',\n    url: `/services/data/v66.0/sobjects/Lead_Inbound_Log__c/${r.Id}`,\n    referenceId: `patch_${i}`,\n    body: { Status__c: 'superseded_by_full_form' }\n  })),\n  allOrNone: false\n};\nreturn [{ json: { ...orig, _composite_body: composite, _supersede_count: records.length, _supersede_ids: records.map(r => r.Id) } }];\n"
+      },
+      "id": "wrtr-code-composite",
+      "name": "Code: Build composite PATCH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "supersede-any",
+              "leftValue": "={{ $json._supersede_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
         "options": {}
       },
-      "id": "wrtr-0006-4000-8000-000000000006",
-      "name": "SF: C Update Contact (AM path)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 360],
+      "id": "wrtr-if-supersede",
+      "name": "IF: any prior to supersede?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/composite",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json._composite_body) }}",
+        "options": {}
+      },
+      "id": "wrtr-http-composite-patch",
+      "name": "SF HTTP: Composite PATCH supersede",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        240
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
-      "notes": "Field map per §7.3. dupcheck__dc3DisableDuplicateCheck__c=true; Lead_Owner__c=AssignmentID. NO Case create on AM path."
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "operation": "update",
-        "resource": "contact",
-        "options": {}
+        "jsCode": "const sfResponse = $input.first().json;\nconst upstream = $('Code: Build final-update payload').first().json;\nreturn [{ json: { ...upstream, _sf_response: sfResponse } }];"
       },
-      "id": "wrtr-0007-4000-8000-000000000007",
-      "name": "SF: D Update Contact (SDR path)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [900, 480],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "Field map per §7.4. Followed by Case create (RecordTypeId=Inside Sales R360 SDR Follow-Up)."
-    },
-    {
-      "parameters": {
-        "operation": "create",
-        "resource": "case",
-        "options": {}
-      },
-      "id": "wrtr-0008-4000-8000-000000000008",
-      "name": "SF: D Create Case (R360 SDR Follow-Up)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1120, 480],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "RecordTypeId=<R360 SDR Follow-Up Case RT>. ContactId from D path. OwnerId=InsideSalesQueue. Origin='Web'."
-    },
-    {
-      "parameters": {
-        "operation": "create",
-        "resource": "campaignMember",
-        "options": {}
-      },
-      "id": "wrtr-0009-4000-8000-000000000009",
-      "name": "SF: Add to Campaign 701Ki000000cMwkIAE",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1340, 320],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "Campaign 701Ki000000cMwkIAE (R360 marketing campaign). LeadId or ContactId based on path. Status='Cold / Not Started'. Notes__c='Form Filled: <WPFormName> | <ROI calc>'."
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "campaignMember",
-        "options": {}
-      },
-      "id": "wrtr-000a-4000-8000-00000000000a",
-      "name": "SF: Find existing CampaignMember (error fallback)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1560, 320],
-      "notes": "On 'add to campaign' DUPLICATE_VALUE error: query existing CampaignMember and update Status + Notes__c. SOQL: WHERE CampaignId='701Ki000000cMwkIAE' AND (LeadId=:id OR ContactId=:id)"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "resource": "customObject",
-        "customObject": "Lead_Inbound_Log__c",
-        "options": {}
-      },
-      "id": "wrtr-000b-4000-8000-00000000000b",
-      "name": "SF: Update Lead_Inbound_Log__c (final state)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [1780, 320],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "Set Status__c='written', Decision_Path__c=<path>, Resolved_Lead__c=<id>, Resolved_Contact__c=<id>, n8n_Execution_Id__c=$execution.id"
+      "id": "wrtr-post-final",
+      "name": "Code: Post-final passthrough (for sub-notify)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        380
+      ]
     }
   ],
   "connections": {
-    "When Executed by Another Workflow": { "main": [[{ "node": "Switch: decisionPath (8 sub-paths)", "type": "main", "index": 0 }]] },
-    "Switch: decisionPath (8 sub-paths)": { "main": [
-      [{ "node": "Set: A4b Lead payload (38 fields)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      [{ "node": "Code: Empty-key filter (universal)", "type": "main", "index": 0 }],
-      []
-    ] },
-    "Set: A4b Lead payload (38 fields)": { "main": [[{ "node": "SF: A4b Create Lead (38 fields)", "type": "main", "index": 0 }]] },
-    "Code: Empty-key filter (universal)": { "main": [[
-      { "node": "SF: B/A4a Update Lead", "type": "main", "index": 0 },
-      { "node": "SF: C Update Contact (AM path)", "type": "main", "index": 0 },
-      { "node": "SF: D Update Contact (SDR path)", "type": "main", "index": 0 }
-    ]] },
-    "SF: A4b Create Lead (38 fields)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
-    "SF: B/A4a Update Lead": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
-    "SF: C Update Contact (AM path)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
-    "SF: D Update Contact (SDR path)": { "main": [[{ "node": "SF: D Create Case (R360 SDR Follow-Up)", "type": "main", "index": 0 }]] },
-    "SF: D Create Case (R360 SDR Follow-Up)": { "main": [[{ "node": "SF: Add to Campaign 701Ki000000cMwkIAE", "type": "main", "index": 0 }]] },
-    "SF: Add to Campaign 701Ki000000cMwkIAE": { "main": [[{ "node": "SF: Update Lead_Inbound_Log__c (final state)", "type": "main", "index": 0 }]] },
-    "SF: Find existing CampaignMember (error fallback)": { "main": [[{ "node": "SF: Update Lead_Inbound_Log__c (final state)", "type": "main", "index": 0 }]] }
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch: decisionPath (8 sub-paths)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: decisionPath (8 sub-paths)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build A4b Lead body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build B Lead update body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build C Contact update body (AM)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build D Contact update body (SDR)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build B_lite body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build CD_lite body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build CD_lite body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build A4b Lead body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Create Lead (38 fields)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Create Lead (38 fields)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build CampaignMember body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build B Lead update body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Update Lead (Path B)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Update Lead (Path B)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build CampaignMember body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build C Contact update body (AM)": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Update Contact (Path C)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Update Contact (Path C)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build C Case body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build D Contact update body (SDR)": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Update Contact (Path D)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Update Contact (Path D)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build CampaignMember body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build CampaignMember body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: CampaignMember add",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: CampaignMember add": {
+      "main": [
+        [
+          {
+            "node": "Code: Build supersede SOQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build final-update payload": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Final Inbound_Log update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build C Case body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Create Case (Path C)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Create Case (Path C)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build CampaignMember body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build B_lite body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Update Lead (B_lite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Update Lead (B_lite)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build CD_lite body": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Update Contact (C/D_lite)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Update Contact (C/D_lite)": {
+      "main": [
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build supersede SOQL": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Query prior email_only rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Query prior email_only rows": {
+      "main": [
+        [
+          {
+            "node": "Code: Build composite PATCH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build composite PATCH": {
+      "main": [
+        [
+          {
+            "node": "IF: any prior to supersede?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: any prior to supersede?": {
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Composite PATCH supersede",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Composite PATCH supersede": {
+      "main": [
+        [
+          {
+            "node": "Code: Build final-update payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF HTTP: Final Inbound_Log update": {
+      "main": [
+        [
+          {
+            "node": "Code: Post-final passthrough (for sub-notify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1", "errorWorkflow": "REPLACE_WITH_ERROR_HANDLER_WORKFLOW_ID" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": {
-    "spec": "migration-plans/r360-n8n-build-plan.md §7.1-§7.6 + §10 (CampaignMember) + §12 (per-action error sub-branches)",
-    "todo": [
-      "Wire CampaignMember error fallback (DUPLICATE_VALUE → search + update)",
-      "Add Slack DM + Gmail email at end of each path via sub-notify"
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "695c537d-8f61-4454-9391-31df40c35475",
+  "activeVersionId": "695c537d-8f61-4454-9391-31df40c35475",
+  "versionCounter": 87,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:46.827Z",
+      "createdAt": "2026-05-10T19:09:46.827Z",
+      "role": "workflow:owner",
+      "workflowId": "n12VvtsMqRSUOniR",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T22:10:05.866Z",
+    "createdAt": "2026-05-17T22:10:05.866Z",
+    "versionId": "695c537d-8f61-4454-9391-31df40c35475",
+    "workflowId": "n12VvtsMqRSUOniR",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "wrtr-0001-4000-8000-000000000001",
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "outputKey": "A4b_create_lead",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "A4b",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "A4a_update_lead",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "A4a",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "B_update_lead",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "B",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "C_update_contact_AM",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "C",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "D_update_contact_SDR",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "D",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "A4c_i_update_contact",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "A4c-i",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "A4c_ii_update_contact",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "A4c-ii",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "A4d_terminal",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "A4d",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "X_skip",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "X_no_record_skipped_contactform",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "B_lite_update_lead",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "B_lite",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "C_lite_update_contact",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "C_lite",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "D_lite_update_contact",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "D_lite",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "X_email_only_no_record",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "X_no_record_skipped_email_only",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "X_superseded",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.decisionPath }}",
+                      "rightValue": "X_superseded_by_full_form",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          }
+        },
+        "id": "wrtr-0002-4000-8000-000000000002",
+        "name": "Switch: decisionPath (8 sub-paths)",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [
+          460,
+          320
+        ],
+        "notes": "8 outputs: A4b (create Lead), A4a/B (update Lead), C (update Contact + AM), D (update Contact + Case), A4c-i/A4c-ii (update Contact + Case via requery), A4d (terminal Wait 1min)"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || 'ContactForm';\nconst today = new Date().toISOString().split('T')[0];\nconst leadPayload = {\n  LastName: j.formattedLast, FirstName: j.formattedFirst,\n  Company: j.formattedCompany, Email: j.formattedEmail,\n  Phone: j.phone, MobilePhone: j.phone,\n  Country: j.formattedCountry,\n  RecordTypeId: '012Ki000000bpgRIAQ',\n  LeadSource: j.utmsource, Industry: j.formattedIndustry,\n  HasOptedOutOfEmail: false, IsConverted: false, DoNotCall: false, HasOptedOutOfFax: false,\n  MQL__c: true, Raw_Marketing_Lead__c: true, R360_Record__c: true,\n  OwnerId: j.AssignmentID,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  Lead_Override_Date__c: today,\n  Sales_Notes__c: 'First Name: ' + j.formattedFirst + '\\nLast Name: ' + j.formattedLast + '\\nCompany Name: ' + j.formattedCompany + '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + j.phone + '\\nIndustry: ' + j.formattedIndustry + '\\nRegion: ' + j.formattedRegion + '\\nROI Calculator: ' + (j.roiCalculator || ''),\n  Discovery_Notes__c: 'First Name: ' + j.formattedFirst + '\\nLast Name: ' + j.formattedLast + '\\nCompany Name: ' + j.formattedCompany + '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + j.phone + '\\nIndustry: ' + j.formattedIndustry + '\\nRegion: ' + j.formattedRegion + '\\nROI Calculator: ' + (j.roiCalculator || ''),\n  pi__utm_campaign__c: j.utmCampaign, pi__utm_content__c: j.utmContent,\n  pi__utm_medium__c: j.utmMedium, pi__utm_source__c: j.utmsource, pi__utm_term__c: j.utmTerm,\n  utm_campaign__c: j.utmCampaign, utm_medium__c: j.utmMedium,\n  utm_source__c: j.utmsource, utm_term__c: j.utmTerm,\n  fbc__c: j.fbc, fbp__c: j.fbp, gclid__c: j.gclid, msclkid__c: j.msclkid,\n  Description: j.note || '',\n  // Task 28: WPForms meta-fields\n  pi__url__c: j.pageUrl, LandingPage__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\n  pi__first_touch_url__c: j.pageUrl, conversion_url__c: j.pageUrl,\n};\nconst cleaned = {};\nfor (const k of Object.keys(leadPayload)) {\n  const v = leadPayload[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_lead_body: cleaned } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildA4bLeadbod",
+        "name": "Code: Build A4b Lead body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          100
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:CreateLead(38fields)",
+        "name": "SF HTTP: Create Lead (38 fields)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          100
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || '';\nconst today = new Date().toISOString().split('T')[0];\nconst notes = 'Form Filled: ' + wpFormName + '\\nFirst Name: ' + (j.formattedFirst || '') +\n              '\\nLast Name: ' + (j.formattedLast || '') + '\\nCompany Name: ' + (j.formattedCompany || '') +\n              '\\nEmail: ' + j.formattedEmail + '\\nPhone Number: ' + (j.phone || '') +\n              '\\nIndustry: ' + (j.formattedIndustry || '') + '\\nRegion: ' + (j.formattedRegion || '');\nconst lead = {\n  Country: j.formattedCountry, MobilePhone: j.phone,\n  Email: j.formattedEmail,\n  R360_Record__c: true, MQL__c: true,\n  Lead_Override_Date__c: today,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  OwnerId: j.AssignmentID,\n  pi__utm_campaign__c: j.utmCampaign, pi__utm_content__c: j.utmContent,\n  pi__utm_medium__c: j.utmMedium, pi__utm_source__c: j.utmsource, pi__utm_term__c: j.utmTerm,\n  utm_campaign__c: j.utmCampaign, utm_medium__c: j.utmMedium,\n  utm_source__c: j.utmsource, utm_term__c: j.utmTerm,\n  fbc__c: j.fbc, fbp__c: j.fbp, gclid__c: j.gclid, msclkid__c: j.msclkid,\n  Sales_Notes__c: notes, pi__notes__c: notes, Discovery_Notes__c: notes,\n  Description: j.note || '',\n  LeadSource: j.utmsource, Raw_Marketing_Lead__c: true,\n  Industry: j.formattedIndustry,\n  // Task 28: WPForms meta\n  pi__url__c: j.pageUrl, LandingPage__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\n};\nconst cleaned = {};\nfor (const k of Object.keys(lead)) {\n  const v = lead[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.leadId } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildBLeadupdat",
+        "name": "Code: Build B Lead update body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          220
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead/{{ $json._sf_record_id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:UpdateLead(PathB)",
+        "name": "SF HTTP: Update Lead (Path B)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          220
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst j = $input.first().json;\nconst wpFormName = j.WPFormName || '';\nconst contact = {\n  Status__c: 'Cold / Not Started',\n  OwnerId: j.AssignmentID,\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n  // Task 28: WPForms meta\n};\n  pi__url__c: j.pageUrl, Conversion_Page_URL__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\nconst cleaned = {};\nfor (const k of Object.keys(contact)) {\n  const v = contact[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.contactId } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildCContactup",
+        "name": "Code: Build C Contact update body (AM)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          340
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:UpdateContact(PathC)",
+        "name": "SF HTTP: Update Contact (Path C)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          340
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst j = $input.first().json;\nconst description = 'First Name: ' + (j.formattedFirst || '') +\n                    '\\nLast Name: ' + (j.formattedLast || '') +\n                    '\\nCompany Name: ' + (j.formattedCompany || '') +\n                    '\\nEmail: ' + j.formattedEmail +\n                    '\\nPhone Number: ' + (j.phone || '') +\n                    '\\nIndustry: ' + (j.formattedIndustry || '') +\n                    '\\nRegion: ' + (j.formattedRegion || '');\nconst contact = {\n  MQL__c: true,\n  dupcheck__dc3DisableDuplicateCheck__c: true,\n  Lead_Owner__c: j.AssignmentID,\n  Description: description,\n  // Task 28: WPForms meta\n};\n  pi__url__c: j.pageUrl, Conversion_Page_URL__c: j.pageUrl,\n  ReferrerPage__c: j.referer,\n  gaconnector_IP_Address__c: j.userIp,\n  gaconnector_First_Click_Landing_Page__c: j.pageUrl,\n  gaconnector_First_Click_Referrer__c: j.referer,\n  Device__c: j.userAgent ? (/(iphone|android|ipod|mobile)/i.test(j.userAgent) ? 'Mobile' : /(ipad|tablet)/i.test(j.userAgent) ? 'Tablet' : 'Desktop') : '',\nconst cleaned = {};\nfor (const k of Object.keys(contact)) {\n  const v = contact[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...j, _sf_body: cleaned, _sf_record_id: j.contactId } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildDContactup",
+        "name": "Code: Build D Contact update body (SDR)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          700,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:UpdateContact(PathD)",
+        "name": "SF HTTP: Update Contact (Path D)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          900,
+          460
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst subject = 'R360 AM/Customer Form Submission — ' + (orig.formattedCompany || orig.formattedEmail);\nconst cs = {\n  RecordTypeId: '0124u000000l5qwAAA',\n  ContactId: orig.contactId,\n  AccountId: orig.accountId,\n  Subject: subject,\n  Origin: 'Web',\n  Status: 'New',\n  Priority: 'Medium',\n  Type: 'Account Manager/CSM Request',\n  OwnerId: '00GKi0000016PF2MAM',\n  Description: 'R360 form submission from existing Contact (Customer Account). Form: ' + (orig.WPFormName || '') +\n               '\\n\\nSummary: ' + (orig.summary || orig.note || ''),\n};\nconst cleaned = {};\nfor (const k of Object.keys(cs)) {\n  const v = cs[k]; if (v === '' || v === null || v === undefined) continue;\n  cleaned[k] = v;\n}\nreturn [{ json: { ...orig, _sf_case_body: cleaned } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildDCasebody",
+        "name": "Code: Build C Case body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Case",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_case_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:CreateCase(PathD)",
+        "name": "SF HTTP: Create Case (Path C)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1300,
+          460
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst decisionPath = orig.decisionPath;\nlet leadId = null, contactId = null;\nif (decisionPath === 'A4b') {\n  leadId = $('SF HTTP: Create Lead (38 fields)').first()?.json?.id || null;\n} else if (decisionPath === 'B') {\n  leadId = orig.leadId;\n} else if (decisionPath === 'C' || decisionPath === 'D') {\n  contactId = orig.contactId;\n}\nconst cm = {\n  CampaignId: '701Ki000000cMwkIAE',\n  Status: 'Cold / Not Started',\n  Notes__c: 'Form Filled: ' + (orig.WPFormName || '') + ' | ROI: ' + (orig.roiCalculator || ''),\n};\nif (leadId) cm.LeadId = leadId;\nif (contactId) cm.ContactId = contactId;\nreturn [{ json: { ...orig, _cm_body: cm, _resolved_lead_id: leadId, _resolved_contact_id: contactId } }];\n"
+        },
+        "id": "wrtr-c-Code:BuildCampaignMe",
+        "name": "Code: Build CampaignMember body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/CampaignMember",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._cm_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-SFHTTP:CampaignMemberadd",
+        "name": "SF HTTP: CampaignMember add",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1700,
+          280
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst origHash = orig.Idempotency_Hash__c;\nconst decisionPath = orig.decisionPath;\n\nlet resolvedLead = null, resolvedContact = null;\nif (decisionPath === 'A4b') {\n  resolvedLead = $('SF HTTP: Create Lead (38 fields)').first()?.json?.id || null;\n} else if (decisionPath === 'B' || decisionPath === 'B_lite') {\n  resolvedLead = orig.leadId;\n} else if (decisionPath === 'C' || decisionPath === 'D' || decisionPath === 'C_lite' || decisionPath === 'D_lite') {\n  resolvedContact = orig.contactId;\n}\n\nconst liteToShort = { 'B_lite': 'B', 'C_lite': 'C', 'D_lite': 'D' };\nlet decisionPathPicklist;\nif (decisionPath in liteToShort) decisionPathPicklist = liteToShort[decisionPath];\nelse if (decisionPath.startsWith('X_')) decisionPathPicklist = 'X';\nelse decisionPathPicklist = decisionPath;\n\nlet status;\nif (decisionPath === 'X_superseded_by_full_form') status = 'superseded_by_full_form';\nelse if (decisionPath === 'X_no_record_skipped_email_only') status = 'X_no_record_skipped_email_only';\nelse if (decisionPath === 'X_no_record_skipped_contactform') status = 'X_no_record_skipped_contactform';\nelse if (decisionPath in liteToShort) status = 'email_only_tracked';\nelse status = 'written';\n\n// Task 25: determine sub-notify template (null = no notify, e.g. for email-only or X paths)\nconst templateMap = { 'A4b': 'lead_created', 'B': 'lead_updated', 'C': 'contact_AM', 'D': 'contact_SDR' };\nconst template = templateMap[decisionPath] || null;\n\nconst payload = {\n  Status__c: status,\n  Decision_Path__c: decisionPathPicklist,\n  n8n_Execution_Id__c: $execution.id,\n};\nif (resolvedLead) payload.Resolved_Lead__c = resolvedLead;\nif (resolvedContact) payload.Resolved_Contact__c = resolvedContact;\n\nreturn [{\n  json: {\n    ...orig,  // carry through formattedFirst, formattedLast, etc. for sub-notify templates\n    leadId: resolvedLead || orig.leadId,\n    contactId: resolvedContact || orig.contactId,\n    Idempotency_Hash__c: origHash,\n    final_payload: payload,\n    template,\n    NotificationEmail: orig.NotificationEmail,\n  }\n}];\n"
+        },
+        "id": "wrtr-c-Code:Buildfinal-upda",
+        "name": "Code: Build final-update payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1900,
+          280
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/Idempotency_Hash__c/{{ encodeURIComponent($json.Idempotency_Hash__c) }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.final_payload) }}",
+          "options": {}
+        },
+        "id": "wrtr-final-patch",
+        "name": "SF HTTP: Final Inbound_Log update",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2100,
+          280
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst wpFormName = orig.WPFormName || '';\nconst body = {\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n};\nreturn [{ json: { ...orig, _sf_body: body, _sf_record_id: orig.leadId } }];\n"
+        },
+        "id": "wrtr-code-b-lite",
+        "name": "Code: Build B_lite body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          760
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead/{{ $json._sf_record_id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-http-b-lite",
+        "name": "SF HTTP: Update Lead (B_lite)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1340,
+          760
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst wpFormName = orig.WPFormName || '';\nconst body = {\n  Most_Recent_Pardot_Form__c: 'R360 - ' + wpFormName,\n};\nreturn [{ json: { ...orig, _sf_body: body, _sf_record_id: orig.contactId } }];\n"
+        },
+        "id": "wrtr-code-cd-lite",
+        "name": "Code: Build CD_lite body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1140,
+          860
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Contact/{{ $json._sf_record_id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._sf_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-http-cd-lite",
+        "name": "SF HTTP: Update Contact (C/D_lite)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1340,
+          860
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nconst dp = orig.decisionPath;\n// Only for full-form paths B/C/D (which mark prior email_only_tracked rows)\nconst isFullForm = (dp === 'B' || dp === 'C' || dp === 'D');\nconst leadId = orig.leadId;\nconst contactId = orig.contactId;\nif (!isFullForm || (!leadId && !contactId)) {\n  return [{ json: { ...orig, _skip_supersede: true } }];\n}\nconst clauses = [];\nif (leadId) clauses.push(`Resolved_Lead__c = '${leadId}'`);\nif (contactId) clauses.push(`Resolved_Contact__c = '${contactId}'`);\nconst soql = `SELECT Id FROM Lead_Inbound_Log__c WHERE Status__c = 'email_only_tracked' AND (${clauses.join(' OR ')}) AND CreatedDate >= LAST_N_DAYS:7 LIMIT 50`;\nreturn [{ json: { ...orig, _supersede_soql: soql, _skip_supersede: false } }];\n"
+        },
+        "id": "wrtr-code-supersede-soql",
+        "name": "Code: Build supersede SOQL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1500,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query?q={{ encodeURIComponent($json._supersede_soql) }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "options": {}
+        },
+        "id": "wrtr-http-supersede-query",
+        "name": "SF HTTP: Query prior email_only rows",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1700,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst orig = $('When Executed by Another Workflow').first().json;\nif ($input.first().json._skip_supersede) {\n  return [{ json: { ...orig, _supersede_count: 0 } }];\n}\nconst queryRes = $input.first().json;\nconst records = queryRes.records || [];\nif (records.length === 0) return [{ json: { ...orig, _supersede_count: 0 } }];\nconst composite = {\n  compositeRequest: records.map((r, i) => ({\n    method: 'PATCH',\n    url: `/services/data/v66.0/sobjects/Lead_Inbound_Log__c/${r.Id}`,\n    referenceId: `patch_${i}`,\n    body: { Status__c: 'superseded_by_full_form' }\n  })),\n  allOrNone: false\n};\nreturn [{ json: { ...orig, _composite_body: composite, _supersede_count: records.length, _supersede_ids: records.map(r => r.Id) } }];\n"
+        },
+        "id": "wrtr-code-composite",
+        "name": "Code: Build composite PATCH",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1860,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "supersede-any",
+                "leftValue": "={{ $json._supersede_count }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "wrtr-if-supersede",
+        "name": "IF: any prior to supersede?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2100,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/composite",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json._composite_body) }}",
+          "options": {}
+        },
+        "id": "wrtr-http-composite-patch",
+        "name": "SF HTTP: Composite PATCH supersede",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2000,
+          240
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const sfResponse = $input.first().json;\nconst upstream = $('Code: Build final-update payload').first().json;\nreturn [{ json: { ...upstream, _sf_response: sfResponse } }];"
+        },
+        "id": "wrtr-post-final",
+        "name": "Code: Post-final passthrough (for sub-notify)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2700,
+          380
+        ]
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Switch: decisionPath (8 sub-paths)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch: decisionPath (8 sub-paths)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build A4b Lead body",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build B Lead update body",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build C Contact update body (AM)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build D Contact update body (SDR)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build B_lite body",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build CD_lite body",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build CD_lite body",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build A4b Lead body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Create Lead (38 fields)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Create Lead (38 fields)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build CampaignMember body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build B Lead update body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Update Lead (Path B)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Update Lead (Path B)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build CampaignMember body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build C Contact update body (AM)": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Update Contact (Path C)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Update Contact (Path C)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build C Case body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build D Contact update body (SDR)": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Update Contact (Path D)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Update Contact (Path D)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build CampaignMember body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build CampaignMember body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: CampaignMember add",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: CampaignMember add": {
+        "main": [
+          [
+            {
+              "node": "Code: Build supersede SOQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build final-update payload": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Final Inbound_Log update",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build C Case body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Create Case (Path C)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Create Case (Path C)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build CampaignMember body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build B_lite body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Update Lead (B_lite)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Update Lead (B_lite)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build CD_lite body": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Update Contact (C/D_lite)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Update Contact (C/D_lite)": {
+        "main": [
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build supersede SOQL": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Query prior email_only rows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Query prior email_only rows": {
+        "main": [
+          [
+            {
+              "node": "Code: Build composite PATCH",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Build composite PATCH": {
+        "main": [
+          [
+            {
+              "node": "IF: any prior to supersede?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: any prior to supersede?": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Composite PATCH supersede",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Composite PATCH supersede": {
+        "main": [
+          [
+            {
+              "node": "Code: Build final-update payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Final Inbound_Log update": {
+        "main": [
+          [
+            {
+              "node": "Code: Post-final passthrough (for sub-notify)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T22:10:06.304Z",
+        "id": 4504,
+        "workflowId": "n12VvtsMqRSUOniR",
+        "versionId": "695c537d-8f61-4454-9391-31df40c35475",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
     ]
   }
 }

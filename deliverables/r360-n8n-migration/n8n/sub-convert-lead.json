@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-17T17:02:05.641Z",
+  "createdAt": "2026-05-10T19:09:47.103Z",
+  "id": "Qcw3aP324fMlwhQF",
   "name": "R360 Sub: Convert Lead (HTTP — n8n SF node has no convertLead)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,7 +13,10 @@
       "name": "When Executed by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ]
     },
     {
       "parameters": {
@@ -18,16 +27,25 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"leadId\": \"{{ $json.leadId }}\",\n  \"convertedStatus\": \"Qualified\",\n  \"doNotCreateOpportunity\": false,\n  \"accountId\": \"{{ $json.LeadAccountId }}\"\n}",
-        "options": { "response": { "response": { "responseFormat": "json" } } }
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "conv-0002-4000-8000-000000000002",
       "name": "HTTP: SF LeadConvert REST",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
@@ -35,10 +53,125 @@
     }
   ],
   "connections": {
-    "When Executed by Another Workflow": { "main": [[{ "node": "HTTP: SF LeadConvert REST", "type": "main", "index": 0 }]] }
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "HTTP: SF LeadConvert REST",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §2.2", "todo": ["Validate UAT por.my.salesforce.com hostname matches por-uat (likely por--uat.sandbox.my.salesforce.com)"] }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "f45d6fc6-4fdf-4e7c-b0c9-4b4860cc1a09",
+  "activeVersionId": "f45d6fc6-4fdf-4e7c-b0c9-4b4860cc1a09",
+  "versionCounter": 10,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:47.105Z",
+      "createdAt": "2026-05-10T19:09:47.105Z",
+      "role": "workflow:owner",
+      "workflowId": "Qcw3aP324fMlwhQF",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T17:02:05.642Z",
+    "createdAt": "2026-05-17T17:02:05.642Z",
+    "versionId": "f45d6fc6-4fdf-4e7c-b0c9-4b4860cc1a09",
+    "workflowId": "Qcw3aP324fMlwhQF",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "conv-0001-4000-8000-000000000001",
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://por.my.salesforce.com/services/data/v62.0/sobjects/LeadConvert/",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"leadId\": \"{{ $json.leadId }}\",\n  \"convertedStatus\": \"Qualified\",\n  \"doNotCreateOpportunity\": false,\n  \"accountId\": \"{{ $json.LeadAccountId }}\"\n}",
+          "options": {
+            "response": {
+              "response": {
+                "responseFormat": "json"
+              }
+            }
+          }
+        },
+        "id": "conv-0002-4000-8000-000000000002",
+        "name": "HTTP: SF LeadConvert REST",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "n8n Salesforce node does NOT support convertLead — use HTTP. See §2.2.\nBUG FIX from Zap 340057313: use {{LeadAccountId}} (region-routed) NOT hardcoded NA accountId 0014u00002BFXvRAAX.\nResponse: { id, success, contactId, accountId, opportunityId } — feeds downstream Campaign/Slack."
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "HTTP: SF LeadConvert REST",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T17:02:05.933Z",
+        "id": 4346,
+        "workflowId": "Qcw3aP324fMlwhQF",
+        "versionId": "f45d6fc6-4fdf-4e7c-b0c9-4b4860cc1a09",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

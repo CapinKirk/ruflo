@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-17T22:07:50.072Z",
+  "createdAt": "2026-05-10T19:09:47.476Z",
+  "id": "Hx2Zi7z2rKoqKSSE",
   "name": "R360 Sub: Notify (Slack DM + Gmail SMTP, 5 templates)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,36 +13,95 @@
       "name": "When Executed by Another Workflow",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1,
-      "position": [240, 320]
-    },
-    {
-      "parameters": {
-        "operation": "search",
-        "resource": "user",
-        "options": {}
-      },
-      "id": "noty-0002-4000-8000-000000000002",
-      "name": "SF Find: User.Slack_ID__c by AssignmentID",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [460, 320],
-      "credentials": {
-        "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
-          "name": "[RH] UAT"
-        }
-      },
-      "notes": "SOQL: SELECT Id, Name, Email, Slack_ID__c FROM User WHERE Id = :AssignmentID. If Slack_ID__c is null, fall back to email-only notification."
+      "position": [
+        240,
+        320
+      ]
     },
     {
       "parameters": {
         "rules": {
           "values": [
-            { "outputKey": "tmpl_lead_created",   "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "lead_created",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "tmpl_lead_updated",   "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "lead_updated",   "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "tmpl_contact_AM",     "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "contact_AM",     "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "tmpl_contact_SDR",    "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "contact_SDR",    "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } },
-            { "outputKey": "tmpl_pre_discovery",  "conditions": { "conditions": [{ "leftValue": "={{ $json.template }}", "rightValue": "pre_discovery",  "operator": { "type": "string", "operation": "equals" } }], "combinator": "and" } }
+            {
+              "outputKey": "tmpl_lead_created",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template }}",
+                    "rightValue": "lead_created",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "tmpl_lead_updated",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template }}",
+                    "rightValue": "lead_updated",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "tmpl_contact_AM",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template }}",
+                    "rightValue": "contact_AM",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "tmpl_contact_SDR",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template }}",
+                    "rightValue": "contact_SDR",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "outputKey": "tmpl_pre_discovery",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.template }}",
+                    "rightValue": "pre_discovery",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
           ]
         }
       },
@@ -44,7 +109,10 @@
       "name": "Switch: 5 templates",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [680, 320],
+      "position": [
+        680,
+        320
+      ],
       "notes": "Template body specifics in build plan §10 (CampaignMember) + Pre-Discovery in §8.7."
     },
     {
@@ -54,7 +122,7 @@
             {
               "id": "tmpl-lc-01",
               "name": "recipient_slack_id",
-              "value": "={{ $('SF Find: User.Slack_ID__c by AssignmentID').item.json.Slack_ID__c }}",
+              "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
               "type": "string"
             },
             {
@@ -83,7 +151,10 @@
       "name": "Set: Template lead_created",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 80],
+      "position": [
+        900,
+        80
+      ],
       "notes": "Path A4b — Lead created fresh (no prior Lead or Contact). AE Slack DM + team email. Spec §4A sub-path A4b + §7 notifications node 316797592."
     },
     {
@@ -93,7 +164,7 @@
             {
               "id": "tmpl-lu-01",
               "name": "recipient_slack_id",
-              "value": "={{ $('SF Find: User.Slack_ID__c by AssignmentID').item.json.Slack_ID__c }}",
+              "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
               "type": "string"
             },
             {
@@ -122,7 +193,10 @@
       "name": "Set: Template lead_updated",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 220],
+      "position": [
+        900,
+        220
+      ],
       "notes": "Path B / A4a — existing Lead updated (and converted). AE Slack DM + team email. Spec §4A sub-path A4a + §4B + §7 nodes 316797580, 316797647."
     },
     {
@@ -132,7 +206,7 @@
             {
               "id": "tmpl-cam-01",
               "name": "recipient_slack_id",
-              "value": "={{ $('SF Find: User.Slack_ID__c by AssignmentID').item.json.Slack_ID__c }}",
+              "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
               "type": "string"
             },
             {
@@ -161,7 +235,10 @@
       "name": "Set: Template contact_AM",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 360],
+      "position": [
+        900,
+        360
+      ],
       "notes": "Path C — existing Contact, Account.Status__c == 'Customer'. AM routing. A Case is created. Spec §4C + §7 (no dedicated email node in spec — mirrors contact_SDR subject pattern)."
     },
     {
@@ -171,7 +248,7 @@
             {
               "id": "tmpl-csd-01",
               "name": "recipient_slack_id",
-              "value": "={{ $('SF Find: User.Slack_ID__c by AssignmentID').item.json.Slack_ID__c }}",
+              "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
               "type": "string"
             },
             {
@@ -200,7 +277,10 @@
       "name": "Set: Template contact_SDR",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 500],
+      "position": [
+        900,
+        500
+      ],
       "notes": "Path D — existing Contact, Account.Status__c != 'Customer'. SDR routing. Includes field14 (message body) in email body per spec §4D note. Spec §7 node 316797672."
     },
     {
@@ -239,7 +319,10 @@
       "name": "Set: Template pre_discovery",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 640],
+      "position": [
+        900,
+        640
+      ],
       "notes": "Pre-Discovery (Zap 336544812 / §8.7). 3 recipients: U02HR1T6PBK, U01B0955NEQ, AE Slack_ID__c — fanned out by SplitInBatches upstream. message_text = GPT-5.1 output_text (mrkdwn). body_html = MD→HTML conversion. subject line uses contactName from the workflow input. Slack-only for managers; AE gets both DM and email fallback if Slack_ID__c missing."
     },
     {
@@ -250,109 +333,886 @@
         "nodeCredentialType": "slackOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"{{ $json.recipient_slack_id }}\",\n  \"text\": \"{{ $json.message_text }}\",\n  \"as_user\": false,\n  \"username\": \"RevOps R360 Bot\",\n  \"icon_url\": \"https://i.ibb.co/m5KMWdgH/Rev-Ops-Logo.png\",\n  \"unfurl_links\": false,\n  \"unfurl_media\": false,\n  \"link_names\": true\n}",
-        "options": {}
+        "jsonBody": "={{ JSON.stringify({ channel: $json.recipient_slack_id, text: $json.message_text, username: \"RevOps R360 Bot\", icon_url: \"https://i.ibb.co/m5KMWdgH/Rev-Ops-Logo.png\", unfurl_links: false, unfurl_media: false, link_names: true }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ]
+        }
       },
       "id": "noty-0004-4000-8000-000000000004",
       "name": "HTTP: Slack DM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1140, 240],
+      "position": [
+        1140,
+        240
+      ],
       "credentials": {
         "slackOAuth2Api": {
-          "id": "skn3Ct9zjw3Vt3Pn",
-          "name": "RevTech Bot"
+          "id": "zIKGdRwmj0OkX07V",
+          "name": "Slack OAuth2 API"
         }
       },
       "notes": "unfurl_links=false to prevent Slack expanding every URL. Use Slack <URL|Label> link syntax (NOT Markdown)."
     },
     {
       "parameters": {
-        "fromEmail": "marketing@pointofrental.com",
-        "toEmail": "={{ $json.NotificationEmail }}",
+        "sendTo": "={{ $json.NotificationEmail }}",
         "subject": "={{ $json.subject }}",
-        "html": "={{ $json.body_html }}",
-        "options": {}
-      },
-      "id": "noty-0005-4000-8000-000000000005",
-      "name": "Gmail SMTP: Send email notification",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [1140, 400],
-      "credentials": {
-        "smtp": {
-          "id": "c25mpMz1DWsVl1YG",
-          "name": "Gmail OAuth2 — Kirk Bennett"
+        "message": "={{ $json.body_html }}",
+        "options": {
+          "appendAttribution": false
         }
       },
-      "notes": "From: marketing@pointofrental.com. To: NotificationEmail (comma-list from Assignment Owner). Split on ',' inside Set node before this if Gmail SMTP rejects."
+      "id": "notify-gmail",
+      "name": "Gmail: Send notification",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1140,
+        400
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IjOolmALabHu9NLG",
+          "name": "POR NoReply"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "webhookId": "541a32ba-b05c-44f2-8891-6639986b1b9d"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query?q={{ encodeURIComponent(\"SELECT Slack_ID__c, Email FROM User WHERE Id='\" + $json.AssignmentID + \"' LIMIT 1\") }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "options": {}
+      },
+      "id": "notify-sf-user",
+      "name": "SF HTTP: Find User.Slack_ID__c by AssignmentID",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        300
+      ],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const orig = $('When Executed by Another Workflow').first().json;\nconst queryRes = $input.first().json;\nconst user = (queryRes.records || [])[0] || {};\nreturn [{ json: { ...orig, Slack_ID__c: user.Slack_ID__c || null, UserEmail: user.Email || null } }];"
+      },
+      "id": "notify-code-extract",
+      "name": "Code: Extract Slack_ID__c",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ]
     }
   ],
   "connections": {
     "When Executed by Another Workflow": {
-      "main": [[{ "node": "SF Find: User.Slack_ID__c by AssignmentID", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "SF HTTP: Find User.Slack_ID__c by AssignmentID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "SF Find: User.Slack_ID__c by AssignmentID": {
-      "main": [[{ "node": "Switch: 5 templates", "type": "main", "index": 0 }]]
+    "SF HTTP: Find User.Slack_ID__c by AssignmentID": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract Slack_ID__c",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract Slack_ID__c": {
+      "main": [
+        [
+          {
+            "node": "Switch: 5 templates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Switch: 5 templates": {
       "main": [
-        [{ "node": "Set: Template lead_created",  "type": "main", "index": 0 }],
-        [{ "node": "Set: Template lead_updated",  "type": "main", "index": 0 }],
-        [{ "node": "Set: Template contact_AM",    "type": "main", "index": 0 }],
-        [{ "node": "Set: Template contact_SDR",   "type": "main", "index": 0 }],
-        [{ "node": "Set: Template pre_discovery", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Set: Template lead_created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Template lead_updated",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Template contact_AM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Template contact_SDR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set: Template pre_discovery",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Set: Template lead_created": {
       "main": [
         [
-          { "node": "HTTP: Slack DM",                    "type": "main", "index": 0 },
-          { "node": "Gmail SMTP: Send email notification","type": "main", "index": 0 }
+          {
+            "node": "HTTP: Slack DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Send notification",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Set: Template lead_updated": {
       "main": [
         [
-          { "node": "HTTP: Slack DM",                    "type": "main", "index": 0 },
-          { "node": "Gmail SMTP: Send email notification","type": "main", "index": 0 }
+          {
+            "node": "HTTP: Slack DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Send notification",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Set: Template contact_AM": {
       "main": [
         [
-          { "node": "HTTP: Slack DM",                    "type": "main", "index": 0 },
-          { "node": "Gmail SMTP: Send email notification","type": "main", "index": 0 }
+          {
+            "node": "HTTP: Slack DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Send notification",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Set: Template contact_SDR": {
       "main": [
         [
-          { "node": "HTTP: Slack DM",                    "type": "main", "index": 0 },
-          { "node": "Gmail SMTP: Send email notification","type": "main", "index": 0 }
+          {
+            "node": "HTTP: Slack DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Send notification",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Set: Template pre_discovery": {
       "main": [
         [
-          { "node": "HTTP: Slack DM",                    "type": "main", "index": 0 },
-          { "node": "Gmail SMTP: Send email notification","type": "main", "index": 0 }
+          {
+            "node": "HTTP: Slack DM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Gmail: Send notification",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": false,
-  "versionId": "0.2.0-templates",
-  "meta": {
-    "spec": "migration-plans/r360-n8n-build-plan.md §7 + §8.7 + specs/spec_316797554.md §4, §7",
-    "todo": [
-      "Add fixed Slack DM recipients U02HR1T6PBK + U01B0955NEQ for Pre-Discovery template (§8.7) — use SplitInBatches upstream of this sub-workflow to fan out the 3-recipient list before invoking",
-      "Handle missing Slack_ID__c gracefully — branch to email-only path"
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "f9e0882c-cda8-40a3-b27b-5650cf867b83",
+  "activeVersionId": "f9e0882c-cda8-40a3-b27b-5650cf867b83",
+  "versionCounter": 31,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:47.478Z",
+      "createdAt": "2026-05-10T19:09:47.478Z",
+      "role": "workflow:owner",
+      "workflowId": "Hx2Zi7z2rKoqKSSE",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T22:07:50.073Z",
+    "createdAt": "2026-05-17T22:07:50.073Z",
+    "versionId": "f9e0882c-cda8-40a3-b27b-5650cf867b83",
+    "workflowId": "Hx2Zi7z2rKoqKSSE",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "noty-0001-4000-8000-000000000001",
+        "name": "When Executed by Another Workflow",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "outputKey": "tmpl_lead_created",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template }}",
+                      "rightValue": "lead_created",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "tmpl_lead_updated",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template }}",
+                      "rightValue": "lead_updated",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "tmpl_contact_AM",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template }}",
+                      "rightValue": "contact_AM",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "tmpl_contact_SDR",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template }}",
+                      "rightValue": "contact_SDR",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "outputKey": "tmpl_pre_discovery",
+                "conditions": {
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.template }}",
+                      "rightValue": "pre_discovery",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          }
+        },
+        "id": "noty-0003-4000-8000-000000000003",
+        "name": "Switch: 5 templates",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [
+          680,
+          320
+        ],
+        "notes": "Template body specifics in build plan §10 (CampaignMember) + Pre-Discovery in §8.7."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tmpl-lc-01",
+                "name": "recipient_slack_id",
+                "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lc-02",
+                "name": "message_text",
+                "value": "=:tada: *New R360 Lead Created*\n\n*Name:* {{ $json.formattedFirst }} {{ $json.formattedLast }}\n*Company:* {{ $json.formattedCompany }}\n*Email:* {{ $json.formattedEmail }}\n*Phone:* {{ $json.phone }}\n*Industry:* {{ $json.formattedIndustry }}\n*Region:* {{ $json.formattedRegion }}\n*Lead Source:* {{ $json.utmsource }}\n\n<https://por.lightning.force.com/lightning/r/Lead/{{ $json.leadId }}/view|View Lead in Salesforce>",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lc-03",
+                "name": "subject",
+                "value": "Contact Form Page - R360 Lead Created (new form fill, new contact)",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lc-04",
+                "name": "body_html",
+                "value": "=<html><body style=\"font-family:Arial,sans-serif;color:#222;\">\n<h2 style=\"color:#0070d2;\">New R360 Lead Created</h2>\n<p>A new Lead was created in Salesforce from a Record360 web form submission.</p>\n<table cellpadding=\"6\" cellspacing=\"0\" border=\"1\" style=\"border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr><th style=\"background:#f4f6f9;text-align:left;\">Field</th><th style=\"background:#f4f6f9;text-align:left;\">Value</th></tr>\n  <tr><td>First Name</td><td>{{ $json.formattedFirst }}</td></tr>\n  <tr><td>Last Name</td><td>{{ $json.formattedLast }}</td></tr>\n  <tr><td>Company</td><td>{{ $json.formattedCompany }}</td></tr>\n  <tr><td>Email</td><td>{{ $json.formattedEmail }}</td></tr>\n  <tr><td>Phone</td><td>{{ $json.phone }}</td></tr>\n  <tr><td>Industry</td><td>{{ $json.formattedIndustry }}</td></tr>\n  <tr><td>Region</td><td>{{ $json.formattedRegion }}</td></tr>\n  <tr><td>Lead Source</td><td>{{ $json.utmsource }}</td></tr>\n  <tr><td>UTM Campaign</td><td>{{ $json.utmCampaign }}</td></tr>\n  <tr><td>UTM Medium</td><td>{{ $json.utmMedium }}</td></tr>\n  <tr><td>UTM Term</td><td>{{ $json.utmTerm }}</td></tr>\n  <tr><td>Landing Page</td><td>{{ $json.LandingPage }}</td></tr>\n</table>\n<p><a href=\"https://por.lightning.force.com/lightning/r/Lead/{{ $json.leadId }}/view\" style=\"color:#0070d2;\">View Lead in Salesforce</a></p>\n<h3>Form Submission Notes</h3>\n<pre style=\"background:#f9f9f9;padding:10px;border:1px solid #ddd;white-space:pre-wrap;\">Form Filled: R360 - Contact Form\nFirst Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}</pre>\n<hr/><p style=\"font-size:11px;color:#888;\">&copy; 2013 - {{ $json.currentYear }} Record360 | Sent by RevOps Automation</p>\n</body></html>",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "noty-0010-4000-8000-000000000010",
+        "name": "Set: Template lead_created",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          900,
+          80
+        ],
+        "notes": "Path A4b — Lead created fresh (no prior Lead or Contact). AE Slack DM + team email. Spec §4A sub-path A4b + §7 notifications node 316797592."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tmpl-lu-01",
+                "name": "recipient_slack_id",
+                "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lu-02",
+                "name": "message_text",
+                "value": "=:arrows_counterclockwise: *R360 Lead Updated — Existing Lead Re-submitted*\n\n*Name:* {{ $json.formattedFirst }} {{ $json.formattedLast }}\n*Company:* {{ $json.formattedCompany }}\n*Email:* {{ $json.formattedEmail }}\n*Phone:* {{ $json.phone }}\n*Industry:* {{ $json.formattedIndustry }}\n*Region:* {{ $json.formattedRegion }}\n*Lead Source:* {{ $json.utmsource }}\n\n<https://por.lightning.force.com/lightning/r/Lead/{{ $json.leadId }}/view|View Lead in Salesforce>",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lu-03",
+                "name": "subject",
+                "value": "Contact Form Page - R360 Lead Updated (new form fill, new contact)",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-lu-04",
+                "name": "body_html",
+                "value": "=<html><body style=\"font-family:Arial,sans-serif;color:#222;\">\n<h2 style=\"color:#0070d2;\">R360 Lead Updated</h2>\n<p>An existing Lead was updated in Salesforce from a new Record360 web form submission. The Lead was subsequently converted to a Contact.</p>\n<table cellpadding=\"6\" cellspacing=\"0\" border=\"1\" style=\"border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr><th style=\"background:#f4f6f9;text-align:left;\">Field</th><th style=\"background:#f4f6f9;text-align:left;\">Value</th></tr>\n  <tr><td>First Name</td><td>{{ $json.formattedFirst }}</td></tr>\n  <tr><td>Last Name</td><td>{{ $json.formattedLast }}</td></tr>\n  <tr><td>Company</td><td>{{ $json.formattedCompany }}</td></tr>\n  <tr><td>Email</td><td>{{ $json.formattedEmail }}</td></tr>\n  <tr><td>Phone</td><td>{{ $json.phone }}</td></tr>\n  <tr><td>Industry</td><td>{{ $json.formattedIndustry }}</td></tr>\n  <tr><td>Region</td><td>{{ $json.formattedRegion }}</td></tr>\n  <tr><td>Lead Source</td><td>{{ $json.utmsource }}</td></tr>\n  <tr><td>UTM Campaign</td><td>{{ $json.utmCampaign }}</td></tr>\n  <tr><td>UTM Medium</td><td>{{ $json.utmMedium }}</td></tr>\n  <tr><td>UTM Term</td><td>{{ $json.utmTerm }}</td></tr>\n  <tr><td>CRO1</td><td>{{ $json.CRO1 }}</td></tr>\n  <tr><td>CRO2</td><td>{{ $json.CRO2 }}</td></tr>\n  <tr><td>Landing Page</td><td>{{ $json.LandingPage }}</td></tr>\n</table>\n<p><a href=\"https://por.lightning.force.com/lightning/r/Lead/{{ $json.leadId }}/view\" style=\"color:#0070d2;\">View Lead in Salesforce</a></p>\n<h3>Form Submission Notes</h3>\n<pre style=\"background:#f9f9f9;padding:10px;border:1px solid #ddd;white-space:pre-wrap;\">Form Filled: R360 - Contact Form\nFirst Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}</pre>\n<hr/><p style=\"font-size:11px;color:#888;\">&copy; 2013 - {{ $json.currentYear }} Record360 | Sent by RevOps Automation</p>\n</body></html>",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "noty-0011-4000-8000-000000000011",
+        "name": "Set: Template lead_updated",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          900,
+          220
+        ],
+        "notes": "Path B / A4a — existing Lead updated (and converted). AE Slack DM + team email. Spec §4A sub-path A4a + §4B + §7 nodes 316797580, 316797647."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tmpl-cam-01",
+                "name": "recipient_slack_id",
+                "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-cam-02",
+                "name": "message_text",
+                "value": "=:office: *R360 Contact Updated — Existing Customer*\n\nAn existing Customer Contact re-submitted a Record360 form. A Case has been opened.\n\n*Name:* {{ $json.formattedFirst }} {{ $json.formattedLast }}\n*Company:* {{ $json.formattedCompany }}\n*Email:* {{ $json.formattedEmail }}\n*Phone:* {{ $json.phone }}\n*Industry:* {{ $json.formattedIndustry }}\n*Region:* {{ $json.formattedRegion }}\n*Lead Source:* {{ $json.utmsource }}\n\n<https://por.lightning.force.com/lightning/r/Contact/{{ $json.contactId }}/view|View Contact in Salesforce>",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-cam-03",
+                "name": "subject",
+                "value": "Contact Form Page - R360 Contact Updated (new form fill, existing contact — Customer)",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-cam-04",
+                "name": "body_html",
+                "value": "=<html><body style=\"font-family:Arial,sans-serif;color:#222;\">\n<h2 style=\"color:#0070d2;\">R360 Contact Updated — Existing Customer</h2>\n<p>An existing Customer Contact submitted a new Record360 web form. A Case (Inside Sales) has been created and the Contact record has been updated. This is routed to the <strong>Account Manager</strong> queue.</p>\n<table cellpadding=\"6\" cellspacing=\"0\" border=\"1\" style=\"border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr><th style=\"background:#f4f6f9;text-align:left;\">Field</th><th style=\"background:#f4f6f9;text-align:left;\">Value</th></tr>\n  <tr><td>First Name</td><td>{{ $json.formattedFirst }}</td></tr>\n  <tr><td>Last Name</td><td>{{ $json.formattedLast }}</td></tr>\n  <tr><td>Company</td><td>{{ $json.formattedCompany }}</td></tr>\n  <tr><td>Email</td><td>{{ $json.formattedEmail }}</td></tr>\n  <tr><td>Phone</td><td>{{ $json.phone }}</td></tr>\n  <tr><td>Industry</td><td>{{ $json.formattedIndustry }}</td></tr>\n  <tr><td>Region</td><td>{{ $json.formattedRegion }}</td></tr>\n  <tr><td>Lead Source</td><td>{{ $json.utmsource }}</td></tr>\n  <tr><td>UTM Campaign</td><td>{{ $json.utmCampaign }}</td></tr>\n  <tr><td>UTM Medium</td><td>{{ $json.utmMedium }}</td></tr>\n  <tr><td>CRO1</td><td>{{ $json.CRO1 }}</td></tr>\n  <tr><td>CRO2</td><td>{{ $json.CRO2 }}</td></tr>\n</table>\n<p><a href=\"https://por.lightning.force.com/lightning/r/Contact/{{ $json.contactId }}/view\" style=\"color:#0070d2;\">View Contact in Salesforce</a></p>\n<h3>Form Submission Notes</h3>\n<pre style=\"background:#f9f9f9;padding:10px;border:1px solid #ddd;white-space:pre-wrap;\">Form Filled: R360 - Contact Form\nFirst Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}</pre>\n<hr/><p style=\"font-size:11px;color:#888;\">&copy; 2013 - {{ $json.currentYear }} Record360 | Sent by RevOps Automation</p>\n</body></html>",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "noty-0012-4000-8000-000000000012",
+        "name": "Set: Template contact_AM",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          900,
+          360
+        ],
+        "notes": "Path C — existing Contact, Account.Status__c == 'Customer'. AM routing. A Case is created. Spec §4C + §7 (no dedicated email node in spec — mirrors contact_SDR subject pattern)."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tmpl-csd-01",
+                "name": "recipient_slack_id",
+                "value": "={{ $('Code: Extract Slack_ID__c').first().json.Slack_ID__c }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-csd-02",
+                "name": "message_text",
+                "value": "=:wave: *R360 Contact Updated — Prospect Re-submitted*\n\n*Name:* {{ $json.formattedFirst }} {{ $json.formattedLast }}\n*Company:* {{ $json.formattedCompany }}\n*Email:* {{ $json.formattedEmail }}\n*Phone:* {{ $json.phone }}\n*Industry:* {{ $json.formattedIndustry }}\n*Region:* {{ $json.formattedRegion }}\n*Lead Source:* {{ $json.utmsource }}\n*Status set to:* Cold / Not Started\n\n<https://por.lightning.force.com/lightning/r/Contact/{{ $json.contactId }}/view|View Contact in Salesforce>",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-csd-03",
+                "name": "subject",
+                "value": "Contact Form Page - R360 Contact Updated (new form fill, existing contact)",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-csd-04",
+                "name": "body_html",
+                "value": "=<html><body style=\"font-family:Arial,sans-serif;color:#222;\">\n<h2 style=\"color:#0070d2;\">R360 Contact Updated — Prospect</h2>\n<p>An existing Prospect Contact submitted a new Record360 web form. The Contact record has been updated and added to the R360 Website Campaign. This is routed to the <strong>SDR</strong> queue.</p>\n<table cellpadding=\"6\" cellspacing=\"0\" border=\"1\" style=\"border-collapse:collapse;width:100%;max-width:600px;\">\n  <tr><th style=\"background:#f4f6f9;text-align:left;\">Field</th><th style=\"background:#f4f6f9;text-align:left;\">Value</th></tr>\n  <tr><td>First Name</td><td>{{ $json.formattedFirst }}</td></tr>\n  <tr><td>Last Name</td><td>{{ $json.formattedLast }}</td></tr>\n  <tr><td>Company</td><td>{{ $json.formattedCompany }}</td></tr>\n  <tr><td>Email</td><td>{{ $json.formattedEmail }}</td></tr>\n  <tr><td>Phone</td><td>{{ $json.phone }}</td></tr>\n  <tr><td>Industry</td><td>{{ $json.formattedIndustry }}</td></tr>\n  <tr><td>Region</td><td>{{ $json.formattedRegion }}</td></tr>\n  <tr><td>Lead Source</td><td>{{ $json.utmsource }}</td></tr>\n  <tr><td>UTM Campaign</td><td>{{ $json.utmCampaign }}</td></tr>\n  <tr><td>UTM Medium</td><td>{{ $json.utmMedium }}</td></tr>\n  <tr><td>UTM Term</td><td>{{ $json.utmTerm }}</td></tr>\n  <tr><td>CRO1</td><td>{{ $json.CRO1 }}</td></tr>\n  <tr><td>CRO2</td><td>{{ $json.CRO2 }}</td></tr>\n  <tr><td>Landing Page</td><td>{{ $json.LandingPage }}</td></tr>\n</table>\n<p><a href=\"https://por.lightning.force.com/lightning/r/Contact/{{ $json.contactId }}/view\" style=\"color:#0070d2;\">View Contact in Salesforce</a></p>\n<h3>Form Submission Notes</h3>\n<pre style=\"background:#f9f9f9;padding:10px;border:1px solid #ddd;white-space:pre-wrap;\">Form Filled: R360 - Contact Form\nFirst Name: {{ $json.formattedFirst }}\nLast Name: {{ $json.formattedLast }}\nCompany Name: {{ $json.formattedCompany }}\nEmail: {{ $json.formattedEmail }}\nPhone Number: {{ $json.phone }}\nIndustry: {{ $json.formattedIndustry }}\nRegion: {{ $json.formattedRegion }}\nROI Calculator: {{ $json.roiCalculator }}\nMessage: {{ $json.field14 }}</pre>\n<hr/><p style=\"font-size:11px;color:#888;\">&copy; 2013 - {{ $json.currentYear }} Record360 | Sent by RevOps Automation</p>\n</body></html>",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "noty-0013-4000-8000-000000000013",
+        "name": "Set: Template contact_SDR",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          900,
+          500
+        ],
+        "notes": "Path D — existing Contact, Account.Status__c != 'Customer'. SDR routing. Includes field14 (message body) in email body per spec §4D note. Spec §7 node 316797672."
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tmpl-pd-01",
+                "name": "recipient_slack_id",
+                "value": "={{ $json.recipient_slack_id }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-pd-02",
+                "name": "message_text",
+                "value": "={{ $('OpenAI gpt-5.1').item.json.output_text }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-pd-03",
+                "name": "subject",
+                "value": "=R360 Pre-Discovery AI Brief — {{ $json.contactName }}",
+                "type": "string"
+              },
+              {
+                "id": "tmpl-pd-04",
+                "name": "body_html",
+                "value": "={{ $('MD→HTML').item.json.html }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "noty-0014-4000-8000-000000000014",
+        "name": "Set: Template pre_discovery",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          900,
+          640
+        ],
+        "notes": "Pre-Discovery (Zap 336544812 / §8.7). 3 recipients: U02HR1T6PBK, U01B0955NEQ, AE Slack_ID__c — fanned out by SplitInBatches upstream. message_text = GPT-5.1 output_text (mrkdwn). body_html = MD→HTML conversion. subject line uses contactName from the workflow input. Slack-only for managers; AE gets both DM and email fallback if Slack_ID__c missing."
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://slack.com/api/chat.postMessage",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "slackOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ channel: $json.recipient_slack_id, text: $json.message_text, username: \"RevOps R360 Bot\", icon_url: \"https://i.ibb.co/m5KMWdgH/Rev-Ops-Logo.png\", unfurl_links: false, unfurl_media: false, link_names: true }) }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": false
+              }
+            }
+          },
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json; charset=utf-8"
+              }
+            ]
+          }
+        },
+        "id": "noty-0004-4000-8000-000000000004",
+        "name": "HTTP: Slack DM",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1140,
+          240
+        ],
+        "credentials": {
+          "slackOAuth2Api": {
+            "id": "zIKGdRwmj0OkX07V",
+            "name": "Slack OAuth2 API"
+          }
+        },
+        "notes": "unfurl_links=false to prevent Slack expanding every URL. Use Slack <URL|Label> link syntax (NOT Markdown)."
+      },
+      {
+        "parameters": {
+          "sendTo": "={{ $json.NotificationEmail }}",
+          "subject": "={{ $json.subject }}",
+          "message": "={{ $json.body_html }}",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "id": "notify-gmail",
+        "name": "Gmail: Send notification",
+        "type": "n8n-nodes-base.gmail",
+        "typeVersion": 2.1,
+        "position": [
+          1140,
+          400
+        ],
+        "credentials": {
+          "gmailOAuth2": {
+            "id": "IjOolmALabHu9NLG",
+            "name": "POR NoReply"
+          }
+        },
+        "onError": "continueRegularOutput",
+        "webhookId": "541a32ba-b05c-44f2-8891-6639986b1b9d"
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/query?q={{ encodeURIComponent(\"SELECT Slack_ID__c, Email FROM User WHERE Id='\" + $json.AssignmentID + \"' LIMIT 1\") }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "options": {}
+        },
+        "id": "notify-sf-user",
+        "name": "SF HTTP: Find User.Slack_ID__c by AssignmentID",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          380,
+          300
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const orig = $('When Executed by Another Workflow').first().json;\nconst queryRes = $input.first().json;\nconst user = (queryRes.records || [])[0] || {};\nreturn [{ json: { ...orig, Slack_ID__c: user.Slack_ID__c || null, UserEmail: user.Email || null } }];"
+        },
+        "id": "notify-code-extract",
+        "name": "Code: Extract Slack_ID__c",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          580,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "SF HTTP: Find User.Slack_ID__c by AssignmentID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF HTTP: Find User.Slack_ID__c by AssignmentID": {
+        "main": [
+          [
+            {
+              "node": "Code: Extract Slack_ID__c",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Extract Slack_ID__c": {
+        "main": [
+          [
+            {
+              "node": "Switch: 5 templates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch: 5 templates": {
+        "main": [
+          [
+            {
+              "node": "Set: Template lead_created",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set: Template lead_updated",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set: Template contact_AM",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set: Template contact_SDR",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Set: Template pre_discovery",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set: Template lead_created": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack DM",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gmail: Send notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set: Template lead_updated": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack DM",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gmail: Send notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set: Template contact_AM": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack DM",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gmail: Send notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set: Template contact_SDR": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack DM",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gmail: Send notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Set: Template pre_discovery": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack DM",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Gmail: Send notification",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T22:07:50.539Z",
+        "id": 4500,
+        "workflowId": "Hx2Zi7z2rKoqKSSE",
+        "versionId": "f9e0882c-cda8-40a3-b27b-5650cf867b83",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
     ]
   }
 }

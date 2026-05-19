@@ -1,18 +1,29 @@
 {
+  "updatedAt": "2026-05-17T21:38:10.251Z",
+  "createdAt": "2026-05-10T19:09:48.997Z",
+  "id": "ozNWOnrOZhFongdX",
   "name": "R360 Receiver: WPForm 33076 (FAQ — Google Sheets only, no SF)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "r360/faq",
-        "responseMode": "lastNode",
-        "options": {}
+        "responseMode": "onReceived",
+        "options": {},
+        "responseData": "firstEntryJson"
       },
       "id": "rcfaq-0001-4000-8000-000000000001",
       "name": "Webhook: /r360/faq",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 320]
+      "position": [
+        240,
+        320
+      ],
+      "webhookId": "96055463-26be-49e9-8fe5-eb96f9e4e271"
     },
     {
       "parameters": {
@@ -21,10 +32,22 @@
         "sheetName": "FAQ Submissions",
         "fieldsUi": {
           "values": [
-            { "fieldId": "Timestamp",  "fieldValue": "={{ $now.toISO() }}" },
-            { "fieldId": "Email",       "fieldValue": "={{ $json.body.fields?.['7'] || $json.body.field7 || '' }}" },
-            { "fieldId": "Question",    "fieldValue": "={{ $json.body.fields?.['8'] || $json.body.field8 || '' }}" },
-            { "fieldId": "Source",      "fieldValue": "wpform_33076" }
+            {
+              "fieldId": "Timestamp",
+              "fieldValue": "={{ $now.toISO() }}"
+            },
+            {
+              "fieldId": "Email",
+              "fieldValue": "={{ $json.body.fields?.['7'] || $json.body.field7 || '' }}"
+            },
+            {
+              "fieldId": "Question",
+              "fieldValue": "={{ $json.body.fields?.['8'] || $json.body.field8 || '' }}"
+            },
+            {
+              "fieldId": "Source",
+              "fieldValue": "wpform_33076"
+            }
           ]
         },
         "options": {}
@@ -33,7 +56,10 @@
       "name": "Google Sheets: Append FAQ row",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [460, 320],
+      "position": [
+        460,
+        320
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "TncsI38D3TJN20Fk",
@@ -44,10 +70,159 @@
     }
   ],
   "connections": {
-    "Webhook: /r360/faq": { "main": [[{ "node": "Google Sheets: Append FAQ row", "type": "main", "index": 0 }]] }
+    "Webhook: /r360/faq": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Append FAQ row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §1 row 7 (Phase 1C, low priority)", "form_id": "33076" }
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": "K3pVAyECE0tCFQgw"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+  "activeVersionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+  "versionCounter": 16,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:48.999Z",
+      "createdAt": "2026-05-10T19:09:48.999Z",
+      "role": "workflow:owner",
+      "workflowId": "ozNWOnrOZhFongdX",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-10T19:43:26.400Z",
+    "createdAt": "2026-05-10T19:43:26.400Z",
+    "versionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+    "workflowId": "ozNWOnrOZhFongdX",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "r360/faq",
+          "responseMode": "onReceived",
+          "options": {},
+          "responseData": "firstEntryJson"
+        },
+        "id": "rcfaq-0001-4000-8000-000000000001",
+        "name": "Webhook: /r360/faq",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          320
+        ],
+        "webhookId": "96055463-26be-49e9-8fe5-eb96f9e4e271"
+      },
+      {
+        "parameters": {
+          "operation": "append",
+          "documentId": "REPLACE_WITH_FAQ_SHEET_ID",
+          "sheetName": "FAQ Submissions",
+          "fieldsUi": {
+            "values": [
+              {
+                "fieldId": "Timestamp",
+                "fieldValue": "={{ $now.toISO() }}"
+              },
+              {
+                "fieldId": "Email",
+                "fieldValue": "={{ $json.body.fields?.['7'] || $json.body.field7 || '' }}"
+              },
+              {
+                "fieldId": "Question",
+                "fieldValue": "={{ $json.body.fields?.['8'] || $json.body.field8 || '' }}"
+              },
+              {
+                "fieldId": "Source",
+                "fieldValue": "wpform_33076"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "rcfaq-0002-4000-8000-000000000002",
+        "name": "Google Sheets: Append FAQ row",
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.5,
+        "position": [
+          460,
+          320
+        ],
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "TncsI38D3TJN20Fk",
+            "name": "Google Sheets OAuth (kirk)"
+          }
+        },
+        "notes": "FAQ form is non-SF, low priority. Confirm sheet ID + column map with Marketing during Day 1 readiness."
+      }
+    ],
+    "connections": {
+      "Webhook: /r360/faq": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets: Append FAQ row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-10T19:43:26.685Z",
+        "id": 3717,
+        "workflowId": "ozNWOnrOZhFongdX",
+        "versionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:10.634Z",
+        "id": 4449,
+        "workflowId": "ozNWOnrOZhFongdX",
+        "versionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-05-17T21:38:09.566Z",
+        "id": 4448,
+        "workflowId": "ozNWOnrOZhFongdX",
+        "versionId": "b93efdb3-0154-4a55-8e01-586e7ce2dcbd",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }

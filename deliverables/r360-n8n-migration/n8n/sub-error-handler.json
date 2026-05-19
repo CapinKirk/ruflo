@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-05-17T17:02:00.708Z",
+  "createdAt": "2026-05-10T19:09:47.847Z",
+  "id": "K3pVAyECE0tCFQgw",
   "name": "R360 Sub: Error Handler (Inbound_Log update + Slack page + retry)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,7 +13,10 @@
       "name": "Error Trigger",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
-      "position": [240, 320],
+      "position": [
+        240,
+        320
+      ],
       "notes": "Bind this workflow as 'errorWorkflow' on every receiver + sub-workflow."
     },
     {
@@ -18,23 +27,33 @@
       "name": "Code: Extract error context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 320]
+      "position": [
+        460,
+        320
+      ]
     },
     {
       "parameters": {
-        "operation": "update",
-        "resource": "customObject",
-        "customObject": "Lead_Inbound_Log__c",
+        "method": "PATCH",
+        "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/Idempotency_Hash__c/{{ encodeURIComponent($json.hash || 'unknown-' + $execution.id) }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "salesforceOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"Status__c\": \"failed\",\n  \"Error_Message__c\": ($json.errorMessage || \"\").substring(0, 32000),\n  \"Retry_Count__c\": $json.retryCount || 1,\n  \"n8n_Execution_Id__c\": $execution.id\n}",
         "options": {}
       },
       "id": "errr-0003-4000-8000-000000000003",
       "name": "SF: Update Lead_Inbound_Log__c (failed)",
-      "type": "n8n-nodes-base.salesforce",
-      "typeVersion": 1,
-      "position": [680, 320],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        320
+      ],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "N5uEq1CnutZGYOnW",
+          "id": "JUyr1xCnPHSkU1tm",
           "name": "[RH] UAT"
         }
       },
@@ -43,12 +62,18 @@
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false, "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
           "conditions": [
             {
               "leftValue": "={{ $json.retryCount }}",
               "rightValue": 5,
-              "operator": { "type": "number", "operation": "gte" }
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
             }
           ]
         }
@@ -57,7 +82,10 @@
       "name": "IF: retryCount >= 5 (escalate)",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [900, 320],
+      "position": [
+        900,
+        320
+      ],
       "notes": "If retry already at 5, page on-call instead of waiting for next DLQ replay cycle."
     },
     {
@@ -68,13 +96,16 @@
         "nodeCredentialType": "slackOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_ERRORS }}\",\n  \"text\": \"❌ R360 Inbound failed (retry {{ $json.retryCount }}/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Node: {{ $json.errorNode }}\\n• Error: {{ $json.errorMessage }}\\n• Execution: {{ $json.executionId }}\",\n  \"unfurl_links\": false\n}"
+        "jsonBody": "={\n  \"channel\": \"C02DJ9UVAET\",\n  \"text\": \"❌ R360 Inbound failed (retry {{ $json.retryCount }}/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Node: {{ $json.errorNode }}\\n• Error: {{ $json.errorMessage }}\\n• Execution: {{ $json.executionId }}\",\n  \"unfurl_links\": false\n}"
       },
       "id": "errr-0005-4000-8000-000000000005",
       "name": "HTTP: Slack #r360-leads-errors",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 240],
+      "position": [
+        1120,
+        240
+      ],
       "credentials": {
         "slackOAuth2Api": {
           "id": "skn3Ct9zjw3Vt3Pn",
@@ -90,13 +121,16 @@
         "nodeCredentialType": "slackOAuth2Api",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"{{ $env.SLACK_CHANNEL_R360_ERRORS }}\",\n  \"text\": \":rotating_light: P0 ESCALATION — R360 Inbound exhausted retries (5/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Error: {{ $json.errorMessage }}\\n<!subteam^revops-oncall> please investigate immediately.\",\n  \"unfurl_links\": false\n}"
+        "jsonBody": "={\n  \"channel\": \"C02DJ9UVAET\",\n  \"text\": \":rotating_light: P0 ESCALATION — R360 Inbound exhausted retries (5/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Error: {{ $json.errorMessage }}\\n<!subteam^revops-oncall> please investigate immediately.\",\n  \"unfurl_links\": false\n}"
       },
       "id": "errr-0006-4000-8000-000000000006",
       "name": "HTTP: Slack escalation page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1120, 400],
+      "position": [
+        1120,
+        400
+      ],
       "credentials": {
         "slackOAuth2Api": {
           "id": "skn3Ct9zjw3Vt3Pn",
@@ -106,16 +140,292 @@
     }
   ],
   "connections": {
-    "Error Trigger": { "main": [[{ "node": "Code: Extract error context", "type": "main", "index": 0 }]] },
-    "Code: Extract error context": { "main": [[{ "node": "SF: Update Lead_Inbound_Log__c (failed)", "type": "main", "index": 0 }]] },
-    "SF: Update Lead_Inbound_Log__c (failed)": { "main": [[{ "node": "IF: retryCount >= 5 (escalate)", "type": "main", "index": 0 }]] },
-    "IF: retryCount >= 5 (escalate)": { "main": [
-      [{ "node": "HTTP: Slack escalation page", "type": "main", "index": 0 }],
-      [{ "node": "HTTP: Slack #r360-leads-errors", "type": "main", "index": 0 }]
-    ] }
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract error context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract error context": {
+      "main": [
+        [
+          {
+            "node": "SF: Update Lead_Inbound_Log__c (failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SF: Update Lead_Inbound_Log__c (failed)": {
+      "main": [
+        [
+          {
+            "node": "IF: retryCount >= 5 (escalate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: retryCount >= 5 (escalate)": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Slack escalation page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP: Slack #r360-leads-errors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "settings": { "executionOrder": "v1" },
-  "active": false,
-  "versionId": "0.1.0-skeleton",
-  "meta": { "spec": "migration-plans/r360-n8n-build-plan.md §14 + §15.9 + §17.5 C-14/C-15" }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "169eefaf-4d00-4e06-af20-26e14939b796",
+  "activeVersionId": "169eefaf-4d00-4e06-af20-26e14939b796",
+  "versionCounter": 18,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-05-10T19:09:47.849Z",
+      "createdAt": "2026-05-10T19:09:47.849Z",
+      "role": "workflow:owner",
+      "workflowId": "K3pVAyECE0tCFQgw",
+      "projectId": "cR8iU4JEgaFZmT9z",
+      "project": {
+        "updatedAt": "2026-01-27T00:26:45.118Z",
+        "createdAt": "2026-01-27T00:21:08.975Z",
+        "id": "cR8iU4JEgaFZmT9z",
+        "name": "Paul Alleyne <paul.alleyne@me.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-05-17T17:02:00.708Z",
+    "createdAt": "2026-05-17T17:02:00.708Z",
+    "versionId": "169eefaf-4d00-4e06-af20-26e14939b796",
+    "workflowId": "K3pVAyECE0tCFQgw",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "errr-0001-4000-8000-000000000001",
+        "name": "Error Trigger",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          320
+        ],
+        "notes": "Bind this workflow as 'errorWorkflow' on every receiver + sub-workflow."
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract context from the failed execution\nconst err = $json.execution.error || {};\nconst ctx = $json.execution.lastNodeExecuted || 'unknown';\nconst inputJson = $json.execution.json || $json;\n// Pull Idempotency_Hash if present in payload\nconst hash = inputJson.Idempotency_Hash__c || inputJson.idempotencyHash || null;\nconst source = inputJson.source || inputJson.Source__c || 'unknown';\nreturn [{ json: {\n  hash,\n  source,\n  errorMessage: (err.message || String(err)).substring(0, 32000),\n  errorNode: ctx,\n  executionId: $json.execution.id,\n  retryCount: (inputJson.retryCount || 0) + 1\n} }];"
+        },
+        "id": "errr-0002-4000-8000-000000000002",
+        "name": "Code: Extract error context",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          460,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://por--uat.sandbox.my.salesforce.com/services/data/v66.0/sobjects/Lead_Inbound_Log__c/Idempotency_Hash__c/{{ encodeURIComponent($json.hash || 'unknown-' + $execution.id) }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "salesforceOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"Status__c\": \"failed\",\n  \"Error_Message__c\": ($json.errorMessage || \"\").substring(0, 32000),\n  \"Retry_Count__c\": $json.retryCount || 1,\n  \"n8n_Execution_Id__c\": $execution.id\n}",
+          "options": {}
+        },
+        "id": "errr-0003-4000-8000-000000000003",
+        "name": "SF: Update Lead_Inbound_Log__c (failed)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          680,
+          320
+        ],
+        "credentials": {
+          "salesforceOAuth2Api": {
+            "id": "JUyr1xCnPHSkU1tm",
+            "name": "[RH] UAT"
+          }
+        },
+        "notes": "Match by Idempotency_Hash__c External Id. Set Status__c='failed', Error_Message__c=<truncated msg>, Retry_Count__c++, n8n_Execution_Id__c=<execution id>"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": false,
+              "typeValidation": "loose"
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.retryCount }}",
+                "rightValue": 5,
+                "operator": {
+                  "type": "number",
+                  "operation": "gte"
+                }
+              }
+            ]
+          }
+        },
+        "id": "errr-0004-4000-8000-000000000004",
+        "name": "IF: retryCount >= 5 (escalate)",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          900,
+          320
+        ],
+        "notes": "If retry already at 5, page on-call instead of waiting for next DLQ replay cycle."
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://slack.com/api/chat.postMessage",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "slackOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"channel\": \"C02DJ9UVAET\",\n  \"text\": \"❌ R360 Inbound failed (retry {{ $json.retryCount }}/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Node: {{ $json.errorNode }}\\n• Error: {{ $json.errorMessage }}\\n• Execution: {{ $json.executionId }}\",\n  \"unfurl_links\": false\n}"
+        },
+        "id": "errr-0005-4000-8000-000000000005",
+        "name": "HTTP: Slack #r360-leads-errors",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1120,
+          240
+        ],
+        "credentials": {
+          "slackOAuth2Api": {
+            "id": "skn3Ct9zjw3Vt3Pn",
+            "name": "RevTech Bot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://slack.com/api/chat.postMessage",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "slackOAuth2Api",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={\n  \"channel\": \"C02DJ9UVAET\",\n  \"text\": \":rotating_light: P0 ESCALATION — R360 Inbound exhausted retries (5/5)\\n• Source: {{ $json.source }}\\n• Hash: {{ $json.hash }}\\n• Error: {{ $json.errorMessage }}\\n<!subteam^revops-oncall> please investigate immediately.\",\n  \"unfurl_links\": false\n}"
+        },
+        "id": "errr-0006-4000-8000-000000000006",
+        "name": "HTTP: Slack escalation page",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1120,
+          400
+        ],
+        "credentials": {
+          "slackOAuth2Api": {
+            "id": "skn3Ct9zjw3Vt3Pn",
+            "name": "RevTech Bot"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Error Trigger": {
+        "main": [
+          [
+            {
+              "node": "Code: Extract error context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code: Extract error context": {
+        "main": [
+          [
+            {
+              "node": "SF: Update Lead_Inbound_Log__c (failed)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SF: Update Lead_Inbound_Log__c (failed)": {
+        "main": [
+          [
+            {
+              "node": "IF: retryCount >= 5 (escalate)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "IF: retryCount >= 5 (escalate)": {
+        "main": [
+          [
+            {
+              "node": "HTTP: Slack escalation page",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "HTTP: Slack #r360-leads-errors",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-05-17T17:02:01.041Z",
+        "id": 4340,
+        "workflowId": "K3pVAyECE0tCFQgw",
+        "versionId": "169eefaf-4d00-4e06-af20-26e14939b796",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
 }
