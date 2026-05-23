@@ -1,0 +1,31 @@
+[Unit]
+Description=Drive Monitor v3 (cereal -> rotating JSON-line log)
+# Independent of openpilot - we don't gate on comma.service so the monitor
+# starts even if the car-stack is disabled. Cereal sockets simply won't have
+# data until openpilot runs; the monitor logs that gracefully.
+After=network.target
+# Restart-rate limit lives in [Unit] for systemd < 230 compat.
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/data
+Environment=PYTHONUNBUFFERED=1
+Environment=DRIVE_MONITOR_LOG=/data/drive-monitor.log
+Environment=DRIVE_MONITOR_MAX_BYTES=104857600
+Environment=DRIVE_MONITOR_BACKUPS=5
+Environment=DRIVE_MONITOR_OP_DIR=/data/openpilot
+Environment=DRIVE_MONITOR_HEARTBEAT=10
+Environment=DRIVE_MONITOR_SNAPSHOT=60
+ExecStart=/usr/local/venv/bin/python3 /data/drive-monitor-v3.py
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=drive-monitor
+
+[Install]
+WantedBy=default.target
