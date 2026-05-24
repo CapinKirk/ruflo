@@ -3,7 +3,7 @@
 Auto-captures the assignee a task held at the moment it moved into **Quality Assurance**, into a People custom field, so QA handoffs are traceable and filterable.
 
 - **Asana task:** https://app.asana.com/1/247986675893735/project/1209024971684846/task/1213989369437747
-- **Status:** Live since 2026-05-17. Original v1 had a race-condition bug discovered 2026-05-24. **v3 is the current production version** — race-fixed, verified, and 227 historical misses backfilled.
+- **Status:** Live since 2026-05-17. Original v1 had a race-condition bug discovered 2026-05-24. **v3.2 is the current production version** — race-fixed, stamps both `QA Came From` and `Entered QA At`, has a `Skip if not in QA` short-circuit before the Stories fetch, errors page Slack via the shared `Error Notification - Slack` sub-workflow, and 227 historical misses are backfilled.
 - **Implementation:** n8n workflow (not a native Asana Rule — see Decision).
 
 This README is the complete spec. An AI agent or engineer can iterate using only what is below. The live source of truth for the node code is the n8n API; this file mirrors it and is regenerated from the deployed workflow.
@@ -27,6 +27,8 @@ Native Asana Rules can set a **People** custom field only to a **statically chos
 | Thing | Value |
 |---|---|
 | Custom field `QA Came From` | gid `1214876159436964`, `resource_subtype: people` |
+| Custom field `Entered QA At` | gid `1215085559448866`, `resource_subtype: date` (date_time precision) |
+| Error sub-workflow (Slack pager) | n8n workflow id `XaNTnsikRThG3w4R` — `Error Notification - Slack` (shared org-wide). Wired via `settings.errorWorkflow` on the main workflow. |
 | RevTech project | gid `1209024971684846` |
 | Workspace (pointofrental.com) | gid `247986675893735` |
 | "Quality Assurance" section (trigger column) | gid `1209047939293885` |
@@ -58,17 +60,23 @@ POST https://app.asana.com/api/1.0/projects/1209024971684846/addCustomFieldSetti
 
 Destructive reset: `DELETE /custom_fields/1214876159436964` (also detaches from project and clears all values everywhere).
 
-## Architecture / data flow (v3)
+## Architecture / data flow (v3.2)
 
-Linear 6-node pipeline. Connections: `Trigger → Filter → Get Task → Get Stories → Decide → Set`.
+Linear 7-node pipeline. Connections: `Trigger → Filter → Get Task → Skip if not in QA → Get Stories → Decide → Set`. Failures route to the shared Slack-pager sub-workflow via `settings.errorWorkflow`.
 
 ```
 Asana Trigger: RevTech Project   (n8n-managed Asana webhook; ALL project events)
   → Filter: only QA section moves   (passes only "task added to QA section"; else 0 items)
   → Asana: Get Task                 (assignee + memberships + custom_fields)
-  → Asana: Get Stories              (NEW in v3: full audit log for assignee derivation)
+  → Skip if not in QA               (v3.2 — short-circuit before the Stories fetch
+                                     if task isn't currently in QA; saves the wasted
+                                     Stories GET on Shape-B non-QA section moves)
+  → Asana: Get Stories              (v3 — full audit log for assignee derivation)
   → Decide: write QA Came From?     (story-based pre-move assignee; idempotency check)
-  → Asana: Set QA Came From         (PUT custom_fields[1214876159436964] = preMoveAssigneeGid)
+  → Asana: Set QA Came From + Entered QA At
+                                     (v3.2 — single PUT writes BOTH custom fields:
+                                     QA Came From = preMoveAssigneeGid,
+                                     Entered QA At = T_move ISO timestamp)
 ```
 
 Asana webhooks cannot be scoped to a single section — the hook is project-wide, hence the Filter node.

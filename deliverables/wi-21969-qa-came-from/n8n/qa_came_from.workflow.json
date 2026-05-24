@@ -38,7 +38,7 @@
     },
     {
       "parameters": {
-        "url": "=https://app.asana.com/api/1.0/tasks/{{ $json.taskGid }}?opt_fields=name,assignee.gid,assignee.name,memberships.section.gid,memberships.section.name,custom_fields.gid,custom_fields.name,custom_fields.people_value",
+        "url": "=https://app.asana.com/api/1.0/tasks/{{ $json.taskGid }}?opt_fields=name,assignee.gid,assignee.name,memberships.section.gid,memberships.section.name,custom_fields.gid,custom_fields.name,custom_fields.people_value,custom_fields.date_value",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "asanaApi",
         "options": {}
@@ -60,7 +60,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// v3: correct story subtypes ('assigned' / 'unassigned'), not 'assignee_changed'.\n//\n// Pre-move assignee algorithm:\n//   1. Confirm task is currently in QA (else drop).\n//   2. T_move = created_at of most recent section_changed -> QA story.\n//   3. Walk assignment events (assigned/unassigned) with created_at <= T_move, chronological:\n//      - if the last one is 'assigned', that story's assignee.gid is the answer.\n//      - if the last one is 'unassigned', the task was intentionally unassigned at move\n//        time -> no write (don't fall through to trigger.user, that'd be misleading).\n//   4. Else (no pre-move assignment stories at all):\n//      a) fall back to task.assignee (current state \u2014 caught lucky path with no race)\n//      b) last resort: triggerUserGid (the drag actor).\n//   5. Idempotency: skip if QA Came From already holds that person.\nconst QA_SECTION_GID = '1209047939293885';\nconst QA_CAME_FROM_FIELD_GID = '1214876159436964';\n\nconst storiesResp = $json;\nconst stories = (storiesResp && storiesResp.data) ? storiesResp.data : (storiesResp.stories || []);\nconst taskResp = $('Asana: Get Task').first().json;\nconst task = (taskResp && taskResp.data) ? taskResp.data : taskResp;\nconst upstream = $('Filter: only QA section moves').first().json;\nconst triggerUserGid = upstream.triggerUserGid || null;\n\nconst inQA = (task.memberships || []).some(m => m && m.section && m.section.gid === QA_SECTION_GID);\nif (!inQA) { return []; }\n\nconst qaMoveStories = stories\n  .filter(s => s && s.resource_subtype === 'section_changed' && s.new_section && s.new_section.gid === QA_SECTION_GID)\n  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));\nconst tMove = qaMoveStories.length ? new Date(qaMoveStories[0].created_at) : null;\n\nlet preMoveAssignee = null;\nlet derivedFrom = 'none';\nlet intentionallyUnassigned = false;\n\nif (tMove) {\n  const assignmentEvents = stories\n    .filter(s => s && (s.resource_subtype === 'assigned' || s.resource_subtype === 'unassigned'))\n    .filter(s => new Date(s.created_at) <= tMove)\n    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));\n  if (assignmentEvents.length) {\n    const last = assignmentEvents[assignmentEvents.length - 1];\n    if (last.resource_subtype === 'assigned' && last.assignee && last.assignee.gid) {\n      preMoveAssignee = last.assignee;\n      derivedFrom = 'story.assigned';\n    } else if (last.resource_subtype === 'unassigned') {\n      intentionallyUnassigned = true;\n    }\n  }\n}\n\nif (!preMoveAssignee && !intentionallyUnassigned && task.assignee && task.assignee.gid) {\n  preMoveAssignee = task.assignee;\n  derivedFrom = 'task.assignee (current)';\n}\n\nif (!preMoveAssignee && !intentionallyUnassigned && triggerUserGid) {\n  preMoveAssignee = { gid: triggerUserGid, name: '(trigger user)' };\n  derivedFrom = 'trigger.user (last resort)';\n}\n\nif (!preMoveAssignee) { return []; }\n\nconst existing = (task.custom_fields || []).find(f => f && f.gid === QA_CAME_FROM_FIELD_GID);\nconst alreadySet = existing && existing.people_value && existing.people_value.length === 1 &&\n                   existing.people_value[0].gid === preMoveAssignee.gid;\nif (alreadySet) { return []; }\n\nreturn [{\n  json: {\n    taskGid: task.gid, taskName: task.name,\n    assigneeGid: preMoveAssignee.gid, assigneeName: preMoveAssignee.name,\n    qaCameFromFieldGid: QA_CAME_FROM_FIELD_GID,\n    derivedFrom, tMove: tMove ? tMove.toISOString() : null\n  }\n}];\n"
+        "jsCode": "// v3.1: also emit Entered QA At date (T_move) so Set can stamp both fields.\nconst QA_SECTION_GID = '1209047939293885';\nconst QA_CAME_FROM_FIELD_GID = '1214876159436964';\nconst ENTERED_QA_AT_FIELD_GID = '1215085559448866';\n\nconst storiesResp = $json;\nconst stories = (storiesResp && storiesResp.data) ? storiesResp.data : (storiesResp.stories || []);\nconst taskResp = $('Asana: Get Task').first().json;\nconst task = (taskResp && taskResp.data) ? taskResp.data : taskResp;\nconst upstream = $('Filter: only QA section moves').first().json;\nconst triggerUserGid = upstream.triggerUserGid || null;\n\nconst inQA = (task.memberships || []).some(m => m && m.section && m.section.gid === QA_SECTION_GID);\nif (!inQA) { return []; }\n\nconst qaMoveStories = stories\n  .filter(s => s && s.resource_subtype === 'section_changed' && s.new_section && s.new_section.gid === QA_SECTION_GID)\n  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));\nconst tMove = qaMoveStories.length ? new Date(qaMoveStories[0].created_at) : null;\nconst tMoveIso = tMove ? tMove.toISOString() : null;\n\nlet preMoveAssignee = null;\nlet derivedFrom = 'none';\nlet intentionallyUnassigned = false;\nif (tMove) {\n  const assignmentEvents = stories\n    .filter(s => s && (s.resource_subtype === 'assigned' || s.resource_subtype === 'unassigned'))\n    .filter(s => new Date(s.created_at) <= tMove)\n    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));\n  if (assignmentEvents.length) {\n    const last = assignmentEvents[assignmentEvents.length - 1];\n    if (last.resource_subtype === 'assigned' && last.assignee && last.assignee.gid) {\n      preMoveAssignee = last.assignee;\n      derivedFrom = 'story.assigned';\n    } else if (last.resource_subtype === 'unassigned') {\n      intentionallyUnassigned = true;\n    }\n  }\n}\nif (!preMoveAssignee && !intentionallyUnassigned && task.assignee && task.assignee.gid) {\n  preMoveAssignee = task.assignee;\n  derivedFrom = 'task.assignee (current)';\n}\nif (!preMoveAssignee && !intentionallyUnassigned && triggerUserGid) {\n  preMoveAssignee = { gid: triggerUserGid, name: '(trigger user)' };\n  derivedFrom = 'trigger.user (last resort)';\n}\nif (!preMoveAssignee) { return []; }\n\n// idempotency: skip if BOTH fields already match what we would write\nconst existingPerson = (task.custom_fields || []).find(f => f && f.gid === QA_CAME_FROM_FIELD_GID);\nconst personMatches = existingPerson && existingPerson.people_value &&\n                      existingPerson.people_value.length === 1 &&\n                      existingPerson.people_value[0].gid === preMoveAssignee.gid;\nconst existingDate = (task.custom_fields || []).find(f => f && f.gid === ENTERED_QA_AT_FIELD_GID);\nconst dateMatches = existingDate && existingDate.date_value &&\n                    existingDate.date_value.date_time === tMoveIso;\nif (personMatches && dateMatches) { return []; }\n\nreturn [{\n  json: {\n    taskGid: task.gid, taskName: task.name,\n    assigneeGid: preMoveAssignee.gid, assigneeName: preMoveAssignee.name,\n    qaCameFromFieldGid: QA_CAME_FROM_FIELD_GID,\n    enteredQaAtFieldGid: ENTERED_QA_AT_FIELD_GID,\n    tMoveIso,\n    derivedFrom,\n  }\n}];\n"
       },
       "id": "wi21969-0004-0000-0000-000000000004",
       "name": "Decide: write QA Came From?",
@@ -79,11 +79,11 @@
         "nodeCredentialType": "asanaApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"data\": {\n    \"custom_fields\": {\n      \"{{ $json.qaCameFromFieldGid }}\": \"{{ $json.assigneeGid }}\"\n    }\n  }\n}",
+        "jsonBody": "={\n  \"data\": {\n    \"custom_fields\": {\n      \"{{ $json.qaCameFromFieldGid }}\": \"{{ $json.assigneeGid }}\",\n      \"{{ $json.enteredQaAtFieldGid }}\": { \"date_time\": \"{{ $json.tMoveIso }}\" }\n    }\n  }\n}",
         "options": {}
       },
       "id": "wi21969-0005-0000-0000-000000000005",
-      "name": "Asana: Set QA Came From",
+      "name": "Asana: Set QA Came From + Entered QA At",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -118,6 +118,19 @@
           "name": "Asana account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "// v3.2 optimization: short-circuit before the Get Stories HTTP call when the\n// task is not currently in QA. Shape B (section_changed story) forwards every\n// section move to Get Task, but ~90% of those go to non-QA sections \u2014 without\n// this guard we'd waste a Get Stories call on each.\nconst QA_SECTION_GID = '1209047939293885';\nconst taskResp = $json;\nconst task = (taskResp && taskResp.data) ? taskResp.data : taskResp;\nconst upstream = $('Filter: only QA section moves').first().json;\nconst inQA = (task.memberships || []).some(m => m && m.section && m.section.gid === QA_SECTION_GID);\nif (!inQA) { return []; }\n// Pass through the Filter payload so Get Stories' URL template (which references\n// 'Filter: only QA section moves') still resolves the taskGid.\nreturn [{ json: upstream }];\n"
+      },
+      "id": "wi21969-0007-0000-0000-000000000007",
+      "name": "Skip if not in QA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ]
     }
   ],
   "connections": {
@@ -147,7 +160,7 @@
       "main": [
         [
           {
-            "node": "Asana: Get Stories",
+            "node": "Skip if not in QA",
             "type": "main",
             "index": 0
           }
@@ -169,7 +182,18 @@
       "main": [
         [
           {
-            "node": "Asana: Set QA Came From",
+            "node": "Asana: Set QA Came From + Entered QA At",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip if not in QA": {
+      "main": [
+        [
+          {
+            "node": "Asana: Get Stories",
             "type": "main",
             "index": 0
           }
@@ -181,6 +205,7 @@
     "executionOrder": "v1",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
-    "executionTimeout": 60
+    "executionTimeout": 60,
+    "errorWorkflow": "XaNTnsikRThG3w4R"
   }
 }
