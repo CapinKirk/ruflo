@@ -3,7 +3,7 @@
 Auto-captures the assignee a task held at the moment it moved into **Quality Assurance**, into a People custom field, so QA handoffs are traceable and filterable.
 
 - **Asana task:** https://app.asana.com/1/247986675893735/project/1209024971684846/task/1213989369437747
-- **Status:** Live since 2026-05-17. Original v1 had a race-condition bug discovered 2026-05-24. **v3.2 is the current production version** — race-fixed, stamps both `QA Came From` and `Entered QA At`, has a `Skip if not in QA` short-circuit before the Stories fetch, errors page Slack via the shared `Error Notification - Slack` sub-workflow, and 227 historical misses are backfilled.
+- **Status:** Live since 2026-05-17. **v3.3 is the current production version** (2026-05-25) — race-fixed, multi-item-trigger fixed, 404-tolerant on Get Task / Get Stories, stamps both `QA Came From` and `Entered QA At`, has a `Skip if not in QA` short-circuit, and errors page Slack via the shared `Error Notification - Slack` sub-workflow. Two complete backfill passes have run: 227 `QA Came From` writes (2026-05-24) + 228 `Entered QA At` writes (2026-05-25).
 - **Implementation:** n8n workflow (not a native Asana Rule — see Decision).
 
 This README is the complete spec. An AI agent or engineer can iterate using only what is below. The live source of truth for the node code is the n8n API; this file mirrors it and is regenerated from the deployed workflow.
@@ -60,9 +60,9 @@ POST https://app.asana.com/api/1.0/projects/1209024971684846/addCustomFieldSetti
 
 Destructive reset: `DELETE /custom_fields/1214876159436964` (also detaches from project and clears all values everywhere).
 
-## Architecture / data flow (v3.2)
+## Architecture / data flow (v3.3)
 
-Linear 7-node pipeline. Connections: `Trigger → Filter → Get Task → Skip if not in QA → Get Stories → Decide → Set`. Failures route to the shared Slack-pager sub-workflow via `settings.errorWorkflow`.
+Linear 7-node pipeline. Connections: `Trigger → Filter → Get Task → Skip if not in QA → Get Stories → Decide → Set`. Failures route to the shared Slack-pager sub-workflow via `settings.errorWorkflow`. Get Task and Get Stories use `onError: 'continueRegularOutput'` so deleted-task 404s flow downstream as error bodies and are dropped silently by Skip / Decide. Filter iterates every trigger item via `$input.all()` to handle Asana's multi-event webhook batches.
 
 ```
 Asana Trigger: RevTech Project   (n8n-managed Asana webhook; ALL project events)
@@ -209,6 +209,22 @@ return [{
   }
 }
 ```
+
+## Incident: v3.2 deleted-task 404 + multi-item Filter bug (RCA, 2026-05-25)
+
+**Symptom 1 — Slack alert:** `Asana: Get Task` failed with HTTP 404 `task: Not a recognized ID: 1215104917252042` on execution 491549. The task had been deleted between the section_changed story firing and n8n's GET landing ~4s later. This is a transient/expected race (webhook delivery is at-least-once; tasks can be deleted at any moment).
+
+**Symptom 2 — discovered while writing the test:** during validation of the 404 fix, I noticed the Asana trigger emits multiple events per webhook batch (story:assigned + task added to section + custom_field_changed, etc.) but **n8n's Code node defaults to `runOnceForAllItems` mode, where `$json` is the FIRST item only**. The Filter node's `if (event.action === ...)` check only inspected the first item. Any QA-move event that wasn't the first item in the batch was silently dropped. In one test execution, item 0 was `story/assigned` (no match) and item 1 was a perfect Shape A QA move (parent.gid = QA section) — Filter emitted 0 and we missed the capture. This was likely happening sporadically since v1.
+
+**Fix (v3.3):**
+1. Set `onError: 'continueRegularOutput'` on `Asana: Get Task` and `Asana: Get Stories`. A 404 (or any HTTP error) now emits the error body as a regular output instead of failing the execution.
+2. Hardened `Skip if not in QA`: returns `[]` if `$json.errors` is an array (Asana's error-body shape) or if `task.memberships` is missing. The 404 flows downstream and is dropped silently — no Slack page.
+3. Hardened `Decide` for symmetry: drops if Get Stories returned an error body too.
+4. Rewrote `Filter` to iterate every input item via `$input.all()` (instead of relying on `$json` which is the first item only). Added a dedupe to handle the case where Shape A and Shape B fire for the same task in one batch.
+
+**Backfill (one-time, 2026-05-25):** Re-audited 3,511 downstream-of-QA tasks. Found 228 missing the new `Entered QA At` field (originally written 2026-05-24 when the field didn't exist yet). All 228 backfilled, zero failures.
+
+**Lesson:** n8n Code node mode is a footgun. Default `runOnceForAllItems` makes `$json` mean "first item" — counterintuitive. Always use `$input.all()` in Code nodes that need to handle multi-item input. Recorded as a reference memory.
 
 ## Incident: v1 race condition (RCA, 2026-05-24)
 
