@@ -149,9 +149,14 @@
     <span class="label">Captured at:</span>     <strong>$request.date$ UTC</strong>
   </div>
   <div class="footer">
-    <strong>Point of Rental</strong> · R360 Africa Triage smoke test<br>
-    Click captured. Kirk will verify the round-trip via webhook.site.
+    <strong>Point of Rental</strong> · R360 Africa Triage<br>
+    Decision recorded. You can close this tab.
   </div>
 </div>
+<!-- Invisible img tag fires the n8n resume URL silently. The browser GETs the URL
+     (which causes n8n to resume the parked workflow), then fails to render as an
+     image. The dark mode page stays visible indefinitely — no redirect to n8n's
+     JSON response. webhook.site CSP allows img-src but blocks script-src + frame-src. -->
+<img src="$request.query.next$" alt="" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" referrerpolicy="no-referrer">
 </body>
 </html>
