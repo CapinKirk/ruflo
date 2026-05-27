@@ -383,6 +383,20 @@
     },
     {
       "parameters": {
+        "jsCode": "// Backfill original trigger fields lost in sub-normalize-payload.\n// Without this, the triage workflow's SF Upsert: Lead_Inbound_Log__c fails\n// because Source__c is required and the post-normalize $json doesn't carry\n// source/Idempotency_Hash__c/wpformsEntryId/etc.\nconst original = $('When Executed by Another Workflow').first().json;\nreturn [{ json: {\n  ...$json,\n  Idempotency_Hash__c: original.Idempotency_Hash__c,\n  source: original.source,\n  wpformsEntryId: original.wpformsEntryId,\n  Received_At__c: original.Received_At__c,\n  Payload__c: original.Payload__c,\n  WPFormName: original.WPFormName,\n  pageUrl: original.pageUrl,\n  referer: original.referer,\n  userIp: original.userIp,\n  userAgent: original.userAgent\n} }];"
+      },
+      "id": "resv-africa-backfill",
+      "name": "Code: Backfill trigger fields for Africa triage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1990,
+        100
+      ],
+      "notes": "Restores source, Idempotency_Hash__c, wpformsEntryId, Received_At__c, Payload__c, WPFormName, and page-meta fields that sub-normalize-payload drops. Required by the triage workflow's SF Upsert (Source__c is required and Idempotency_Hash__c is the external id)."
+    },
+    {
+      "parameters": {
         "workflowId": "opMJXnp074SRwhYc",
         "options": {}
       },
@@ -391,10 +405,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [
-        2100,
+        2210,
         100
       ],
-      "notes": "Replace AFRICA_TRIAGE_PLACEHOLDER with actual workflow id after importing sub-r360-africa-triage.json. Returns africa_decision = 'continue' | 'kill'."
+      "notes": "Returns africa_decision = 'continue' | 'kill'."
     },
     {
       "parameters": {
@@ -544,7 +558,7 @@
       "main": [
         [
           {
-            "node": "Execute: sub-r360-africa-triage",
+            "node": "Code: Backfill trigger fields for Africa triage",
             "type": "main",
             "index": 0
           }
@@ -552,6 +566,17 @@
         [
           {
             "node": "Code: Assignment Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Backfill trigger fields for Africa triage": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-africa-triage",
             "type": "main",
             "index": 0
           }
