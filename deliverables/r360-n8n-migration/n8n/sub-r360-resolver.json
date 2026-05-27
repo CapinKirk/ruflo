@@ -349,6 +349,83 @@
         2100,
         380
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-africa",
+              "leftValue": "={{ $json.formattedRegion }}",
+              "rightValue": "Africa",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "resv-if-africa",
+      "name": "IF: Africa triage?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        180
+      ],
+      "notes": "Africa region fork. TRUE branch routes through sub-r360-africa-triage for human approval before MQL. FALSE branch passes through to Code: Assignment Owner unchanged — preserves AMER/EU/APAC behavior byte-identical."
+    },
+    {
+      "parameters": {
+        "workflowId": "AFRICA_TRIAGE_PLACEHOLDER",
+        "options": {}
+      },
+      "id": "resv-exec-africa-triage",
+      "name": "Execute: sub-r360-africa-triage",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        2100,
+        100
+      ],
+      "notes": "Replace AFRICA_TRIAGE_PLACEHOLDER with actual workflow id after importing sub-r360-africa-triage.json. Returns africa_decision = 'continue' | 'kill'."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-africa-continue",
+              "leftValue": "={{ $json.africa_decision }}",
+              "rightValue": "continue",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "resv-if-africa-decision",
+      "name": "IF: Africa decision continue?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        100
+      ],
+      "notes": "TRUE → Code: Assignment Owner (resume normal flow). FALSE (kill) → no further action; Lead_Inbound_Log__c already marked africa_killed by triage workflow."
     }
   ],
   "connections": {
@@ -456,11 +533,52 @@
       "main": [
         [
           {
+            "node": "IF: Africa triage?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Africa triage?": {
+      "main": [
+        [
+          {
+            "node": "Execute: sub-r360-africa-triage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Code: Assignment Owner",
             "type": "main",
             "index": 0
           }
         ]
+      ]
+    },
+    "Execute: sub-r360-africa-triage": {
+      "main": [
+        [
+          {
+            "node": "IF: Africa decision continue?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Africa decision continue?": {
+      "main": [
+        [
+          {
+            "node": "Code: Assignment Owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     },
     "Code: Assignment Owner": {

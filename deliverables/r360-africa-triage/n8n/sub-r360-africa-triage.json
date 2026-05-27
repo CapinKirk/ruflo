@@ -1,0 +1,295 @@
+{
+  "id": "AFRICA_TRIAGE_PLACEHOLDER",
+  "name": "R360 Sub: Africa Triage (human approval before MQL routing)",
+  "description": "Forked from sub-r360-resolver when formattedRegion='Africa'. Posts interactive Slack approval card to Dean Hammond + Kirk Bennett, parks execution on Wait/resume webhook, and resumes resolver with africa_decision = 'continue' or 'kill'. Other regions are not impacted — they bypass this workflow entirely.",
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "afr-0001-4000-8000-000000000001",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [240, 320],
+      "notes": "Called by sub-r360-resolver via IF: Africa triage? TRUE branch. Receives full $json with formattedRegion='Africa' plus all normalized fields and SF query results."
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "externalId": "Idempotency_Hash__c",
+        "externalIdValue": "={{ $json.Idempotency_Hash__c }}",
+        "customFieldsUi": {
+          "customFieldsValues": [
+            {
+              "fieldId": "Status__c",
+              "value": "africa_pending"
+            },
+            {
+              "fieldId": "Source__c",
+              "value": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "External_Submission_Id__c",
+              "value": "={{ String($json.wpformsEntryId || '') }}"
+            },
+            {
+              "fieldId": "Received_At__c",
+              "value": "={{ $json.Received_At__c || $now.toISO() }}"
+            },
+            {
+              "fieldId": "Payload__c",
+              "value": "={{ JSON.stringify($json).substring(0, 32000) }}"
+            },
+            {
+              "fieldId": "n8n_Execution_Id__c",
+              "value": "={{ $execution.id }}"
+            },
+            {
+              "fieldId": "Retry_Count__c",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "id": "afr-0002-4000-8000-000000000002",
+      "name": "SF Upsert: Lead_Inbound_Log__c (africa_pending)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [460, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      },
+      "notes": "Bind to [RH] PROD for prod. Provisional log row so replays during the approval window short-circuit (see resolver IF: already written) and the reconciliation cron sees the submission."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Slack Block Kit message for human approval.\n// Includes: SF link if existing Lead/Contact found, lead metadata, action buttons.\n// The action buttons use `url` type pointing at $resumeUrl with decision query param —\n// when clicked, the browser opens the URL and n8n's Wait/resume picks up the decision.\n\nconst j = $json;\nconst SF_BASE = 'https://por.my.salesforce.com';\n\n// Format SF links if records found\nconst leadLink = j.found_lead_id ? `${SF_BASE}/${j.found_lead_id}` : null;\nconst contactLink = j.found_contact_id ? `${SF_BASE}/${j.found_contact_id}` : null;\nconst accountLink = j.found_account_id ? `${SF_BASE}/${j.found_account_id}` : null;\n\n// SF status summary\nlet sfStatus;\nif (j.found_lead_id) {\n  sfStatus = `🟡 Existing Lead found: <${leadLink}|${j.found_lead_id}>`;\n} else if (j.found_contact_id) {\n  const acctStr = accountLink ? ` (Account: <${accountLink}|${j.found_account_status || 'Unknown'}>)` : '';\n  sfStatus = `🟢 Existing Contact found: <${contactLink}|${j.found_contact_id}>${acctStr}`;\n} else {\n  sfStatus = '🆕 *No Salesforce match* — new lead';\n}\n\n// Lead detail block\nconst details = [];\nif (j.formattedFirst || j.formattedLast) details.push(`*Name:* ${[j.formattedFirst, j.formattedLast].filter(Boolean).join(' ')}`);\nif (j.formattedEmail) details.push(`*Email:* ${j.formattedEmail}`);\nif (j.formattedCompany) details.push(`*Company:* ${j.formattedCompany}`);\nif (j.formattedCountry) details.push(`*Country:* ${j.formattedCountry}`);\nif (j.phone) details.push(`*Phone:* ${j.phone}`);\nif (j.formattedIndustry) details.push(`*Industry:* ${j.formattedIndustry}`);\nif (j.WPFormName) details.push(`*Form:* ${j.WPFormName}`);\nif (j.utmsource) details.push(`*UTM source:* ${j.utmsource}`);\nif (j.utmCampaign) details.push(`*UTM campaign:* ${j.utmCampaign}`);\nif (j.LandingPage || j.landingPage) details.push(`*Landing:* ${j.LandingPage || j.landingPage}`);\n\nconst detailText = details.join('\\n') || '_(no detail fields populated)_';\n\n// Buttons embed resumeUrl with decision query param.\n// $resumeUrl is provided by the Wait node downstream — n8n exposes it as an expression\n// at workflow start, so it can be referenced in nodes BEFORE the Wait node runs.\nconst resumeBase = $execution.resumeUrl;\nconst continueUrl = `${resumeBase}?decision=continue&hash=${encodeURIComponent(j.Idempotency_Hash__c)}`;\nconst killUrl = `${resumeBase}?decision=kill&hash=${encodeURIComponent(j.Idempotency_Hash__c)}`;\n\nconst blocks = [\n  {\n    type: 'header',\n    text: { type: 'plain_text', text: '🌍 Africa lead — human triage required', emoji: true }\n  },\n  {\n    type: 'section',\n    text: { type: 'mrkdwn', text: sfStatus }\n  },\n  {\n    type: 'section',\n    text: { type: 'mrkdwn', text: detailText }\n  },\n  {\n    type: 'context',\n    elements: [\n      { type: 'mrkdwn', text: `Submission: \\`${j.Idempotency_Hash__c}\\` · Source: \\`${j.source}\\` · n8n exec: \\`${$execution.id}\\`` }\n    ]\n  },\n  {\n    type: 'actions',\n    elements: [\n      {\n        type: 'button',\n        style: 'primary',\n        text: { type: 'plain_text', text: '✅ Continue to MQL + routing', emoji: true },\n        url: continueUrl,\n        action_id: 'africa_continue'\n      },\n      {\n        type: 'button',\n        style: 'danger',\n        text: { type: 'plain_text', text: '🛑 Kill (do not route)', emoji: true },\n        url: killUrl,\n        action_id: 'africa_kill'\n      }\n    ]\n  }\n];\n\nconst fallbackText = `Africa lead triage required: ${j.formattedFirst || ''} ${j.formattedLast || ''} from ${j.formattedCompany || j.formattedEmail || 'unknown'}`;\n\nreturn [{\n  json: {\n    ...j,\n    slack_blocks: blocks,\n    slack_fallback_text: fallbackText,\n    continue_url: continueUrl,\n    kill_url: killUrl\n  }\n}];"
+      },
+      "id": "afr-0003-4000-8000-000000000003",
+      "name": "Code: Build Slack Block Kit message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 320],
+      "notes": "Builds Block Kit JSON with SF links, lead detail, and two URL buttons pointing at $execution.resumeUrl. The Wait node downstream is what gives us the resumeUrl."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"U0135HAS0KA\",\n  \"text\": \"{{ $json.slack_fallback_text }}\",\n  \"blocks\": {{ JSON.stringify($json.slack_blocks) }}\n}",
+        "options": {}
+      },
+      "id": "afr-0004-4000-8000-000000000004",
+      "name": "Slack: DM Dean Hammond",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 240],
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_CREDENTIAL_PLACEHOLDER",
+          "name": "Slack: marketing bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "DM to Dean Hammond (U0135HAS0KA). onError=continue so a failed DM to Dean doesn't block Kirk's DM. Capture message_ts in response for later update."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"U02HR1T6PBK\",\n  \"text\": \"{{ $json.slack_fallback_text }}\",\n  \"blocks\": {{ JSON.stringify($json.slack_blocks) }}\n}",
+        "options": {}
+      },
+      "id": "afr-0005-4000-8000-000000000005",
+      "name": "Slack: DM Kirk Bennett",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 320],
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_CREDENTIAL_PLACEHOLDER",
+          "name": "Slack: marketing bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "DM to Kirk Bennett (U02HR1T6PBK). onError=continue."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"C06TTMZB3RA\",\n  \"text\": \"🌍 Africa lead awaiting triage — {{ $json.formattedFirst }} {{ $json.formattedLast }} ({{ $json.formattedCompany }}) — Dean Hammond + Kirk Bennett DM'd for decision. Hash: `{{ $json.Idempotency_Hash__c }}`\"\n}",
+        "options": {}
+      },
+      "id": "afr-0006-4000-8000-000000000006",
+      "name": "Slack: notify channel (visibility-only)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400],
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_CREDENTIAL_PLACEHOLDER",
+          "name": "Slack: marketing bot"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Visibility-only notification to #marketing-lead-errors. No buttons — interaction goes through Dean/Kirk DMs."
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {
+          "webhookSuffix": "africa-decision"
+        }
+      },
+      "id": "afr-0007-4000-8000-000000000007",
+      "name": "Wait: human decision (resume on webhook)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1120, 320],
+      "notes": "Resumes when one of the Slack buttons is clicked (decision=continue|kill in query). Times out per workflow settings (default: no timeout — set 24h in settings if needed for prod)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// After Wait resumes, the query string from the click is on $json (from the GET hit).\n// We also have access to the pre-wait payload via $('Code: Build Slack Block Kit message').first().json.\n\nconst preWaitPayload = $('Code: Build Slack Block Kit message').first().json;\nconst resumeQuery = $json;\nconst decision = (resumeQuery.decision || resumeQuery.query?.decision || '').toLowerCase();\nconst hashFromQuery = resumeQuery.hash || resumeQuery.query?.hash;\n\n// Defense: confirm hash matches (anti-CSRF light — anyone with the URL can hit it,\n// but the URL was only sent to Dean+Kirk DMs so attack surface is small).\nif (hashFromQuery && hashFromQuery !== preWaitPayload.Idempotency_Hash__c) {\n  throw new Error(`Hash mismatch: query=${hashFromQuery} pre-wait=${preWaitPayload.Idempotency_Hash__c}`);\n}\n\nif (decision !== 'continue' && decision !== 'kill') {\n  throw new Error(`Invalid decision: \"${decision}\". Expected 'continue' or 'kill'.`);\n}\n\n// Slack user_id of the clicker isn't available from a plain url-button click.\n// For audit we record the timestamp and the decision. Upgrade path: switch to\n// proper Slack interactivity (chat.postMessage with action elements + Slack app\n// signing secret verification) to capture user_id.\nconst decided_at = new Date().toISOString();\n\nreturn [{\n  json: {\n    ...preWaitPayload,\n    africa_decision: decision,\n    africa_decided_at: decided_at,\n    Status__c: decision === 'continue' ? 'africa_continued' : 'africa_killed'\n  }\n}];"
+      },
+      "id": "afr-0008-4000-8000-000000000008",
+      "name": "Code: Parse decision",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 320]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "resource": "customObject",
+        "customObject": "Lead_Inbound_Log__c",
+        "externalId": "Idempotency_Hash__c",
+        "externalIdValue": "={{ $json.Idempotency_Hash__c }}",
+        "customFieldsUi": {
+          "customFieldsValues": [
+            {
+              "fieldId": "Status__c",
+              "value": "={{ $json.Status__c }}"
+            }
+          ]
+        }
+      },
+      "id": "afr-0009-4000-8000-000000000009",
+      "name": "SF Update: Lead_Inbound_Log__c (decision)",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [1560, 320],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "JUyr1xCnPHSkU1tm",
+          "name": "[RH] UAT"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"channel\": \"C06TTMZB3RA\",\n  \"text\": \"🌍 Africa lead decision: *{{ $json.africa_decision }}* for {{ $json.formattedFirst }} {{ $json.formattedLast }} ({{ $json.formattedCompany }}). Hash: `{{ $json.Idempotency_Hash__c }}`. Decided at: {{ $json.africa_decided_at }}\"\n}",
+        "options": {}
+      },
+      "id": "afr-000a-4000-8000-00000000000a",
+      "name": "Slack: notify channel (decision)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 320],
+      "credentials": {
+        "slackApi": {
+          "id": "SLACK_CREDENTIAL_PLACEHOLDER",
+          "name": "Slack: marketing bot"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [[{ "node": "SF Upsert: Lead_Inbound_Log__c (africa_pending)", "type": "main", "index": 0 }]]
+    },
+    "SF Upsert: Lead_Inbound_Log__c (africa_pending)": {
+      "main": [[{ "node": "Code: Build Slack Block Kit message", "type": "main", "index": 0 }]]
+    },
+    "Code: Build Slack Block Kit message": {
+      "main": [[
+        { "node": "Slack: DM Dean Hammond", "type": "main", "index": 0 },
+        { "node": "Slack: DM Kirk Bennett", "type": "main", "index": 0 },
+        { "node": "Slack: notify channel (visibility-only)", "type": "main", "index": 0 }
+      ]]
+    },
+    "Slack: DM Dean Hammond": {
+      "main": [[{ "node": "Wait: human decision (resume on webhook)", "type": "main", "index": 0 }]]
+    },
+    "Slack: DM Kirk Bennett": {
+      "main": [[{ "node": "Wait: human decision (resume on webhook)", "type": "main", "index": 0 }]]
+    },
+    "Slack: notify channel (visibility-only)": {
+      "main": [[{ "node": "Wait: human decision (resume on webhook)", "type": "main", "index": 0 }]]
+    },
+    "Wait: human decision (resume on webhook)": {
+      "main": [[{ "node": "Code: Parse decision", "type": "main", "index": 0 }]]
+    },
+    "Code: Parse decision": {
+      "main": [[{ "node": "SF Update: Lead_Inbound_Log__c (decision)", "type": "main", "index": 0 }]]
+    },
+    "SF Update: Lead_Inbound_Log__c (decision)": {
+      "main": [[{ "node": "Slack: notify channel (decision)", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "meta": {
+    "owner": "kirk.bennett@pointofrental.com",
+    "purpose": "R360 Africa region human triage — Dean Hammond + Kirk Bennett approve/kill before MQL routing",
+    "callers": ["sub-r360-resolver (IF: Africa triage? TRUE branch)"],
+    "callees": [],
+    "credentials_required": [
+      "[RH] UAT or [RH] PROD (Salesforce OAuth2)",
+      "Slack: marketing bot (chat.postMessage scope to U0135HAS0KA, U02HR1T6PBK, C06TTMZB3RA)"
+    ],
+    "todo": [
+      "Replace SLACK_CREDENTIAL_PLACEHOLDER with actual Slack credential ID after import",
+      "Replace AFRICA_TRIAGE_PLACEHOLDER workflow id after import + record in resolver Execute Workflow node",
+      "Set workflow timeout in n8n settings — recommend 24h for prod (after which Status__c stays at africa_pending and reconciliation cron can flag for follow-up)",
+      "After import, bind error workflow = sub-error-handler (same as resolver)",
+      "Once Slack interactivity app is configured, swap url buttons for value buttons to capture user_id of clicker"
+    ]
+  },
+  "tags": [
+    { "name": "r360" },
+    { "name": "africa" },
+    { "name": "human-in-loop" }
+  ]
+}
