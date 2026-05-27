@@ -1,5 +1,5 @@
 {
-  "id": "AFRICA_TRIAGE_PLACEHOLDER",
+  "id": "opMJXnp074SRwhYc",
   "name": "R360 Sub: Africa Triage (human approval before MQL routing)",
   "description": "Forked from sub-r360-resolver when formattedRegion='Africa'. Posts interactive Slack approval card to Dean Hammond + Kirk Bennett, parks execution on Wait/resume webhook, and resumes resolver with africa_decision = 'continue' or 'kill'. Other regions are not impacted — they bypass this workflow entirely.",
   "active": false,

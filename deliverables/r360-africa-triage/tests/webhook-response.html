@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Africa Triage — Decision Captured</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e8e8f0;
+    overflow: hidden;
+    position: relative;
+    background: radial-gradient(ellipse at 30% 20%, #16162a 0%, #050510 70%);
+  }
+  body[class="continue"] { background: radial-gradient(ellipse at 30% 20%, #0b3a1a 0%, #050510 70%); }
+  body[class="kill"]     { background: radial-gradient(ellipse at 30% 20%, #3a0b0b 0%, #050510 70%); }
+
+  /* Variant visibility (CSS-only switcher) */
+  .v-continue, .v-kill, .v-unknown { display: none; }
+  body[class="continue"] .v-continue { display: inline; }
+  body[class="kill"]     .v-kill     { display: inline; }
+  body:not([class="continue"]):not([class="kill"]) .v-unknown { display: inline; }
+
+  /* Starfield */
+  .stars { position: fixed; inset: 0; pointer-events: none; }
+  .stars::before, .stars::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 80%, #fff, transparent),
+      radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 10%, #fff, transparent),
+      radial-gradient(2px 2px at 10% 70%, #c0c0ff, transparent),
+      radial-gradient(1px 1px at 35% 90%, #fff, transparent),
+      radial-gradient(2px 2px at 80% 40%, #ffeebb, transparent);
+    background-repeat: repeat;
+    background-size: 300px 300px;
+    opacity: 0.7;
+  }
+  .stars::after {
+    background-size: 200px 200px;
+    background-position: 100px 50px;
+    opacity: 0.4;
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.2; } to { opacity: 0.6; } }
+
+  .card {
+    background: rgba(20, 20, 38, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 56px 64px;
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08) inset;
+    max-width: 580px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .rocket {
+    font-size: 96px;
+    line-height: 1;
+    margin-bottom: 12px;
+    display: inline-block;
+    filter: drop-shadow(0 0 24px rgba(255,200,80,0.4));
+  }
+  body[class="continue"] .rocket { animation: launch 1.6s cubic-bezier(.5,0,.5,1) infinite; }
+  body[class="kill"]     .rocket { animation: crash  1.8s ease-in-out infinite; }
+  body:not([class="continue"]):not([class="kill"]) .rocket { animation: hover 3.2s ease-in-out infinite; }
+
+  @keyframes launch {
+    0%   { transform: translateY(20px)  rotate(-45deg); opacity: 0.4; }
+    30%  { transform: translateY(0)     rotate(-45deg); opacity: 1;   }
+    100% { transform: translateY(-200px) rotate(-45deg); opacity: 0; }
+  }
+  @keyframes crash {
+    0%, 100% { transform: rotate(135deg) translateY(0);  }
+    50%      { transform: rotate(135deg) translateY(8px); }
+  }
+  @keyframes hover {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 34px;
+    letter-spacing: -0.6px;
+    font-weight: 700;
+  }
+  body[class="continue"] h1 { color: #4ade80; text-shadow: 0 0 30px rgba(74,222,128,0.5); }
+  body[class="kill"]     h1 { color: #f87171; text-shadow: 0 0 30px rgba(248,113,113,0.5); }
+  body:not([class="continue"]):not([class="kill"]) h1 { color: #a5b4fc; text-shadow: 0 0 30px rgba(165,180,252,0.4); }
+
+  .subtitle { font-size: 18px; color: #b0b0c8; margin: 0 0 28px; }
+
+  .meta {
+    background: rgba(8, 8, 16, 0.6);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 18px 22px;
+    border-radius: 10px;
+    text-align: left;
+    font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #c8c8e0;
+    margin-bottom: 24px;
+  }
+  .meta strong { color: #fff; font-weight: 600; }
+  .meta .label { color: #888; }
+
+  .flavor { font-style: italic; color: #888; font-size: 15px; margin: 0 0 28px; line-height: 1.5; }
+
+  .footer { font-size: 12px; color: #555; line-height: 1.6; }
+  .footer strong { color: #888; }
+</style>
+</head>
+<body class="$request.query.decision$">
+<div class="stars"></div>
+<div class="card">
+  <div class="rocket"><span class="v-continue">🚀</span><span class="v-kill">☄️</span><span class="v-unknown">🛸</span></div>
+  <h1>
+    <span class="v-continue">CONTINUE — ROUTING TO MQL</span>
+    <span class="v-kill">LEAD KILLED — NO ROUTING</span>
+    <span class="v-unknown">Awaiting decision</span>
+  </h1>
+  <p class="subtitle">
+    <span class="v-continue">This lead launches into Salesforce. 🛰️</span>
+    <span class="v-kill">This lead burns up on re-entry. 💥</span>
+    <span class="v-unknown">No decision in URL. Click a button in Slack.</span>
+  </p>
+  <div class="flavor">
+    <span class="v-continue">"To MQL and beyond." — Buzz Bidstreamer</span>
+    <span class="v-kill">"Houston, we have a no." — Marketing Ops, 2026</span>
+    <span class="v-unknown">The URL was missing ?decision=continue|kill</span>
+  </div>
+  <div class="meta">
+    <span class="label">Decision:</span>        <strong>$request.query.decision$</strong><br>
+    <span class="label">Submission hash:</span> <strong>$request.query.hash$</strong><br>
+    <span class="label">Clicker:</span>         <strong>$request.query.clicker$</strong><br>
+    <span class="label">Captured at:</span>     <strong>$request.date$ UTC</strong>
+  </div>
+  <div class="footer">
+    <strong>Point of Rental</strong> · R360 Africa Triage smoke test<br>
+    Click captured. Kirk will verify the round-trip via webhook.site.
+  </div>
+</div>
+</body>
+</html>

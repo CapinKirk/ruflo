@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Status__c</fullName>
-    <description>Lifecycle state of this inbound submission. received → written | replayed | replayed_duplicate | failed | X_skipped_no_email | X_no_record_skipped_contactform | email_only_tracked | superseded_by_full_form | X_no_record_skipped_email_only.</description>
+    <description>Lifecycle state of this inbound submission. received → written | replayed | replayed_duplicate | failed | X_skipped_no_email | X_no_record_skipped_contactform | email_only_tracked | superseded_by_full_form | X_no_record_skipped_email_only | africa_pending → africa_continued | africa_killed.</description>
     <externalId>false</externalId>
     <label>Status</label>
     <required>true</required>
@@ -61,6 +61,21 @@
                 <fullName>X_no_record_skipped_email_only</fullName>
                 <default>false</default>
                 <label>X_no_record_skipped_email_only</label>
+            </value>
+            <value>
+                <fullName>africa_pending</fullName>
+                <default>false</default>
+                <label>africa_pending</label>
+            </value>
+            <value>
+                <fullName>africa_continued</fullName>
+                <default>false</default>
+                <label>africa_continued</label>
+            </value>
+            <value>
+                <fullName>africa_killed</fullName>
+                <default>false</default>
+                <label>africa_killed</label>
             </value>
         </valueSetDefinition>
     </valueSet>
