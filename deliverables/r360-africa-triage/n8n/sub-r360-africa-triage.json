@@ -132,7 +132,7 @@
       "parameters": {
         "resume": "webhook",
         "options": {
-          "webhookSuffix": "africa-decision"
+          "responseValue": "Decision captured. You can close this window."
         }
       },
       "id": "afr-0007-4000-8000-000000000007",
@@ -140,7 +140,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [1120, 320],
-      "notes": "Resumes when one of the Slack buttons is clicked (decision=continue|kill in query). Times out per workflow settings (default: no timeout — set 24h in settings if needed for prod)."
+      "notes": "Resumes when one of the Slack buttons is clicked. Suffix removed because $execution.resumeUrl doesn't include the suffix, causing 404. Decision arrives in $json from the GET query string. Times out per workflow settings."
     },
     {
       "parameters": {
