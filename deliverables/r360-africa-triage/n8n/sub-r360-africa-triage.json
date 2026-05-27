@@ -86,36 +86,11 @@
         "nodeCredentialType": "slackApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"U0135HAS0KA\",\n  \"text\": \"{{ $json.slack_fallback_text }}\",\n  \"blocks\": {{ JSON.stringify($json.slack_blocks) }}\n}",
+        "jsonBody": "={\n  \"channel\": \"C0B6JUJEF2M\",\n  \"text\": \"{{ $json.slack_fallback_text }}\",\n  \"blocks\": {{ JSON.stringify($json.slack_blocks) }}\n}",
         "options": {}
       },
       "id": "afr-0004-4000-8000-000000000004",
-      "name": "Slack: DM Dean Hammond",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [900, 240],
-      "credentials": {
-        "slackApi": {
-          "id": "SLACK_CREDENTIAL_PLACEHOLDER",
-          "name": "Slack: marketing bot"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "notes": "DM to Dean Hammond (U0135HAS0KA). onError=continue so a failed DM to Dean doesn't block Kirk's DM. Capture message_ts in response for later update."
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://slack.com/api/chat.postMessage",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "slackApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"U02HR1T6PBK\",\n  \"text\": \"{{ $('Code: Build Slack Block Kit message').item.json.slack_fallback_text }}\",\n  \"blocks\": {{ JSON.stringify($('Code: Build Slack Block Kit message').item.json.slack_blocks) }}\n}",
-        "options": {}
-      },
-      "id": "afr-0005-4000-8000-000000000005",
-      "name": "Slack: DM Kirk Bennett",
+      "name": "Slack: Post triage to MPIM (Dean + Kirk + bot)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [900, 320],
@@ -126,7 +101,7 @@
         }
       },
       "onError": "continueRegularOutput",
-      "notes": "DM to Kirk Bennett (U02HR1T6PBK). onError=continue."
+      "notes": "Single group DM to Dean Hammond (U0135HAS0KA) + Kirk Bennett (U02HR1T6PBK) via MPIM channel C0B6JUJEF2M (mpdm-por_revtech--dean.hammond--kirk.bennett-1). Both see the same message with the same action buttons; whoever clicks first resolves the lead."
     },
     {
       "parameters": {
@@ -136,14 +111,14 @@
         "nodeCredentialType": "slackApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"C06TTMZB3RA\",\n  \"text\": \"🌍 Africa lead awaiting triage — {{ $('Code: Build Slack Block Kit message').item.json.formattedFirst }} {{ $('Code: Build Slack Block Kit message').item.json.formattedLast }} ({{ $('Code: Build Slack Block Kit message').item.json.formattedCompany }}) — Dean Hammond + Kirk Bennett DM'd for decision. Hash: `{{ $('Code: Build Slack Block Kit message').item.json.Idempotency_Hash__c }}`\"\n}",
+        "jsonBody": "={\n  \"channel\": \"C0B61KZNXD5\",\n  \"text\": \"🌍 Africa lead awaiting triage — {{ $('Code: Build Slack Block Kit message').item.json.formattedFirst }} {{ $('Code: Build Slack Block Kit message').item.json.formattedLast }} ({{ $('Code: Build Slack Block Kit message').item.json.formattedCompany }}) — Dean Hammond + Kirk Bennett pinged in MPIM. Hash: `{{ $('Code: Build Slack Block Kit message').item.json.Idempotency_Hash__c }}`\"\n}",
         "options": {}
       },
       "id": "afr-0006-4000-8000-000000000006",
       "name": "Slack: notify channel (visibility-only)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [900, 400],
+      "position": [1120, 400],
       "credentials": {
         "slackApi": {
           "id": "SLACK_CREDENTIAL_PLACEHOLDER",
@@ -151,7 +126,7 @@
         }
       },
       "onError": "continueRegularOutput",
-      "notes": "Visibility-only notification to #marketing-lead-errors. No buttons — interaction goes through Dean/Kirk DMs."
+      "notes": "Visibility-only notification to #african-lead-approvals (C0B61KZNXD5). No buttons — interaction goes through the MPIM."
     },
     {
       "parameters": {
@@ -213,7 +188,7 @@
         "nodeCredentialType": "slackApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"channel\": \"C06TTMZB3RA\",\n  \"text\": \"🌍 Africa lead decision: *{{ $json.africa_decision }}* for {{ $json.formattedFirst }} {{ $json.formattedLast }} ({{ $json.formattedCompany }}). Hash: `{{ $json.Idempotency_Hash__c }}`. Decided at: {{ $json.africa_decided_at }}\"\n}",
+        "jsonBody": "={\n  \"channel\": \"C0B61KZNXD5\",\n  \"text\": \"🌍 Africa lead decision: *{{ $json.africa_decision }}* for {{ $json.formattedFirst }} {{ $json.formattedLast }} ({{ $json.formattedCompany }}). Hash: `{{ $json.Idempotency_Hash__c }}`. Decided at: {{ $json.africa_decided_at }}\"\n}",
         "options": {}
       },
       "id": "afr-000a-4000-8000-00000000000a",
@@ -238,12 +213,9 @@
       "main": [[{ "node": "Code: Build Slack Block Kit message", "type": "main", "index": 0 }]]
     },
     "Code: Build Slack Block Kit message": {
-      "main": [[{ "node": "Slack: DM Dean Hammond", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Slack: Post triage to MPIM (Dean + Kirk + bot)", "type": "main", "index": 0 }]]
     },
-    "Slack: DM Dean Hammond": {
-      "main": [[{ "node": "Slack: DM Kirk Bennett", "type": "main", "index": 0 }]]
-    },
-    "Slack: DM Kirk Bennett": {
+    "Slack: Post triage to MPIM (Dean + Kirk + bot)": {
       "main": [[{ "node": "Slack: notify channel (visibility-only)", "type": "main", "index": 0 }]]
     },
     "Slack: notify channel (visibility-only)": {
