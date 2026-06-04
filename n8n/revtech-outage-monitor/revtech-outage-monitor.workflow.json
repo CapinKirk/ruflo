@@ -1,0 +1,522 @@
+{
+  "id": "hIIZRFNkw1IEWrdE",
+  "name": "RevTech Outage Monitor — :mega: AI forward to #sf-help",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "c1111111-1111-4111-8111-111111111111",
+      "name": "Every 1 min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://slack.com/api/conversations.history",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "channel",
+              "value": "C0B877P91FX"
+            },
+            {
+              "name": "limit",
+              "value": "15"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c2222222-2222-4222-8222-222222222222",
+      "name": "Read #revtech-status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        200,
+        300
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "tqBcqmqwg1Fb7VuP",
+          "name": "Paul's n8n Erros Bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// :mega: forwarder, step 1 (n8n Code node). Input: conversations.history for #revtech-status.\n// Finds messages newly reacted with :mega:, strips the alert text, and builds the Anthropic\n// request body that turns the raw alert into a customer-friendly #sf-help notice in Paul's voice.\nconst store = (typeof $getWorkflowStaticData === 'function') ? $getWorkflowStaticData('global') : this.getWorkflowStaticData('global');\nstore.fwd = store.fwd || {};\nstore.attempts = store.attempts || {};  // bounded-retry counter (persists only on successful runs)\nconst resp = $input.first() ? $input.first().json : {};\nif (resp && resp.ok === false) {\n  throw new Error('Slack conversations.history failed: ' + (resp.error || 'unknown') + (resp.needed ? ' (needed scope: ' + resp.needed + ')' : ''));\n}\n\nconst SYSTEM = [\n  \"You write short service-status notices for Point of Rental's #sf-help Slack channel, where reps and staff watch for vendor issues that affect their work.\",\n  \"Input: a raw internal monitoring alert about a third-party vendor (Salesforce, Gong, Zoom, Google Workspace, AWS, etc.). Rewrite it as a clear, calm notice for staff, in Slack mrkdwn.\",\n  \"\",\n  \"Mirror this real example exactly in shape:\",\n  \":warning: *Known Issue: Gong not recording Google Meet calls*\",\n  \"\",\n  \"Gong has an open incident affecting Google Meet call recording. Some calls are not being recorded or transcribed while this is active.\",\n  \"\",\n  \"This is on Gong's side, not a Salesforce or POR configuration issue.\",\n  \"\",\n  \"Track status here: <https://status.gong.io/|Gong status>\",\n  \"\",\n  \"If this is impacting you, submit a ticket at Helpdesk.pointofrental.com\",\n  \"\",\n  \"Rules:\",\n  \"- Lead with an emoji + bold title naming the vendor and the impact (:warning: for outage/degradation, :white_check_mark: for restored).\",\n  \"- 1 to 2 short, plain-English sentences on what is happening and what it affects.\",\n  \"- If it is the vendor's fault, say it is on their side, not a POR or Salesforce config issue.\",\n  \"- Include the status link if one is provided, as a Slack link <url|label>.\",\n  \"- Close with: If this is impacting you, submit a ticket at Helpdesk.pointofrental.com\",\n  \"- Voice: friendly, direct, warm, not formal. Short declarative sentences. One idea per line, blank line between lines. State things flatly, no hedging.\",\n  \"- NO em dashes. Avoid the words: dive into, leverage, straightforward, circle back.\",\n  \"- Do not invent details, root causes, or resolution times that are not in the alert.\",\n  \"- Output ONLY the notice text in Slack mrkdwn. No preamble, no 'here is'.\",\n].join('\\n');\n\nconst msgs = (resp && resp.messages) || [];\nconst FLAG = ['mega', 'loudspeaker', 'loudspeaker_with_sound'];\nconst out = [];\nfor (const m of msgs) {\n  const flagged = (m.reactions || []).some(r => FLAG.indexOf(r.name) !== -1);\n  if (flagged && m.ts && !store.fwd[m.ts]) {\n    const tries = store.attempts[m.ts] || 0;\n    if (tries >= 3) {\n      // Deterministic post failure (e.g. #sf-help posting restricted for this bot) must not retry+page\n      // every minute forever. Give up after 3 attempts. Works because 'Post notice' onError=\n      // continueErrorOutput makes the run SUCCEED, so this counter persists (n8n saves static data only on success).\n      store.fwd[m.ts] = 'gave-up-after-3-failed-posts';\n      console.warn('mega-forwarder: gave up on ' + m.ts + ' after 3 failed #sf-help posts (check bot posting permission)');\n      continue;\n    }\n    store.attempts[m.ts] = tries + 1;\n    // NOTE: do NOT mark forwarded here — only mark after a successful post (see \"Mark forwarded\" node),\n    // so a failed forward (e.g. #sf-help permission not yet set) retries on the next run instead of being lost.\n    const text = String(m.text || '').replace(/\\n*_Automated with this <[^>]+>_\\s*$/, '').trim();\n    const urlMatch = text.match(/<(https?:\\/\\/[^|>]+)(?:\\|[^>]*)?>/);\n    const statusUrl = urlMatch ? urlMatch[1] : '';\n    const userContent = 'Raw internal alert:\\n' + (text || '(no text)') + (statusUrl ? ('\\n\\nVendor status link: ' + statusUrl) : '');\n    out.push({ json: { ts: m.ts, body: { model: 'claude-sonnet-4-6', max_tokens: 400, system: SYSTEM, messages: [{ role: 'user', content: userContent }] } } });\n  }\n}\nreturn out;\n"
+      },
+      "id": "c3333333-3333-4333-8333-333333333333",
+      "name": "Find new :mega:",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "id": "c5555555-5555-4555-8555-555555555555",
+      "name": "Claude: write notice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        300
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "RpOenRFTfzXnqecB",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const findItems = $('Find new :mega:').all();\nconst inItems = $input.all();\nconst out = [];\nfor (let i = 0; i < inItems.length; i++) {\n  const r = inItems[i].json;\n  if (r && r.type === 'error') { throw new Error('Anthropic error: ' + JSON.stringify(r.error || r)); }\n  let text = '';\n  if (r && Array.isArray(r.content)) { text = r.content.map(c => (c && c.text) || '').join('').trim(); }\n  if (!text) { throw new Error('Claude returned no text: ' + JSON.stringify(r).slice(0, 300)); }\n  const ts = (findItems[i] && findItems[i].json && findItems[i].json.ts) || '';\n  out.push({ json: { message: text, ts: ts } });\n}\nreturn out;"
+      },
+      "id": "c6666666-6666-4666-8666-666666666666",
+      "name": "Extract notice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "C036SBBPCLF"
+        },
+        "text": "={{ $json.message }}",
+        "otherOptions": {
+          "mrkdwn": true,
+          "unfurl_links": false
+        }
+      },
+      "id": "c4444444-4444-4444-8444-444444444444",
+      "name": "Post notice",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        1000,
+        300
+      ],
+      "credentials": {
+        "slackApi": {
+          "id": "tqBcqmqwg1Fb7VuP",
+          "name": "Paul's n8n Erros Bot"
+        }
+      },
+      "webhookId": "1e44b7b7-9ed9-48a5-91a3-f8b49bf3a044",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Record dedupe ONLY after the post succeeded (this node runs after 'Post notice').\nconst extract = $('Extract notice').all();\nconst store = (typeof $getWorkflowStaticData === 'function') ? $getWorkflowStaticData('global') : this.getWorkflowStaticData('global');\nstore.fwd = store.fwd || {};\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const ts = extract[i] && extract[i].json && extract[i].json.ts;\n  if (ts) { store.fwd[ts] = true; }\n}\nreturn items;"
+      },
+      "id": "c7777777-7777-4777-8777-777777777777",
+      "name": "Mark forwarded",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Every 1 min": {
+      "main": [
+        [
+          {
+            "node": "Read #revtech-status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read #revtech-status": {
+      "main": [
+        [
+          {
+            "node": "Find new :mega:",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find new :mega:": {
+      "main": [
+        [
+          {
+            "node": "Claude: write notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: write notice": {
+      "main": [
+        [
+          {
+            "node": "Extract notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract notice": {
+      "main": [
+        [
+          {
+            "node": "Post notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post notice": {
+      "main": [
+        [
+          {
+            "node": "Mark forwarded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "America/Chicago"
+  },
+  "staticData": {
+    "node:Every 1 min": {
+      "recurrenceRules": []
+    },
+    "global": {
+      "fwd": {
+        "1780590796.629379": true
+      },
+      "attempts": {}
+    }
+  },
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": null,
+  "activeVersionId": "6988d3ef-f9bf-4f57-a321-b71703470ed7",
+  "versionCounter": 3,
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-06-04T21:52:21.038Z",
+    "createdAt": "2026-06-04T21:52:21.038Z",
+    "versionId": "6988d3ef-f9bf-4f57-a321-b71703470ed7",
+    "workflowId": "hIIZRFNkw1IEWrdE",
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "minutesInterval": 1
+              }
+            ]
+          }
+        },
+        "id": "c1111111-1111-4111-8111-111111111111",
+        "name": "Every 1 min",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          0,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "https://slack.com/api/conversations.history",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "slackApi",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "channel",
+                "value": "C0B877P91FX"
+              },
+              {
+                "name": "limit",
+                "value": "15"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "c2222222-2222-4222-8222-222222222222",
+        "name": "Read #revtech-status",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          200,
+          300
+        ],
+        "credentials": {
+          "slackApi": {
+            "id": "tqBcqmqwg1Fb7VuP",
+            "name": "Paul's n8n Erros Bot"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// :mega: forwarder, step 1 (n8n Code node). Input: conversations.history for #revtech-status.\n// Finds messages newly reacted with :mega:, strips the alert text, and builds the Anthropic\n// request body that turns the raw alert into a customer-friendly #sf-help notice in Paul's voice.\nconst store = (typeof $getWorkflowStaticData === 'function') ? $getWorkflowStaticData('global') : this.getWorkflowStaticData('global');\nstore.fwd = store.fwd || {};\nstore.attempts = store.attempts || {};  // bounded-retry counter (persists only on successful runs)\nconst resp = $input.first() ? $input.first().json : {};\nif (resp && resp.ok === false) {\n  throw new Error('Slack conversations.history failed: ' + (resp.error || 'unknown') + (resp.needed ? ' (needed scope: ' + resp.needed + ')' : ''));\n}\n\nconst SYSTEM = [\n  \"You write short service-status notices for Point of Rental's #sf-help Slack channel, where reps and staff watch for vendor issues that affect their work.\",\n  \"Input: a raw internal monitoring alert about a third-party vendor (Salesforce, Gong, Zoom, Google Workspace, AWS, etc.). Rewrite it as a clear, calm notice for staff, in Slack mrkdwn.\",\n  \"\",\n  \"Mirror this real example exactly in shape:\",\n  \":warning: *Known Issue: Gong not recording Google Meet calls*\",\n  \"\",\n  \"Gong has an open incident affecting Google Meet call recording. Some calls are not being recorded or transcribed while this is active.\",\n  \"\",\n  \"This is on Gong's side, not a Salesforce or POR configuration issue.\",\n  \"\",\n  \"Track status here: <https://status.gong.io/|Gong status>\",\n  \"\",\n  \"If this is impacting you, submit a ticket at Helpdesk.pointofrental.com\",\n  \"\",\n  \"Rules:\",\n  \"- Lead with an emoji + bold title naming the vendor and the impact (:warning: for outage/degradation, :white_check_mark: for restored).\",\n  \"- 1 to 2 short, plain-English sentences on what is happening and what it affects.\",\n  \"- If it is the vendor's fault, say it is on their side, not a POR or Salesforce config issue.\",\n  \"- Include the status link if one is provided, as a Slack link <url|label>.\",\n  \"- Close with: If this is impacting you, submit a ticket at Helpdesk.pointofrental.com\",\n  \"- Voice: friendly, direct, warm, not formal. Short declarative sentences. One idea per line, blank line between lines. State things flatly, no hedging.\",\n  \"- NO em dashes. Avoid the words: dive into, leverage, straightforward, circle back.\",\n  \"- Do not invent details, root causes, or resolution times that are not in the alert.\",\n  \"- Output ONLY the notice text in Slack mrkdwn. No preamble, no 'here is'.\",\n].join('\\n');\n\nconst msgs = (resp && resp.messages) || [];\nconst FLAG = ['mega', 'loudspeaker', 'loudspeaker_with_sound'];\nconst out = [];\nfor (const m of msgs) {\n  const flagged = (m.reactions || []).some(r => FLAG.indexOf(r.name) !== -1);\n  if (flagged && m.ts && !store.fwd[m.ts]) {\n    const tries = store.attempts[m.ts] || 0;\n    if (tries >= 3) {\n      // Deterministic post failure (e.g. #sf-help posting restricted for this bot) must not retry+page\n      // every minute forever. Give up after 3 attempts. Works because 'Post notice' onError=\n      // continueErrorOutput makes the run SUCCEED, so this counter persists (n8n saves static data only on success).\n      store.fwd[m.ts] = 'gave-up-after-3-failed-posts';\n      console.warn('mega-forwarder: gave up on ' + m.ts + ' after 3 failed #sf-help posts (check bot posting permission)');\n      continue;\n    }\n    store.attempts[m.ts] = tries + 1;\n    // NOTE: do NOT mark forwarded here — only mark after a successful post (see \"Mark forwarded\" node),\n    // so a failed forward (e.g. #sf-help permission not yet set) retries on the next run instead of being lost.\n    const text = String(m.text || '').replace(/\\n*_Automated with this <[^>]+>_\\s*$/, '').trim();\n    const urlMatch = text.match(/<(https?:\\/\\/[^|>]+)(?:\\|[^>]*)?>/);\n    const statusUrl = urlMatch ? urlMatch[1] : '';\n    const userContent = 'Raw internal alert:\\n' + (text || '(no text)') + (statusUrl ? ('\\n\\nVendor status link: ' + statusUrl) : '');\n    out.push({ json: { ts: m.ts, body: { model: 'claude-sonnet-4-6', max_tokens: 400, system: SYSTEM, messages: [{ role: 'user', content: userContent }] } } });\n  }\n}\nreturn out;\n"
+        },
+        "id": "c3333333-3333-4333-8333-333333333333",
+        "name": "Find new :mega:",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          400,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.anthropic.com/v1/messages",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "anthropicApi",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "anthropic-version",
+                "value": "2023-06-01"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "json",
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.body) }}",
+          "options": {}
+        },
+        "id": "c5555555-5555-4555-8555-555555555555",
+        "name": "Claude: write notice",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          600,
+          300
+        ],
+        "credentials": {
+          "anthropicApi": {
+            "id": "RpOenRFTfzXnqecB",
+            "name": "Anthropic account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const findItems = $('Find new :mega:').all();\nconst inItems = $input.all();\nconst out = [];\nfor (let i = 0; i < inItems.length; i++) {\n  const r = inItems[i].json;\n  if (r && r.type === 'error') { throw new Error('Anthropic error: ' + JSON.stringify(r.error || r)); }\n  let text = '';\n  if (r && Array.isArray(r.content)) { text = r.content.map(c => (c && c.text) || '').join('').trim(); }\n  if (!text) { throw new Error('Claude returned no text: ' + JSON.stringify(r).slice(0, 300)); }\n  const ts = (findItems[i] && findItems[i].json && findItems[i].json.ts) || '';\n  out.push({ json: { message: text, ts: ts } });\n}\nreturn out;"
+        },
+        "id": "c6666666-6666-4666-8666-666666666666",
+        "name": "Extract notice",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          800,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "select": "channel",
+          "channelId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "C036SBBPCLF"
+          },
+          "text": "={{ $json.message }}",
+          "otherOptions": {
+            "mrkdwn": true,
+            "unfurl_links": false
+          }
+        },
+        "id": "c4444444-4444-4444-8444-444444444444",
+        "name": "Post notice",
+        "type": "n8n-nodes-base.slack",
+        "typeVersion": 2.2,
+        "position": [
+          1000,
+          300
+        ],
+        "credentials": {
+          "slackApi": {
+            "id": "tqBcqmqwg1Fb7VuP",
+            "name": "Paul's n8n Erros Bot"
+          }
+        },
+        "webhookId": "1e44b7b7-9ed9-48a5-91a3-f8b49bf3a044",
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Record dedupe ONLY after the post succeeded (this node runs after 'Post notice').\nconst extract = $('Extract notice').all();\nconst store = (typeof $getWorkflowStaticData === 'function') ? $getWorkflowStaticData('global') : this.getWorkflowStaticData('global');\nstore.fwd = store.fwd || {};\nconst items = $input.all();\nfor (let i = 0; i < items.length; i++) {\n  const ts = extract[i] && extract[i].json && extract[i].json.ts;\n  if (ts) { store.fwd[ts] = true; }\n}\nreturn items;"
+        },
+        "id": "c7777777-7777-4777-8777-777777777777",
+        "name": "Mark forwarded",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1200,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Every 1 min": {
+        "main": [
+          [
+            {
+              "node": "Read #revtech-status",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read #revtech-status": {
+        "main": [
+          [
+            {
+              "node": "Find new :mega:",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Find new :mega:": {
+        "main": [
+          [
+            {
+              "node": "Claude: write notice",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Claude: write notice": {
+        "main": [
+          [
+            {
+              "node": "Extract notice",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract notice": {
+        "main": [
+          [
+            {
+              "node": "Post notice",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Post notice": {
+        "main": [
+          [
+            {
+              "node": "Mark forwarded",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "authors": "Paul Alleyne",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-06-04T21:52:21.096Z",
+        "id": 6495,
+        "workflowId": "hIIZRFNkw1IEWrdE",
+        "versionId": "6988d3ef-f9bf-4f57-a321-b71703470ed7",
+        "event": "activated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      },
+      {
+        "createdAt": "2026-06-04T21:52:21.076Z",
+        "id": 6494,
+        "workflowId": "hIIZRFNkw1IEWrdE",
+        "versionId": "6988d3ef-f9bf-4f57-a321-b71703470ed7",
+        "event": "deactivated",
+        "userId": "d1ba1c31-16bd-4632-aa16-4ee51d59f29e"
+      }
+    ]
+  }
+}
